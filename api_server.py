@@ -3263,6 +3263,9 @@ def _parse_currency(value) -> float:
         return 0.0
     if isinstance(value, (int, float)):
         return float(value)
+    if isinstance(value, dict):
+        # Handle nested dicts (e.g. Claimant objects) gracefully
+        return 0.0
     if isinstance(value, str):
         # Remove currency symbols, commas, spaces
         cleaned = value.replace("$", "").replace(",", "").replace(" ", "").strip()
@@ -3304,6 +3307,13 @@ async def get_mortgage_application(app_id: str):
         # Extract data from extracted_fields (format: "filename:FieldName" -> {value, confidence, ...})
         ef = app_md.extracted_fields or {}
         
+        # Helper to safely get a value from a field_data entry
+        def _safe_field_value(field_data):
+            """Extract value from field_data, handling dict, float, str, etc."""
+            if isinstance(field_data, dict):
+                return field_data.get("value")
+            return field_data
+        
         # Helper to get field value
         def get_field(field_name: str, default=None):
             return _get_field_value(ef, field_name, default)
@@ -3334,18 +3344,18 @@ async def get_mortgage_application(app_id: str):
         b2_salary = 0.0
         for key, field_data in ef.items():
             if "B1" in key and ":BaseSalary" in key:
-                b1_salary = _parse_currency(field_data.get("value") if isinstance(field_data, dict) else field_data)
+                b1_salary = _parse_currency(_safe_field_value(field_data))
             elif "B2" in key and ":BaseSalary" in key:
-                b2_salary = _parse_currency(field_data.get("value") if isinstance(field_data, dict) else field_data)
+                b2_salary = _parse_currency(_safe_field_value(field_data))
         
         # Use T4 annual income if available for more accuracy
         b1_annual = 0.0
         b2_annual = 0.0
         for key, field_data in ef.items():
             if "T4_B1" in key and ":AnnualIncome" in key:
-                b1_annual = _parse_currency(field_data.get("value") if isinstance(field_data, dict) else field_data)
+                b1_annual = _parse_currency(_safe_field_value(field_data))
             elif "T4_B2" in key and ":AnnualIncome" in key:
-                b2_annual = _parse_currency(field_data.get("value") if isinstance(field_data, dict) else field_data)
+                b2_annual = _parse_currency(_safe_field_value(field_data))
         
         # Use T4 income if available, otherwise use base salary
         primary_income = b1_annual if b1_annual > 0 else b1_salary
@@ -3625,87 +3635,112 @@ async def get_mortgage_application(app_id: str):
             parsed = ratio_calc.get("parsed", {})
             if parsed and not parsed.get("_error"):
                 calcs = parsed.get("calculations", {})
-                if calcs:
-                    # Use LLM-calculated ratios if available
-                    gds_calc = calcs.get("GDS", {})
-                    tds_calc = calcs.get("TDS", {})
-                    ltv_calc = calcs.get("LTV", {})
-                    stress_calc = calcs.get("stress_test", {})
+                if calcs and isinstance(calcs, dict):
+                    # LLM may return ratios as {"GDS": {"value": 28.5}} or as {"GDS": 28.5}
+                    def _extract_calc_value(calc_entry):
+                        if isinstance(calc_entry, dict):
+                            return calc_entry.get("value")
+                        if isinstance(calc_entry, (int, float)):
+                            return calc_entry
+                        return None
                     
-                    if gds_calc.get("value"):
-                        ratios["gds"] = gds_calc.get("value", ratios["gds"])
-                    if tds_calc.get("value"):
-                        ratios["tds"] = tds_calc.get("value", ratios["tds"])
-                    if ltv_calc.get("value"):
-                        ratios["ltv"] = ltv_calc.get("value", ratios["ltv"])
+                    gds_val = _extract_calc_value(calcs.get("GDS"))
+                    tds_val = _extract_calc_value(calcs.get("TDS"))
+                    ltv_val = _extract_calc_value(calcs.get("LTV"))
+                    ltv_pct = _extract_calc_value(calcs.get("LTV_percent"))
+                    
+                    if gds_val is not None:
+                        ratios["gds"] = gds_val
+                    if tds_val is not None:
+                        ratios["tds"] = tds_val
+                    if ltv_pct is not None:
+                        ratios["ltv"] = ltv_pct
+                    elif ltv_val is not None:
+                        # Convert ratio to percentage if needed
+                        ratios["ltv"] = ltv_val * 100 if ltv_val < 1 else ltv_val
                     
                     # Update stress ratios from LLM
-                    if stress_calc:
-                        stress_gds = stress_calc.get("GDS", {})
-                        stress_tds = stress_calc.get("TDS", {})
-                        if stress_gds.get("value"):
-                            stress_ratios["gds"] = stress_gds.get("value", stress_ratios["gds"])
-                        if stress_tds.get("value"):
-                            stress_ratios["tds"] = stress_tds.get("value", stress_ratios["tds"])
+                    stress_calc = calcs.get("stress_test")
+                    if isinstance(stress_calc, dict):
+                        stress_gds = _extract_calc_value(stress_calc.get("GDS"))
+                        stress_tds = _extract_calc_value(stress_calc.get("TDS"))
+                        if stress_gds is not None:
+                            stress_ratios["gds"] = stress_gds
+                        if stress_tds is not None:
+                            stress_ratios["tds"] = stress_tds
         
         # Get risk assessment from LLM
         risk_data = app_summary.get("risk_assessment", {})
-        risk_parsed = risk_data.get("parsed", {})
-        if risk_parsed and not risk_parsed.get("_error"):
+        if isinstance(risk_data, dict):
+            risk_parsed = risk_data.get("parsed", {})
+        else:
+            risk_parsed = {}
+        if risk_parsed and isinstance(risk_parsed, dict) and not risk_parsed.get("_error"):
             ra = risk_parsed.get("risk_assessment", {})
-            overall_risk = ra.get("overall_risk_level", "Medium")
-            aggregate = ra.get("aggregate_risk_signals", {})
-            
-            for category, level in aggregate.items():
-                if "low" not in level.lower():
-                    risk_signals.append({
-                        "level": "high" if "high" in level.lower() else "medium",
-                        "category": category,
-                        "message": f"{category.replace('_', ' ').title()}: {level}"
-                    })
+            if isinstance(ra, dict):
+                overall_risk = ra.get("overall_risk_level", "Medium")
+                aggregate = ra.get("aggregate_risk_signals", {})
+                if isinstance(aggregate, dict):
+                    for category, level in aggregate.items():
+                        if isinstance(level, str) and "low" not in level.lower():
+                            risk_signals.append({
+                                "level": "high" if "high" in level.lower() else "medium",
+                                "category": category,
+                                "message": f"{category.replace('_', ' ').title()}: {level}"
+                            })
         
         # Get recommendation from LLM
         recommendation = app_summary.get("recommendation", {})
-        rec_parsed = recommendation.get("parsed", {})
-        if rec_parsed and not rec_parsed.get("_error"):
+        if isinstance(recommendation, dict):
+            rec_parsed = recommendation.get("parsed", {})
+        else:
+            rec_parsed = {}
+        if rec_parsed and isinstance(rec_parsed, dict) and not rec_parsed.get("_error"):
             llm_decision = rec_parsed.get("DECISION")
-            if llm_decision:
+            if llm_decision and isinstance(llm_decision, str):
                 decision = llm_decision
             
             rationale = rec_parsed.get("RATIONALE", {})
             conditions = rec_parsed.get("CONDITIONS", [])
             
             # Add conditions as findings
-            for condition in conditions:
-                findings.append({
-                    "type": "condition",
-                    "severity": "warning",
-                    "category": "Conditions",
-                    "message": condition,
-                })
+            if isinstance(conditions, list):
+                for condition in conditions:
+                    if isinstance(condition, str):
+                        findings.append({
+                            "type": "condition",
+                            "severity": "warning",
+                            "category": "Conditions",
+                            "message": condition,
+                        })
         
         # Build AI narrative from recommendation rationale
         narrative_parts = []
-        if rec_parsed and not rec_parsed.get("_error"):
+        if rec_parsed and isinstance(rec_parsed, dict) and not rec_parsed.get("_error"):
             rationale = rec_parsed.get("RATIONALE", {})
-            details = rationale.get("Details", [])
-            if details:
-                narrative_parts.append("**Key observations:**")
-                for detail in details[:5]:  # Limit to 5
-                    narrative_parts.append(f"• {detail}")
-            
-            refs = rationale.get("OSFI_B20_References", [])
-            if refs:
-                narrative_parts.append("")
-                narrative_parts.append(f"**OSFI B-20 Compliance:** All {len(refs)} policy checks passed")
+            if isinstance(rationale, dict):
+                details = rationale.get("Details", [])
+                if isinstance(details, list) and details:
+                    narrative_parts.append("**Key observations:**")
+                    for detail in details[:5]:  # Limit to 5
+                        if isinstance(detail, str):
+                            narrative_parts.append(f"• {detail}")
+                
+                refs = rationale.get("OSFI_B20_References", [])
+                if isinstance(refs, list) and refs:
+                    narrative_parts.append("")
+                    narrative_parts.append(f"**OSFI B-20 Compliance:** All {len(refs)} policy checks passed")
         
         narrative = "\n".join(narrative_parts) if narrative_parts else None
         
         # Count policy checks from OSFI references
         policy_checks_count = 0
-        if rec_parsed and not rec_parsed.get("_error"):
-            refs = rec_parsed.get("RATIONALE", {}).get("OSFI_B20_References", [])
-            policy_checks_count = len(refs)
+        if rec_parsed and isinstance(rec_parsed, dict) and not rec_parsed.get("_error"):
+            rationale_obj = rec_parsed.get("RATIONALE", {})
+            if isinstance(rationale_obj, dict):
+                refs = rationale_obj.get("OSFI_B20_References", [])
+                if isinstance(refs, list):
+                    policy_checks_count = len(refs)
         
         # Merge mortgage-specific data with base data
         return {
@@ -3734,7 +3769,7 @@ async def get_mortgage_application(app_id: str):
                     "bounding_box": field_data.get("bounding_box"),
                 }
                 for key, field_data in ef.items()
-                if isinstance(field_data, dict)
+                if isinstance(field_data, dict) and "confidence" in field_data
             },
             "documents": [
                 {
