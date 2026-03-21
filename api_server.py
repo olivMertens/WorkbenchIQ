@@ -3218,19 +3218,20 @@ async def list_mortgage_applications():
         settings = load_settings()
         apps = list_applications(settings.app.storage_root)
         
-        # Filter to mortgage persona
+        # Filter to mortgage persona (match both 'mortgage' and 'mortgage_underwriting')
+        mortgage_personas = {'mortgage', 'mortgage_underwriting'}
         mortgage_apps = [
             app for app in apps
-            if getattr(app, 'persona', None) == 'mortgage_underwriting'
+            if (app.get('persona') if isinstance(app, dict) else getattr(app, 'persona', None)) in mortgage_personas
         ]
         
         return {
             "applications": [
                 {
-                    "id": app.id,
-                    "created_at": app.created_at,
-                    "status": app.status,
-                    "external_reference": app.external_reference,
+                    "id": app.get("id") if isinstance(app, dict) else app.id,
+                    "created_at": app.get("created_at") if isinstance(app, dict) else app.created_at,
+                    "status": app.get("status") if isinstance(app, dict) else app.status,
+                    "external_reference": app.get("external_reference") if isinstance(app, dict) else app.external_reference,
                 }
                 for app in mortgage_apps
             ],
@@ -3393,16 +3394,32 @@ async def get_mortgage_application(app_id: str):
             "term": get_field("RateTerm", "5 years Fixed"),
         }
         
-        # Build liabilities info
+        # Build liabilities info - use extracted values when available, fall back to estimates
         other_debts_monthly = _parse_currency(get_field("OtherDebtsMonthly", 0))
         
-        # Calculate PITH (Principal, Interest, Taxes, Heating) for housing costs
-        # Using standard assumptions where not provided
-        property_taxes_monthly = purchase_price * 0.01 / 12 if purchase_price else 0  # ~1% annually
-        heating_monthly = 150  # Standard assumption
-        condo_fees = 0
-        if "condo" in (property_info.get("property_type", "") or "").lower():
-            condo_fees = 500  # Typical condo fee
+        # Property taxes: prefer extracted value, else estimate ~1% annually
+        extracted_property_tax = _parse_currency(get_field("PropertyTaxesAnnual", 0))
+        if extracted_property_tax > 0:
+            property_taxes_monthly = extracted_property_tax / 12
+        else:
+            extracted_property_tax_monthly = _parse_currency(get_field("PropertyTaxesMonthly", 0))
+            if extracted_property_tax_monthly > 0:
+                property_taxes_monthly = extracted_property_tax_monthly
+            else:
+                property_taxes_monthly = purchase_price * 0.01 / 12 if purchase_price else 0
+        
+        # Heating: prefer extracted value, else standard assumption
+        extracted_heating = _parse_currency(get_field("HeatingMonthly", 0))
+        heating_monthly = extracted_heating if extracted_heating > 0 else 150
+        
+        # Condo fees: prefer extracted value, else estimate if property type is condo
+        extracted_condo_fees = _parse_currency(get_field("CondoFeesMonthly", 0))
+        if extracted_condo_fees > 0:
+            condo_fees = extracted_condo_fees
+        elif "condo" in (property_info.get("property_type", "") or "").lower():
+            condo_fees = 500
+        else:
+            condo_fees = 0
         
         liabilities = {
             "property_taxes_monthly": property_taxes_monthly,
@@ -3474,61 +3491,120 @@ async def get_mortgage_application(app_id: str):
         
         if gds_stress > 39:
             findings.append({
-                "type": "warning", 
+                "type": "warning",
+                "severity": "fail",
+                "rule_id": "OSFI-B20-GDS-001",
                 "message": f"Stressed GDS ({gds_stress:.1f}%) exceeds 39% limit",
                 "category": "Income Ratio",
                 "sources": ["T4/Paystub", "Mortgage Application"],
+                "evidence": {"calculated_value": round(gds_stress, 2), "limit": 39},
             })
             risk_signals.append({"level": "high", "category": "income", "message": "GDS ratio above guideline"})
         elif gds_stress > 35:
             findings.append({
-                "type": "info", 
+                "type": "info",
+                "severity": "warning",
+                "rule_id": "OSFI-B20-GDS-001",
                 "message": f"Stressed GDS ({gds_stress:.1f}%) approaching 39% limit",
                 "category": "Income Ratio",
+                "evidence": {"calculated_value": round(gds_stress, 2), "limit": 39},
+            })
+        else:
+            findings.append({
+                "type": "success",
+                "severity": "pass",
+                "rule_id": "OSFI-B20-GDS-001",
+                "message": f"Stressed GDS ({gds_stress:.1f}%) within 39% limit",
+                "category": "Income Ratio",
+                "evidence": {"calculated_value": round(gds_stress, 2), "limit": 39},
             })
             
         if tds_stress > 44:
             findings.append({
-                "type": "warning", 
+                "type": "warning",
+                "severity": "fail",
+                "rule_id": "OSFI-B20-TDS-001",
                 "message": f"Stressed TDS ({tds_stress:.1f}%) exceeds 44% limit",
                 "category": "Debt Ratio",
                 "sources": ["Credit Report", "Mortgage Application"],
+                "evidence": {"calculated_value": round(tds_stress, 2), "limit": 44},
             })
             risk_signals.append({"level": "high", "category": "debt", "message": "TDS ratio above guideline"})
         elif tds_stress > 40:
             findings.append({
-                "type": "info", 
+                "type": "info",
+                "severity": "warning",
+                "rule_id": "OSFI-B20-TDS-001",
                 "message": f"Stressed TDS ({tds_stress:.1f}%) approaching 44% limit",
                 "category": "Debt Ratio",
+                "evidence": {"calculated_value": round(tds_stress, 2), "limit": 44},
+            })
+        else:
+            findings.append({
+                "type": "success",
+                "severity": "pass",
+                "rule_id": "OSFI-B20-TDS-001",
+                "message": f"Stressed TDS ({tds_stress:.1f}%) within 44% limit",
+                "category": "Debt Ratio",
+                "evidence": {"calculated_value": round(tds_stress, 2), "limit": 44},
             })
             
         if ltv > 80:
             findings.append({
-                "type": "warning", 
+                "type": "warning",
+                "severity": "warning",
+                "rule_id": "OSFI-B20-LTV-001",
                 "message": f"LTV ({ltv:.1f}%) exceeds 80% - mortgage insurance required",
                 "category": "Loan-to-Value",
                 "sources": ["Appraisal", "Mortgage Application"],
+                "evidence": {"calculated_value": round(ltv, 2), "limit": 80},
             })
             risk_signals.append({"level": "medium", "category": "ltv", "message": "High LTV requires insurance"})
+        else:
+            findings.append({
+                "type": "success",
+                "severity": "pass",
+                "rule_id": "OSFI-B20-LTV-001",
+                "message": f"LTV ({ltv:.1f}%) within 80% conventional limit",
+                "category": "Loan-to-Value",
+                "evidence": {"calculated_value": round(ltv, 2), "limit": 80},
+            })
         
         # Credit score finding with source
         credit_citation = get_field_citation("CreditScore")
         if credit_score < 680:
             findings.append({
-                "type": "warning", 
+                "type": "warning",
+                "severity": "warning",
+                "rule_id": "OSFI-B20-CREDIT-001",
                 "message": f"Credit score ({credit_score}) below preferred threshold",
                 "category": "Credit",
                 "source_file": credit_citation.get("source_file"),
                 "confidence": credit_citation.get("confidence"),
+                "evidence": {"calculated_value": credit_score, "limit": 680},
             })
             risk_signals.append({"level": "medium", "category": "credit", "message": "Credit score needs review"})
         elif credit_score >= 750:
             findings.append({
-                "type": "success", 
+                "type": "success",
+                "severity": "pass",
+                "rule_id": "OSFI-B20-CREDIT-001",
                 "message": f"Excellent credit score ({credit_score})",
                 "category": "Credit",
                 "source_file": credit_citation.get("source_file"),
                 "confidence": credit_citation.get("confidence"),
+                "evidence": {"calculated_value": credit_score, "limit": 680},
+            })
+        else:
+            findings.append({
+                "type": "success",
+                "severity": "pass",
+                "rule_id": "OSFI-B20-CREDIT-001",
+                "message": f"Credit score ({credit_score}) meets minimum threshold",
+                "category": "Credit",
+                "source_file": credit_citation.get("source_file"),
+                "confidence": credit_citation.get("confidence"),
+                "evidence": {"calculated_value": credit_score, "limit": 680},
             })
             
         # Determine overall decision
@@ -3603,6 +3679,8 @@ async def get_mortgage_application(app_id: str):
             for condition in conditions:
                 findings.append({
                     "type": "condition",
+                    "severity": "warning",
+                    "category": "Conditions",
                     "message": condition,
                 })
         
@@ -3765,6 +3843,92 @@ When answering questions:
         
     except Exception as e:
         logger.error("Chat failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# Property Deep Dive endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/api/mortgage/applications/{app_id}/property-deep-dive")
+async def get_property_deep_dive(app_id: str):
+    """Run property deep dive analysis for a mortgage application."""
+    try:
+        from app.mortgage.property_deep_dive import PropertyDeepDiveEngine
+
+        settings = load_settings()
+        app_md = load_application(settings.app.storage_root, app_id)
+        if not app_md:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        ef = app_md.extracted_fields or {}
+
+        address = _get_field_value(ef, "PropertyAddress", "")
+        purchase_price = _parse_currency(_get_field_value(ef, "PurchasePrice", 0))
+        appraised_value = _parse_currency(_get_field_value(ef, "AppraisedValue", 0))
+        property_type = _get_field_value(ef, "PropertyType", "single_family_detached")
+
+        if not address:
+            raise HTTPException(
+                status_code=400,
+                detail="Property address not found in application data.",
+            )
+
+        engine = PropertyDeepDiveEngine(
+            property_address=address,
+            purchase_price=purchase_price,
+            property_type=property_type or "single_family_detached",
+            appraised_value=appraised_value,
+        )
+
+        result = await asyncio.to_thread(engine.analyze)
+        return result.to_dict()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Property deep dive failed for %s: %s", app_id, e, exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/mortgage/applications/{app_id}/property-deep-dive")
+async def run_property_deep_dive(app_id: str, force: bool = False):
+    """Run (or force re-run) property deep dive analysis for a mortgage application."""
+    try:
+        from app.mortgage.property_deep_dive import PropertyDeepDiveEngine
+
+        settings = load_settings()
+        app_md = load_application(settings.app.storage_root, app_id)
+        if not app_md:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        ef = app_md.extracted_fields or {}
+
+        address = _get_field_value(ef, "PropertyAddress", "")
+        purchase_price = _parse_currency(_get_field_value(ef, "PurchasePrice", 0))
+        appraised_value = _parse_currency(_get_field_value(ef, "AppraisedValue", 0))
+        property_type = _get_field_value(ef, "PropertyType", "single_family_detached")
+
+        if not address:
+            raise HTTPException(
+                status_code=400,
+                detail="Property address not found in application data.",
+            )
+
+        engine = PropertyDeepDiveEngine(
+            property_address=address,
+            purchase_price=purchase_price,
+            property_type=property_type or "single_family_detached",
+            appraised_value=appraised_value,
+        )
+
+        result = await asyncio.to_thread(engine.analyze)
+        return {"force": force, **result.to_dict()}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Property deep dive (POST) failed for %s: %s", app_id, e, exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

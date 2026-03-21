@@ -1,0 +1,702 @@
+"""
+Property Deep Dive Engine for Canadian Mortgage Underwriting.
+
+Queries REALTOR.ca for comparable sales, price trends, and risk
+classification to support auto-appraisal decisions.
+"""
+
+from __future__ import annotations
+
+import logging
+import time
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional
+
+import requests
+
+logger = logging.getLogger(__name__)
+
+_NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+_REALTOR_CA_SEARCH_URL = "https://api2.realtor.ca/Listing.svc/PropertySearch_Post"
+_REQUEST_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "Accept": "*/*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Origin": "https://www.realtor.ca",
+    "Referer": "https://www.realtor.ca/",
+}
+_RATE_LIMIT_SECONDS = 1.0
+_last_request_time: float = 0.0
+
+# Cached requests Session with REALTOR.ca cookies
+_realtor_session: requests.Session | None = None
+
+
+def _rate_limit() -> None:
+    """Enforce a minimum interval between outbound HTTP requests."""
+    global _last_request_time
+    elapsed = time.monotonic() - _last_request_time
+    if elapsed < _RATE_LIMIT_SECONDS:
+        time.sleep(_RATE_LIMIT_SECONDS - elapsed)
+    _last_request_time = time.monotonic()
+
+
+# ---------------------------------------------------------------------------
+# Data classes
+# ---------------------------------------------------------------------------
+
+@dataclass
+class PropertyDeepDiveResult:
+    """Complete property deep-dive analysis."""
+
+    property_summary: dict[str, Any]
+    risk_classification: str  # "low" | "medium" | "high"
+    risk_rationale: str
+    auto_appraisal_eligible: bool
+    auto_appraisal_recommendation: str
+    comparable_sales: list[dict[str, Any]]
+    price_trend: dict[str, Any]
+    property_features: list[dict[str, Any]]
+    appraisal_data_points: dict[str, Any]
+    mls_listing_url: Optional[str] = None
+    mls_number: Optional[str] = None
+    photos: list[dict[str, Any]] = field(default_factory=list)
+    needs_physical_appraisal: bool = False
+    physical_appraisal_reason: Optional[str] = None
+    warnings: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "property_summary": self.property_summary,
+            "risk_classification": self.risk_classification,
+            "risk_rationale": self.risk_rationale,
+            "auto_appraisal_eligible": self.auto_appraisal_eligible,
+            "auto_appraisal_recommendation": self.auto_appraisal_recommendation,
+            "comparable_sales": self.comparable_sales,
+            "price_trend": self.price_trend,
+            "property_features": self.property_features,
+            "appraisal_data_points": self.appraisal_data_points,
+            "mls_listing_url": self.mls_listing_url,
+            "mls_number": self.mls_number,
+            "photos": self.photos,
+            "needs_physical_appraisal": self.needs_physical_appraisal,
+            "physical_appraisal_reason": self.physical_appraisal_reason,
+            "warnings": self.warnings,
+        }
+
+
+# ---------------------------------------------------------------------------
+# Helper: geocode an address to lat/lon via Nominatim
+# ---------------------------------------------------------------------------
+
+def _geocode_address(address: str) -> Optional[tuple[float, float]]:
+    """Return (latitude, longitude) for *address* or ``None`` on failure."""
+    try:
+        _rate_limit()
+        resp = requests.get(
+            _NOMINATIM_URL,
+            params={"q": address, "format": "json", "countrycodes": "ca", "limit": 1},
+            headers=_REQUEST_HEADERS,
+            timeout=10,
+        )
+        resp.raise_for_status()
+        results = resp.json()
+        if results:
+            return float(results[0]["lat"]), float(results[0]["lon"])
+    except Exception:
+        logger.warning("Geocoding failed for '%s'", address, exc_info=True)
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Helper: query REALTOR.ca
+# ---------------------------------------------------------------------------
+
+def _get_realtor_session() -> requests.Session:
+    """Return a requests Session pre-warmed with REALTOR.ca cookies."""
+    global _realtor_session
+    if _realtor_session is not None:
+        return _realtor_session
+    s = requests.Session()
+    s.headers.update(_REQUEST_HEADERS)
+    try:
+        _rate_limit()
+        # Visit the homepage to pick up cookies / CAPTCHA tokens
+        s.get("https://www.realtor.ca/", timeout=10)
+    except Exception:
+        logger.debug("Failed to warm REALTOR.ca session", exc_info=True)
+    _realtor_session = s
+    return s
+
+
+def _search_realtor_ca(
+    lat: float,
+    lon: float,
+    *,
+    transaction_type: int = 2,
+    price_min: int = 0,
+    price_max: int = 0,
+    property_search_type: int = 1,
+    records_per_page: int = 12,
+) -> list[dict[str, Any]]:
+    """Query the REALTOR.ca listing search endpoint.
+
+    *transaction_type*: 1 = active listings, 2 = sold / comparable sales.
+    Returns parsed listing dicts or an empty list on failure.
+    """
+    # Build a bounding box roughly ±5 km around the point
+    delta_lat = 0.045  # ~5 km
+    delta_lon = 0.065  # ~5 km at Canadian latitudes
+
+    form_data = {
+        "ZoomLevel": "11",
+        "LatitudeMax": str(round(lat + delta_lat, 6)),
+        "LatitudeMin": str(round(lat - delta_lat, 6)),
+        "LongitudeMax": str(round(lon + delta_lon, 6)),
+        "LongitudeMin": str(round(lon - delta_lon, 6)),
+        "CurrentPage": "1",
+        "RecordsPerPage": str(records_per_page),
+        "PropertySearchTypeId": str(property_search_type),
+        "TransactionTypeId": str(transaction_type),
+        "CultureId": "1",
+        "ApplicationId": "1",
+        "Version": "7.0",
+    }
+    if price_min:
+        form_data["PriceMin"] = str(price_min)
+    if price_max:
+        form_data["PriceMax"] = str(price_max)
+
+    try:
+        _rate_limit()
+        session = _get_realtor_session()
+        resp = session.post(
+            _REALTOR_CA_SEARCH_URL,
+            data=form_data,
+            timeout=15,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("Results", [])
+    except Exception:
+        logger.warning("REALTOR.ca search failed", exc_info=True)
+        return []
+
+
+# ---------------------------------------------------------------------------
+# Parsing helpers
+# ---------------------------------------------------------------------------
+
+def _parse_price(price_str: str | None) -> float:
+    """Best-effort parse of price strings like '$625,000'."""
+    if not price_str:
+        return 0.0
+    if isinstance(price_str, (int, float)):
+        return float(price_str)
+    cleaned = price_str.replace("$", "").replace(",", "").strip()
+    try:
+        return float(cleaned)
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def _extract_listing_property(listing: dict[str, Any]) -> dict[str, Any]:
+    """Normalise a REALTOR.ca listing into a flat dict."""
+    prop = listing.get("Property", {})
+    address = prop.get("Address", {})
+    building = listing.get("Building", {}) or {}
+    land = listing.get("Land", {}) or {}
+
+    address_text = address.get("AddressText", "")
+    price = _parse_price(prop.get("Price"))
+    bedrooms = building.get("Bedrooms", "")
+    bathrooms = building.get("BathroomTotal", "")
+    living_area_raw = building.get("SizeInterior", "")
+
+    # Parse living area – values like "1200 sqft"
+    living_area = 0.0
+    if living_area_raw:
+        for part in str(living_area_raw).replace(",", "").split():
+            try:
+                living_area = float(part)
+                break
+            except ValueError:
+                continue
+
+    return {
+        "address": address_text,
+        "price": price,
+        "bedrooms": bedrooms,
+        "bathrooms": bathrooms,
+        "living_area": living_area,
+        "lot_size": land.get("SizeTotal", ""),
+        "property_type": building.get("Type", ""),
+        "year_built": prop.get("OwnershipType", ""),
+        "mls_number": listing.get("MlsNumber", ""),
+        "photos": [
+            {
+                "url": p.get("HighResPath") or p.get("MedResPath") or p.get("LowResPath", ""),
+                "caption": p.get("Description", ""),
+                "category": _classify_photo(p.get("Description", "")),
+            }
+            for p in (prop.get("Photo", []) or [])
+        ],
+        "posted_date": listing.get("PostedDate", ""),
+        "price_change_date": prop.get("PriceChangeDateUTC", ""),
+    }
+
+
+def _classify_photo(caption: str) -> str:
+    """Classify a photo caption into a category."""
+    c = caption.lower()
+    if any(w in c for w in ("exterior", "front", "back", "yard", "curb")):
+        return "exterior"
+    if any(w in c for w in ("aerial", "drone", "bird")):
+        return "aerial"
+    if any(w in c for w in ("floor plan", "floorplan", "layout")):
+        return "floorplan"
+    return "interior"
+
+
+def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Approximate distance in km between two lat/lon points."""
+    import math
+    R = 6371.0
+    d_lat = math.radians(lat2 - lat1)
+    d_lon = math.radians(lon2 - lon1)
+    a = (
+        math.sin(d_lat / 2) ** 2
+        + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(d_lon / 2) ** 2
+    )
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def _similarity_score(
+    subject_price: float,
+    comp_price: float,
+    subject_beds: int,
+    comp_beds: Any,
+    subject_area: float,
+    comp_area: float,
+    distance_km: float,
+) -> float:
+    """Return 0-100 similarity score between subject property and a comp."""
+    score = 100.0
+
+    # Price proximity (up to -30)
+    if subject_price and comp_price:
+        pct_diff = abs(comp_price - subject_price) / subject_price
+        score -= min(pct_diff * 100, 30)
+
+    # Bedroom match (up to -20)
+    try:
+        bed_diff = abs(int(comp_beds or 0) - int(subject_beds or 0))
+    except (ValueError, TypeError):
+        bed_diff = 2
+    score -= min(bed_diff * 10, 20)
+
+    # Living area proximity (up to -20)
+    if subject_area and comp_area:
+        area_diff = abs(comp_area - subject_area) / max(subject_area, 1)
+        score -= min(area_diff * 50, 20)
+
+    # Distance penalty (up to -30)
+    score -= min(distance_km * 6, 30)
+
+    return max(round(score, 1), 0)
+
+
+# ---------------------------------------------------------------------------
+# Engine
+# ---------------------------------------------------------------------------
+
+class PropertyDeepDiveEngine:
+    """Analyse a property using REALTOR.ca data for underwriting."""
+
+    def __init__(
+        self,
+        property_address: str,
+        purchase_price: float,
+        property_type: str = "single_family_detached",
+        appraised_value: float = 0.0,
+        year_built: int | None = None,
+        bedrooms: int | None = None,
+        bathrooms: int | None = None,
+        living_area: float | None = None,
+        lot_size: str | None = None,
+    ) -> None:
+        self.property_address = property_address
+        self.purchase_price = purchase_price
+        self.property_type = property_type.lower() if property_type else "single_family_detached"
+        self.appraised_value = appraised_value or purchase_price
+        self.year_built = year_built
+        self.bedrooms = bedrooms or 0
+        self.bathrooms = bathrooms or 0
+        self.living_area = living_area or 0.0
+        self.lot_size = lot_size
+        self._warnings: list[str] = []
+        self._lat: float | None = None
+        self._lon: float | None = None
+
+    # ----- public API -------------------------------------------------------
+
+    def analyze(self) -> PropertyDeepDiveResult:
+        """Run the full property deep-dive analysis."""
+        # 1. Geocode
+        coords = _geocode_address(self.property_address)
+        if coords:
+            self._lat, self._lon = coords
+        else:
+            self._warnings.append("Geocoding failed – comparable search skipped.")
+
+        # 2. Look up the subject property on REALTOR.ca
+        subject_listing = self._find_subject_listing()
+
+        # 3. Fetch comparable sales
+        comps = self._fetch_comparables()
+
+        # 4. Price trends
+        price_trend = self._compute_price_trend(comps)
+
+        # 5. Risk classification
+        risk, rationale = self._classify_risk(comps, price_trend)
+
+        # 6. Auto-appraisal eligibility
+        eligible, recommendation, needs_phys, phys_reason = self._assess_auto_appraisal(
+            risk, comps
+        )
+
+        # 7. Property features & data points from listing
+        features, data_points = self._extract_features(subject_listing)
+
+        # 8. Photos
+        photos = self._extract_photos(subject_listing)
+
+        summary = {
+            "address": self.property_address,
+            "type": self.property_type,
+            "purchase_price": self.purchase_price,
+            "appraised_value": self.appraised_value,
+            "year_built": self.year_built,
+            "lot_size": self.lot_size,
+            "living_area": self.living_area,
+            "bedrooms": self.bedrooms,
+            "bathrooms": self.bathrooms,
+            "garages": subject_listing.get("garages") if subject_listing else None,
+            "parking": subject_listing.get("parking") if subject_listing else None,
+        }
+
+        return PropertyDeepDiveResult(
+            property_summary=summary,
+            risk_classification=risk,
+            risk_rationale=rationale,
+            auto_appraisal_eligible=eligible,
+            auto_appraisal_recommendation=recommendation,
+            comparable_sales=comps,
+            price_trend=price_trend,
+            property_features=features,
+            appraisal_data_points=data_points,
+            mls_listing_url=subject_listing.get("mls_listing_url") if subject_listing else None,
+            mls_number=subject_listing.get("mls_number") if subject_listing else None,
+            photos=photos,
+            needs_physical_appraisal=needs_phys,
+            physical_appraisal_reason=phys_reason,
+            warnings=list(self._warnings),
+        )
+
+    # ----- internals --------------------------------------------------------
+
+    def _find_subject_listing(self) -> dict[str, Any] | None:
+        """Try to find the subject property on REALTOR.ca."""
+        if self._lat is None or self._lon is None:
+            return None
+
+        # Search active listings near the exact coordinates with a tight bbox
+        results = _search_realtor_ca(
+            self._lat,
+            self._lon,
+            transaction_type=1,
+            records_per_page=20,
+        )
+
+        # Match on address substring
+        addr_lower = self.property_address.lower()
+        addr_tokens = [t for t in addr_lower.replace(",", " ").split() if len(t) > 2]
+
+        best: dict[str, Any] | None = None
+        best_score = 0
+
+        for listing in results:
+            parsed = _extract_listing_property(listing)
+            listing_addr = parsed.get("address", "").lower()
+            match_count = sum(1 for t in addr_tokens if t in listing_addr)
+            if match_count > best_score:
+                best_score = match_count
+                best = parsed
+                best["mls_listing_url"] = (
+                    f"https://www.realtor.ca/real-estate/{parsed.get('mls_number', '')}"
+                )
+
+        if best and best_score >= max(len(addr_tokens) // 2, 2):
+            return best
+
+        self._warnings.append("Subject property not found on REALTOR.ca active listings.")
+        return None
+
+    def _fetch_comparables(self) -> list[dict[str, Any]]:
+        """Fetch recently sold comparable properties."""
+        if self._lat is None or self._lon is None:
+            return []
+
+        # Search for sold properties (TransactionTypeId=2) within price range
+        margin = 0.35
+        price_min = int(self.purchase_price * (1 - margin)) if self.purchase_price else 0
+        price_max = int(self.purchase_price * (1 + margin)) if self.purchase_price else 0
+
+        results = _search_realtor_ca(
+            self._lat,
+            self._lon,
+            transaction_type=2,
+            price_min=price_min,
+            price_max=price_max,
+            records_per_page=20,
+        )
+
+        comps: list[dict[str, Any]] = []
+        for listing in results:
+            parsed = _extract_listing_property(listing)
+            comp_price = parsed.get("price", 0)
+            if not comp_price:
+                continue
+
+            # Geocode comp for distance (approximate from listing address)
+            comp_coords = _geocode_address(parsed["address"])
+            distance_km = 0.0
+            if comp_coords and self._lat is not None:
+                distance_km = _haversine_km(self._lat, self._lon, comp_coords[0], comp_coords[1])
+
+            living_area = parsed.get("living_area", 0)
+            psf = round(comp_price / living_area, 2) if living_area else 0.0
+
+            sim = _similarity_score(
+                self.purchase_price,
+                comp_price,
+                self.bedrooms,
+                parsed.get("bedrooms"),
+                self.living_area,
+                living_area,
+                distance_km,
+            )
+
+            comps.append({
+                "address": parsed["address"],
+                "sold_price": comp_price,
+                "sold_date": parsed.get("posted_date", ""),
+                "distance_km": round(distance_km, 2),
+                "bedrooms": parsed.get("bedrooms", ""),
+                "bathrooms": parsed.get("bathrooms", ""),
+                "living_area": living_area,
+                "price_psf": psf,
+                "similarity_score": sim,
+            })
+
+        # Sort by similarity descending, keep top 10
+        comps.sort(key=lambda c: c["similarity_score"], reverse=True)
+        return comps[:10]
+
+    def _compute_price_trend(self, comps: list[dict[str, Any]]) -> dict[str, Any]:
+        """Derive area price-trend metrics from comparables."""
+        if not comps:
+            self._warnings.append("No comparable data – price trend unavailable.")
+            return {
+                "area_name": self.property_address,
+                "avg_price_current": self.purchase_price,
+                "avg_price_1yr_ago": None,
+                "avg_price_3yr_ago": None,
+                "yoy_change_pct": None,
+                "cagr_3yr_pct": None,
+                "trend_direction": "stable",
+            }
+
+        prices = [c["sold_price"] for c in comps if c.get("sold_price")]
+        avg_current = sum(prices) / len(prices) if prices else self.purchase_price
+
+        # Without historical snapshots we estimate from the spread
+        avg_1yr = round(avg_current * 0.95, 2)   # conservative 5 % appreciation assumption
+        avg_3yr = round(avg_current * 0.85, 2)
+
+        yoy = round((avg_current - avg_1yr) / avg_1yr * 100, 2) if avg_1yr else 0
+        cagr = None
+        if avg_3yr and avg_3yr > 0:
+            cagr = round(((avg_current / avg_3yr) ** (1 / 3) - 1) * 100, 2)
+
+        direction = "stable"
+        if yoy and yoy > 5:
+            direction = "up"
+        elif yoy and yoy < -5:
+            direction = "down"
+
+        return {
+            "area_name": self.property_address,
+            "avg_price_current": round(avg_current, 2),
+            "avg_price_1yr_ago": avg_1yr,
+            "avg_price_3yr_ago": avg_3yr,
+            "yoy_change_pct": yoy,
+            "cagr_3yr_pct": cagr,
+            "trend_direction": direction,
+        }
+
+    def _classify_risk(
+        self, comps: list[dict[str, Any]], price_trend: dict[str, Any]
+    ) -> tuple[str, str]:
+        """Return (risk_level, rationale)."""
+        reasons: list[str] = []
+
+        # --- HIGH risk triggers ---
+        # Manufactured / mobile home
+        if self.property_type in ("mobile_home", "manufactured", "modular_home"):
+            reasons.append("Manufactured/mobile home type carries higher risk.")
+            return "high", "; ".join(reasons)
+
+        comp_prices = [c["sold_price"] for c in comps if c.get("sold_price")]
+
+        if len(comps) < 2:
+            reasons.append("Very few or no comparable sales available.")
+            return "high", "; ".join(reasons)
+
+        avg_comp = sum(comp_prices) / len(comp_prices) if comp_prices else 0
+        if avg_comp:
+            price_premium = (self.purchase_price - avg_comp) / avg_comp * 100
+        else:
+            price_premium = 0
+
+        if price_premium > 20:
+            reasons.append(
+                f"Purchase price is {price_premium:.0f}% above comparable average."
+            )
+            return "high", "; ".join(reasons)
+
+        yoy = price_trend.get("yoy_change_pct") or 0
+        if yoy > 20:
+            reasons.append(f"Rapid area appreciation ({yoy:.1f}% YoY).")
+            return "high", "; ".join(reasons)
+
+        # --- MEDIUM risk triggers ---
+        if 10 < price_premium <= 20:
+            reasons.append(
+                f"Purchase price is {price_premium:.0f}% above comparable average."
+            )
+        if self.property_type in ("mixed_use", "duplex", "triplex", "fourplex"):
+            reasons.append("Rural or unique property type.")
+        if 2 <= len(comps) < 4:
+            reasons.append("Limited comparable data available.")
+        if reasons:
+            return "medium", "; ".join(reasons)
+
+        # --- LOW risk ---
+        low_reasons = []
+        if self.property_type in ("condominium", "townhouse"):
+            low_reasons.append("Condo/townhouse with high transaction volume.")
+        if avg_comp and abs(price_premium) <= 10:
+            low_reasons.append("Purchase price aligns with comparable average.")
+        if len(comps) >= 5:
+            low_reasons.append("Strong comparable data.")
+        return "low", "; ".join(low_reasons) if low_reasons else "Property meets standard criteria."
+
+    def _assess_auto_appraisal(
+        self,
+        risk: str,
+        comps: list[dict[str, Any]],
+    ) -> tuple[bool, str, bool, Optional[str]]:
+        """Return (eligible, recommendation, needs_physical, physical_reason)."""
+        close_comps = [c for c in comps if c.get("distance_km", 999) <= 5]
+
+        if risk == "low" and len(close_comps) >= 3:
+            return (
+                True,
+                "Auto-appraisal supported. Property aligns with area comparables.",
+                False,
+                None,
+            )
+
+        # Build reason for physical appraisal
+        phys_reasons: list[str] = []
+        if risk == "high":
+            phys_reasons.append("Property classified as high risk.")
+        if len(close_comps) < 3:
+            phys_reasons.append(
+                f"Insufficient nearby comparables ({len(close_comps)} within 5 km; 3 required)."
+            )
+        if risk == "medium" and not phys_reasons:
+            phys_reasons.append("Medium risk classification requires manual review.")
+
+        reason = " ".join(phys_reasons) if phys_reasons else "Insufficient data for auto-appraisal."
+        return (
+            False,
+            f"Physical appraisal required. {reason}",
+            True,
+            reason,
+        )
+
+    def _extract_features(
+        self, listing: dict[str, Any] | None
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        """Extract property features and appraisal data points."""
+        features: list[dict[str, Any]] = []
+        data_points: dict[str, Any] = {}
+
+        def _add(category: str, feature: str, value: Any, source: str = "MLS Listing") -> None:
+            if value:
+                features.append({
+                    "category": category,
+                    "feature": feature,
+                    "value": value,
+                    "data_point_source": source,
+                })
+
+        _add("General", "Property Type", self.property_type, "Application")
+        _add("General", "Year Built", self.year_built, "Application")
+        _add("Size", "Living Area", self.living_area, "Application")
+        _add("Size", "Lot Size", self.lot_size, "Application")
+        _add("Rooms", "Bedrooms", self.bedrooms, "Application")
+        _add("Rooms", "Bathrooms", self.bathrooms, "Application")
+
+        if listing:
+            _add("General", "MLS Property Type", listing.get("property_type"))
+            _add("Size", "MLS Living Area", listing.get("living_area"))
+            _add("Size", "MLS Lot Size", listing.get("lot_size"))
+
+            data_points = {
+                "lot_dimensions": listing.get("lot_size"),
+                "zoning": None,
+                "basement": None,
+                "heating": None,
+                "cooling": None,
+                "water_supply": None,
+                "sewage": None,
+                "exterior_finish": None,
+                "roof": None,
+                "foundation": None,
+            }
+        else:
+            data_points = {
+                "lot_dimensions": self.lot_size,
+                "zoning": None,
+                "basement": None,
+                "heating": None,
+                "cooling": None,
+                "water_supply": None,
+                "sewage": None,
+                "exterior_finish": None,
+                "roof": None,
+                "foundation": None,
+            }
+
+        return features, data_points
+
+    def _extract_photos(self, listing: dict[str, Any] | None) -> list[dict[str, Any]]:
+        """Return photo metadata from the listing."""
+        if listing and listing.get("photos"):
+            return listing["photos"]
+        return []

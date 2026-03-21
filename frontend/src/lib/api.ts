@@ -1512,3 +1512,24 @@ export async function getMediaDamageAreas(
 ): Promise<MediaDamageAreasResponse> {
   return apiFetch<MediaDamageAreasResponse>(`/api/claims/${claimId}/media/${mediaId}/damage-areas`);
 }
+
+// ============================================================================
+// Property Deep Dive APIs (Mortgage)
+// ============================================================================
+
+/**
+ * Get property deep dive analysis for a mortgage application
+ */
+export async function getPropertyDeepDive(appId: string): Promise<import('./types').PropertyDeepDiveData> {
+  return apiFetch<import('./types').PropertyDeepDiveData>(`/api/mortgage/applications/${appId}/property-deep-dive`);
+}
+
+/**
+ * Run property deep dive analysis
+ */
+export async function runPropertyDeepDive(appId: string, force: boolean = false): Promise<import('./types').PropertyDeepDiveData> {
+  const params = force ? '?force=true' : '';
+  return apiFetch<import('./types').PropertyDeepDiveData>(`/api/mortgage/applications/${appId}/property-deep-dive${params}`, {
+    method: 'POST',
+  });
+}
