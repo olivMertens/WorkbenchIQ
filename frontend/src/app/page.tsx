@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import LandingPage from '@/components/LandingPage';
 import WorkbenchView from '@/components/WorkbenchView';
@@ -24,9 +24,26 @@ function HomeContent() {
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewType>('landing');
+  const [username, setUsername] = useState<string | null>(null);
   const { currentPersona, setPersona } = usePersona();
   const searchParams = useSearchParams();
   const [deepLinkHandled, setDeepLinkHandled] = useState(false);
+
+  const fetchUsername = useCallback(async () => {
+    try {
+      const res = await fetch('/api/auth/check');
+      const data = await res.json();
+      if (data.authEnabled && data.username) {
+        setUsername(data.username);
+      }
+    } catch {
+      // Auth check failed silently
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsername();
+  }, [fetchUsername]);
 
   const fetchApplications = async (persona?: string) => {
     const p = persona || currentPersona;
@@ -135,6 +152,7 @@ function HomeContent() {
         onSelectApp={handleSelectApp}
         onRefreshApps={fetchApplications}
         loading={loading}
+        username={username}
       />
     </>
   );
