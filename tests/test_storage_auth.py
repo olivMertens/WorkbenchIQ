@@ -176,7 +176,9 @@ class TestAuthResolution:
         )
 
         mock_dac_svc = _mock_blob_service()
-        mock_dac_svc.get_account_information.side_effect = Exception("DAC failed")
+        # The probe now calls get_container_properties on the container client
+        container_mock = mock_dac_svc.get_container_client.return_value
+        container_mock.get_container_properties.side_effect = Exception("DAC failed")
 
         with (
             patch("azure.identity.DefaultAzureCredential", return_value=MagicMock()),
