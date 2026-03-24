@@ -84,6 +84,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# Health check middleware - bypasses auth so Azure probes and CI can reach /
+@app.middleware("http")
+async def health_check_bypass(request: Request, call_next):
+    if request.url.path == "/":
+        return JSONResponse({"status": "ok", "version": "0.3.0", "name": "WorkbenchIQ"})
+    return await call_next(request)
+
+
 # Include modular routers (lazy loading to avoid circular imports)
 try:
     from app.claims.api import router as claims_api_router
@@ -538,12 +547,6 @@ Always wrap JSON responses in ```json code blocks.
 5. Use structured JSON formats when they enhance clarity; use plain text for simple answers.
 6. If no relevant policy exists for a topic, say so rather than inventing a policy ID.
 """
-
-
-@app.get("/", dependencies=[])
-async def root():
-    """Health check endpoint."""
-    return {"status": "ok", "version": "0.3.0", "name": "WorkbenchIQ"}
 
 
 # ============================================================================
