@@ -38,10 +38,12 @@ export default function Sidebar({
       {/* Logo */}
       <div className="p-4 border-b border-slate-700">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">UA</span>
-          </div>
-          <span className="font-semibold text-lg">Underwriting Assistant</span>
+          <img
+            src="/groupama-logo.png"
+            alt="GroupaIQ"
+            className="h-8 w-auto brightness-0 invert"
+          />
+          <span className="font-semibold text-lg">GroupaIQ</span>
         </Link>
       </div>
 

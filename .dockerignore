@@ -1,0 +1,85 @@
+# =============================================================================
+# .dockerignore — Keep ACR build context small and fast
+# This file is CRITICAL for az acr build performance
+# =============================================================================
+
+# Version control & CI
+.git
+.github
+.gitignore
+.deployment
+
+# IDE
+.vscode
+.idea
+*.code-workspace
+.history
+
+# Documentation (not needed at runtime)
+docs/
+specs/
+README.md
+LICENSE
+
+# Tests
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+coverage/
+.hypothesis/
+
+# Most scripts (keep startup.sh via Dockerfile COPY)
+scripts/setup_*.py
+scripts/setup_*.ps1
+scripts/seed_*.py
+scripts/seed_data/
+scripts/batch_*.py
+scripts/index_*.py
+scripts/migrate_*.py
+scripts/transform_*.py
+scripts/verify_*.py
+scripts/test_*.py
+scripts/_check_cloud_*.py
+scripts/run_frontend.bat
+scripts/run_frontend.sh
+scripts/set_webapp_settings.sh
+scripts/*.json
+scripts/README*
+
+# Frontend (separate image with own build context)
+frontend/
+
+# Assets — PDFs indexed into DB, not baked into image
+assets/
+
+# Infra (Bicep, deploy scripts)
+infra/
+
+# Python build artifacts
+__pycache__/
+*.py[cod]
+*.so
+.Python
+.venv/
+venv/
+env/
+.uv/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# Node artifacts (root level)
+node_modules/
+package-lock.json
+
+# Data directories
+data/
+underwriting-aps-docs/
+batch-review-output/
+
+# Environment files (secrets injected at runtime)
+.env
+.env.local
+.env.production

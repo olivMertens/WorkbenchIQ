@@ -49,8 +49,8 @@ logger = setup_logging()
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="WorkbenchIQ API",
-    description="REST API for WorkbenchIQ - Multi-persona document processing workbench",
+    title="GroupaIQ API",
+    description="REST API for GroupaIQ - Multi-persona document processing workbench",
     version="0.3.0",
     dependencies=[Depends(verify_api_key)],
 )
@@ -89,7 +89,7 @@ app.add_middleware(
 @app.middleware("http")
 async def health_check_bypass(request: Request, call_next):
     if request.url.path == "/":
-        return JSONResponse({"status": "ok", "version": "0.3.0", "name": "WorkbenchIQ"})
+        return JSONResponse({"status": "ok", "version": "0.3.0", "name": "GroupaIQ"})
     return await call_next(request)
 
 
@@ -4047,15 +4047,9 @@ async def seed_customer_360_data():
     """Seed sample customer 360 data (development/demo only)."""
     settings = load_settings()
     try:
-        from scripts.seed_customer360 import (
-            create_sarah_chen,
-            create_marcus_williams,
-            create_priya_patel,
-        )
-        create_sarah_chen(settings.app.storage_root)
-        create_marcus_williams(settings.app.storage_root)
-        create_priya_patel(settings.app.storage_root)
-        return {"status": "ok", "message": "Seeded 3 customer profiles"}
+        from scripts.seed_data.groupama_customers import create_groupama_customers
+        count = create_groupama_customers(settings.app.storage_root)
+        return {"status": "ok", "message": f"Seeded {count} Groupama customer profiles"}
     except Exception as e:
         logger.error("Failed to seed customer 360 data: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))

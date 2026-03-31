@@ -23,6 +23,7 @@ import { usePersona } from '@/lib/PersonaContext';
 import { ApplicationListItem } from '@/lib/types';
 import { createApplication, startProcessing, getApplication } from '@/lib/api';
 import clsx from 'clsx';
+import { useTranslations } from 'next-intl';
 
 interface LandingPageProps {
   applications: ApplicationListItem[];
@@ -40,6 +41,7 @@ export default function LandingPage({
   username 
 }: LandingPageProps) {
   const { currentPersona, personaConfig } = usePersona();
+  const t = useTranslations('dashboard');
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,14 +64,14 @@ export default function LandingPage({
     if (isAutomotiveClaims) {
       return '.pdf,.png,.jpg,.jpeg,.gif,.webp,.mp4,.mov,.avi,.webm';
     }
-    return '.pdf';
+    return '.pdf,.png,.jpg,.jpeg,.gif,.webp';
   };
   
   const getAcceptedMimeTypes = () => {
     if (isAutomotiveClaims) {
       return ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
     }
-    return ['application/pdf'];
+    return ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp'];
   };
 
   // Dashboard Stats
@@ -109,9 +111,9 @@ export default function LandingPage({
   // Get time-based greeting
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    if (hour < 12) return t('greetingMorning');
+    if (hour < 17) return t('greetingAfternoon');
+    return t('greetingEvening');
   };
 
   // Generate display title for application
@@ -120,7 +122,7 @@ export default function LandingPage({
     if (app.external_reference) return app.external_reference;
     // Format: Case {shortId}
     const shortId = app.id.substring(0, 8).toUpperCase();
-    return `Case ${shortId}`;
+    return `${shortId}`;  // No hardcoded prefix
   };
 
   // Poll for processing completion - mirrors admin page behaviour
@@ -266,7 +268,7 @@ export default function LandingPage({
     // Check for active processing first
     if (processingStatus === 'extracting') {
       return { 
-        label: 'Data Agent Running', 
+        label: t('dataAgentRunning'), 
         bg: 'bg-sky-50', 
         text: 'text-sky-700', 
         border: 'border-sky-200',
@@ -276,7 +278,7 @@ export default function LandingPage({
     }
     if (processingStatus === 'analyzing') {
       return { 
-        label: 'Risk Agent Working', 
+        label: t('riskAgentWorking'), 
         bg: 'bg-violet-50', 
         text: 'text-violet-700', 
         border: 'border-violet-200',
@@ -287,14 +289,14 @@ export default function LandingPage({
     
     const configs: Record<string, any> = {
       pending: { 
-        label: 'Pending', 
+        label: t('pending'), 
         bg: 'bg-amber-50', 
         text: 'text-amber-700', 
         border: 'border-amber-200',
         icon: Clock
       },
       extracting: { 
-        label: 'Data Agent Running', 
+        label: t('dataAgentRunning'), 
         bg: 'bg-sky-50', 
         text: 'text-sky-700', 
         border: 'border-sky-200',
@@ -302,7 +304,7 @@ export default function LandingPage({
         animate: true
       },
       analyzing: { 
-        label: 'Risk Agent Working', 
+        label: t('riskAgentWorking'), 
         bg: 'bg-violet-50', 
         text: 'text-violet-700', 
         border: 'border-violet-200',
@@ -310,14 +312,14 @@ export default function LandingPage({
         animate: true
       },
       completed: { 
-        label: 'Ready for Review', 
+        label: t('readyForReview'), 
         bg: 'bg-emerald-50', 
         text: 'text-emerald-700', 
         border: 'border-emerald-200',
         icon: CheckCircle2
       },
       error: { 
-        label: 'Error', 
+        label: t('errorLabel'), 
         bg: 'bg-rose-50', 
         text: 'text-rose-700', 
         border: 'border-rose-200',
@@ -380,7 +382,7 @@ export default function LandingPage({
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
-                  Condense
+                  {t('condense')}
                   <span className={clsx(
                     "w-2 h-2 rounded-full transition-colors",
                     largeDocumentMode ? "bg-indigo-500" : "bg-slate-300"
@@ -399,12 +401,12 @@ export default function LandingPage({
                 {uploading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
+                    {t('processing')}
                   </>
                 ) : (
                   <>
                     <Plus className="w-4 h-4 mr-2" />
-                    New Application
+                    {t('uploadDocuments')}
                   </>
                 )}
                 <input
@@ -423,28 +425,28 @@ export default function LandingPage({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-500">Total Cases</span>
+                <span className="text-sm text-slate-500">{t('total')}</span>
                 <FileText className="w-4 h-4 text-slate-400" />
               </div>
               <p className="text-2xl font-bold text-slate-900 mt-1">{stats.total}</p>
             </div>
             <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-emerald-600">Completed</span>
+                <span className="text-sm text-emerald-600">{t('completed')}</span>
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
               </div>
               <p className="text-2xl font-bold text-emerald-700 mt-1">{stats.completed}</p>
             </div>
             <div className="bg-sky-50 rounded-xl p-4 border border-sky-100">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-sky-600">In Progress</span>
+                <span className="text-sm text-sky-600">{t('inProgress')}</span>
                 <Activity className="w-4 h-4 text-sky-500" />
               </div>
               <p className="text-2xl font-bold text-sky-700 mt-1">{stats.processing}</p>
             </div>
             <div className="bg-violet-50 rounded-xl p-4 border border-violet-100">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-violet-600">Today</span>
+                <span className="text-sm text-violet-600">{t('today')}</span>
                 <TrendingUp className="w-4 h-4 text-violet-500" />
               </div>
               <p className="text-2xl font-bold text-violet-700 mt-1">{stats.todayCount}</p>
@@ -487,7 +489,7 @@ export default function LandingPage({
                   const thisIndex = i;
                   const isDone = stepIndex > thisIndex || processingStep === 'complete';
                   const isCurrent = processingStep === step;
-                  const labels = ['Uploading', 'Extracting', 'Analyzing', 'Complete'];
+                  const labels = [t('stepUpload'), t('stepExtract'), t('stepAnalyze'), t('stepDone')];
                   return (
                     <div key={step} className="flex items-center gap-1.5">
                       {i > 0 && (
@@ -521,14 +523,14 @@ export default function LandingPage({
                   onClick={() => onSelectApp(processingAppId)}
                   className="px-3 py-1.5 text-xs font-medium bg-white border border-sky-200 text-sky-700 rounded-lg hover:bg-sky-50 transition-colors"
                 >
-                  Open
+                  {t('open')}
                 </button>
               )}
               {(processingStep === 'error' || processingStep === 'complete') && (
                 <button
                   onClick={() => { setProcessingStep('idle'); setProcessingMessage(''); setProcessingAppId(null); }}
                   className="p-1.5 text-slate-400 hover:text-slate-600 transition-colors"
-                  title="Dismiss"
+                  title={t('dismiss')}
                 >
                   ✕
                 </button>
@@ -550,8 +552,8 @@ export default function LandingPage({
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900">Ready for Review</h3>
-                    <p className="text-xs text-slate-500">Analysis complete — awaiting your decision</p>
+                    <h3 className="font-semibold text-slate-900">{t('readyForReview')}</h3>
+                    <p className="text-xs text-slate-500">{t('readyForReviewDesc')}</p>
                   </div>
                 </div>
                 <span className="text-2xl font-bold text-emerald-600">{queues.readyForReview.length}</span>
@@ -561,7 +563,7 @@ export default function LandingPage({
               {queues.readyForReview.length === 0 ? (
                 <div className="px-5 py-8 text-center text-slate-400">
                   <CheckCircle2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No cases waiting for review</p>
+                  <p className="text-sm">{t('noReviewCases')}</p>
                 </div>
               ) : (
                 queues.readyForReview.map((app) => (
@@ -602,8 +604,8 @@ export default function LandingPage({
                     <Activity className="w-4 h-4 text-sky-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900">Agents at Work</h3>
-                    <p className="text-xs text-slate-500">AI agents extracting & analyzing</p>
+                    <h3 className="font-semibold text-slate-900">{t('needsAnalysis')}</h3>
+                    <p className="text-xs text-slate-500">{t('needsAnalysisDesc')}</p>
                   </div>
                 </div>
                 <span className="text-2xl font-bold text-sky-600">{queues.needsAnalysis.length}</span>
@@ -613,7 +615,7 @@ export default function LandingPage({
               {queues.needsAnalysis.length === 0 ? (
                 <div className="px-5 py-8 text-center text-slate-400">
                   <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">All agents idle</p>
+                  <p className="text-sm">{t('allAgentsIdle')}</p>
                 </div>
               ) : (
                 queues.needsAnalysis.slice(0, 5).map((app) => (
@@ -651,15 +653,15 @@ export default function LandingPage({
               <AlertTriangle className="w-5 h-5 text-rose-600 flex-shrink-0" />
               <div className="flex-1">
                 <p className="font-medium text-rose-800">
-                  {queues.hasErrors.length} case{queues.hasErrors.length > 1 ? 's' : ''} require{queues.hasErrors.length === 1 ? 's' : ''} attention
+                  {queues.hasErrors.length} {t('requiresAttention')}
                 </p>
-                <p className="text-sm text-rose-600 mt-0.5">Processing errors occurred. Click to review and retry.</p>
+                <p className="text-sm text-rose-600 mt-0.5">{t('errorOccurred')}</p>
               </div>
               <button 
                 onClick={() => onSelectApp(queues.hasErrors[0].id)}
                 className="px-3 py-1.5 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 transition-colors"
               >
-                Review
+                {t('review')}
               </button>
             </div>
           </div>
@@ -683,14 +685,14 @@ export default function LandingPage({
           {dragActive ? (
             <div className="py-8">
               <Upload className="w-10 h-10 text-indigo-500 mx-auto mb-3" />
-              <p className="text-lg font-medium text-indigo-600">Drop files to create new application</p>
+              <p className="text-lg font-medium text-indigo-600">{t('dropFilesActive')}</p>
             </div>
           ) : (
             <div className="flex items-center justify-between py-2">
               <div className="flex items-center gap-4">
                 <Upload className="w-5 h-5 text-slate-400" />
                 <span className="text-slate-500">
-                  Drag and drop {isAutomotiveClaims ? 'images, videos, or PDFs' : 'PDF documents'} here to start a new case
+                  {t('dropFilesHere')}
                 </span>
                 <span className="text-xs text-slate-400 border-l border-slate-200 pl-4">
                   {getAcceptedFileTypes().replaceAll('.', '').toUpperCase().split(',').join(', ')}
@@ -716,7 +718,7 @@ export default function LandingPage({
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
-                  Condense
+                  {t('condense')}
                   <span className={clsx(
                     "w-2 h-2 rounded-full transition-colors",
                     largeDocumentMode ? "bg-indigo-500" : "bg-slate-300"
@@ -740,7 +742,7 @@ export default function LandingPage({
         {/* Table Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
           <h2 className="text-lg font-semibold text-slate-900">
-            Recent Cases
+            {t('recentApplications')}
             <span className="ml-2 text-sm font-normal text-slate-500">({filteredApps.length})</span>
           </h2>
 
@@ -749,7 +751,7 @@ export default function LandingPage({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
                 type="text"
-                placeholder="Search cases..."
+                placeholder={t('searchCases')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
@@ -781,8 +783,8 @@ export default function LandingPage({
         ) : filteredApps.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-xl border border-slate-200 border-dashed">
             <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-slate-900">No cases found</h3>
-            <p className="text-slate-500 mt-1">Upload documents above to create your first case.</p>
+            <h3 className="text-lg font-medium text-slate-900">{t('noApplications')}</h3>
+            <p className="text-slate-500 mt-1">{t('noApplicationsHint')}</p>
           </div>
         ) : viewMode === 'list' ? (
           /* Table View */
@@ -790,10 +792,10 @@ export default function LandingPage({
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-3 font-medium text-slate-600">Case</th>
-                  <th className="px-6 py-3 font-medium text-slate-600">Status</th>
-                  <th className="px-6 py-3 font-medium text-slate-600">Created</th>
-                  <th className="px-6 py-3 font-medium text-slate-600">Reference</th>
+                  <th className="px-6 py-3 font-medium text-slate-600">Dossier</th>
+                  <th className="px-6 py-3 font-medium text-slate-600">Statut</th>
+                  <th className="px-6 py-3 font-medium text-slate-600">Créé</th>
+                  <th className="px-6 py-3 font-medium text-slate-600">Référence</th>
                   <th className="px-6 py-3 font-medium text-slate-600 text-right">Action</th>
                 </tr>
               </thead>

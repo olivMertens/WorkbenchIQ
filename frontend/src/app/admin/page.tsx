@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import {
   createApplication,
+  deleteApplication,
   listApplications,
   getApplication,
   startProcessing,
@@ -37,6 +38,7 @@ import {
 import type { ApplicationListItem, PromptsData, AnalyzerStatus, AnalyzerInfo, FieldSchema, UnderwritingPolicy, PolicyCriteriaItem } from '@/lib/types';
 import type { IndexStats } from '@/lib/api';
 import PersonaSelector from '@/components/PersonaSelector';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import GlossaryManager from '@/components/GlossaryManager';
 import { usePersona } from '@/lib/PersonaContext';
 
@@ -1186,6 +1188,23 @@ export default function AdminPage() {
                           </div>
                         )}
                       </div>
+                      {/* Delete button */}
+                      <button
+                        onClick={async () => {
+                          if (confirm(`Supprimer le dossier ${app.id} ?`)) {
+                            try {
+                              await deleteApplication(app.id);
+                              loadApplications();
+                            } catch (e) {
+                              console.error('Delete failed:', e);
+                            }
+                          }
+                        }}
+                        className="text-xs px-2 py-1 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 </li>
@@ -2346,13 +2365,12 @@ export default function AdminPage() {
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
-              <div 
-                className="w-9 h-9 rounded-lg flex items-center justify-center shadow-sm"
-                style={{ background: `linear-gradient(135deg, ${personaConfig.primaryColor}, ${personaConfig.accentColor})` }}
-              >
-                <span className="text-white font-bold text-xs">W.IQ</span>
-              </div>
-              <span className="font-semibold text-lg text-slate-900">WorkbenchIQ</span>
+              <img
+                src="/groupama-logo.png"
+                alt="GroupaIQ"
+                className="h-9 w-auto"
+              />
+              <span className="font-semibold text-lg text-slate-900">GroupaIQ</span>
             </Link>
             <span className="text-slate-300">|</span>
             <h1 className="text-xl font-semibold text-slate-700">
@@ -2361,6 +2379,7 @@ export default function AdminPage() {
           </div>
           <div className="flex items-center gap-4">
             <PersonaSelector />
+            <LanguageSwitcher />
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
               <span className="text-sm text-slate-600">Backend Connected</span>

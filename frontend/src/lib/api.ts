@@ -1,6 +1,6 @@
 /**
  * API client for communicating with the Python backend.
- * This module provides functions to interact with the WorkbenchIQ backend.
+ * This module provides functions to interact with the GroupaIQ backend.
  */
 
 import type {
@@ -129,6 +129,10 @@ export async function listApplications(persona?: string): Promise<ApplicationLis
  */
 export async function getApplication(appId: string): Promise<ApplicationMetadata> {
   return apiFetch<ApplicationMetadata>(`/api/applications/${appId}`);
+}
+
+export async function deleteApplication(appId: string): Promise<void> {
+  await apiFetch(`/api/applications/${appId}`, { method: 'DELETE' });
 }
 
 /**

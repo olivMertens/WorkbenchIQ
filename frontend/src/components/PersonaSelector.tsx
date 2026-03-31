@@ -8,11 +8,12 @@ import clsx from 'clsx';
 
 // UI display names that map to actual persona IDs
 const PERSONA_UI_LABELS: Record<PersonaId, string> = {
-  underwriting: 'Life & Health Underwriting',
-  life_health_claims: 'Life & Health Claims',
-  automotive_claims: 'Automotive Claims',
-  property_casualty_claims: 'Property & Casualty Claims',
-  mortgage: 'Mortgage Underwriting',
+  underwriting: 'Souscription Vie & Santé',
+  life_health_claims: 'Sinistres Santé',
+  automotive_claims: 'Sinistres Auto',
+  property_casualty_claims: 'Sinistres IARD (ancien)',
+  habitation_claims: 'Sinistres Habitation',
+  mortgage: 'Souscription Hypothécaire',
 };
 
 // Placeholder personas that don't exist in the backend yet (shown as disabled)
@@ -38,19 +39,19 @@ interface PersonaGroup {
 const PERSONA_GROUPS: PersonaGroup[] = [
   {
     id: 'underwriting',
-    label: 'Underwriting',
+    label: 'Souscription',
     icon: ClipboardList,
     personaIds: ['underwriting', 'mortgage'],
   },
   {
     id: 'claims',
-    label: 'Claims',
+    label: 'Sinistres',
     icon: Stethoscope,
-    personaIds: ['life_health_claims', 'automotive_claims'],
+    personaIds: ['life_health_claims', 'automotive_claims', 'habitation_claims'],
   },
   {
     id: 'wealth',
-    label: 'Wealth',
+    label: 'Patrimoine',
     icon: Landmark,
     personaIds: [],
     placeholders: [PLACEHOLDER_PERSONAS.find(p => p.id === 'securities_lending')!],

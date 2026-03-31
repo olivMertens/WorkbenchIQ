@@ -19,6 +19,7 @@ import PersonaSummaryCard from '@/components/customer360/PersonaSummaryCard';
 import RiskCorrelationBanner from '@/components/customer360/RiskCorrelationBanner';
 import CustomerJourneyMetrics from '@/components/customer360/CustomerJourneyMetrics';
 import PersonaSelector from '@/components/PersonaSelector';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function CustomerDetailPage() {
   const params = useParams();
@@ -77,10 +78,12 @@ export default function CustomerDetailPage() {
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br from-indigo-500 to-indigo-600">
-                <span className="text-white font-bold text-xs">W.IQ</span>
-              </div>
-              <span className="font-semibold text-lg text-slate-900">WorkbenchIQ</span>
+              <img
+                src="/groupama-logo.png"
+                alt="GroupaIQ"
+                className="h-9 w-auto"
+              />
+              <span className="font-semibold text-lg text-slate-900">GroupaIQ</span>
             </Link>
 
             <PersonaSelector />
@@ -102,6 +105,8 @@ export default function CustomerDetailPage() {
               <Settings className="w-4 h-4" />
               <span>Admin</span>
             </Link>
+
+            <LanguageSwitcher />
 
             {authEnabled && (
               <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-200">

@@ -32,34 +32,34 @@ function getFieldValue(field: unknown, defaultValue: string = ''): string {
 // Compact Header Strip
 function HeaderStrip({ application }: { application: ApplicationMetadata | null }) {
   const extractedFields = application?.extracted_fields || {};
-  const lineOfBusiness = getFieldValue(extractedFields.LineOfBusiness, 'Auto BI');
-  const causeOfLoss = getFieldValue(extractedFields.CauseOfLoss, 'Rear-end collision');
-  const insuredName = getFieldValue(extractedFields.InsuredName, 'ABC Corp');
-  const paidIndemnity = getFieldValue(extractedFields.PaidIndemnity, '$8,450');
-  const paidExpense = getFieldValue(extractedFields.PaidExpense, '$6,200');
-  const totalIncurred = getFieldValue(extractedFields.TotalIncurred, '$14,650');
-  const currentReserve = getFieldValue(extractedFields.CurrentReserve, '$5,000');
+  const lineOfBusiness = getFieldValue(extractedFields.LineOfBusiness, 'Habitation MRH');
+  const causeOfLoss = getFieldValue(extractedFields.CauseOfLoss, 'Dégâts des eaux / Tempête');
+  const insuredName = getFieldValue(extractedFields.InsuredName, 'MERTENS LAFFITE Olivier');
+  const paidIndemnity = getFieldValue(extractedFields.PaidIndemnity, '—');
+  const paidExpense = getFieldValue(extractedFields.PaidExpense, '—');
+  const totalIncurred = getFieldValue(extractedFields.TotalIncurred, '10 825 €');
+  const currentReserve = getFieldValue(extractedFields.CurrentReserve, '11 000 €');
 
   return (
     <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-5 py-2.5 flex-shrink-0">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-6 text-sm">
-          <div><span className="text-indigo-200 text-xs">LOB:</span> <span className="font-medium">{lineOfBusiness}</span></div>
-          <div><span className="text-indigo-200 text-xs">Cause:</span> <span className="font-medium">{causeOfLoss}</span></div>
-          <div><span className="text-indigo-200 text-xs">Insured:</span> <span className="font-medium">{insuredName}</span></div>
+          <div><span className="text-indigo-200 text-xs">Branche :</span> <span className="font-medium">{lineOfBusiness}</span></div>
+          <div><span className="text-indigo-200 text-xs">Cause :</span> <span className="font-medium">{causeOfLoss}</span></div>
+          <div><span className="text-indigo-200 text-xs">Assuré :</span> <span className="font-medium">{insuredName}</span></div>
         </div>
         <div className="flex items-center gap-5">
-          <div className="text-center"><div className="text-xs text-indigo-200">Paid Indemnity</div><div className="font-semibold">{paidIndemnity}</div></div>
-          <div className="text-center"><div className="text-xs text-indigo-200">Paid Expense</div><div className="font-semibold">{paidExpense}</div></div>
-          <div className="text-center"><div className="text-xs text-indigo-200">Total Incurred</div><div className="font-semibold text-amber-300">{totalIncurred}</div></div>
-          <div className="text-center"><div className="text-xs text-indigo-200">Reserve</div><div className="font-semibold">{currentReserve}</div></div>
-          <span className="px-2.5 py-1 bg-rose-800 rounded-full text-xs font-medium">High Severity</span>
+          <div className="text-center"><div className="text-xs text-indigo-200">Indemnisé</div><div className="font-semibold">{paidIndemnity}</div></div>
+          <div className="text-center"><div className="text-xs text-indigo-200">Frais d'expert</div><div className="font-semibold">{paidExpense}</div></div>
+          <div className="text-center"><div className="text-xs text-indigo-200">Total estimé</div><div className="font-semibold text-amber-300">{totalIncurred}</div></div>
+          <div className="text-center"><div className="text-xs text-indigo-200">Réserve</div><div className="font-semibold">{currentReserve}</div></div>
+          <span className="px-2.5 py-1 bg-amber-600 rounded-full text-xs font-medium">Sinistre majeur</span>
         </div>
       </div>
       <div className="flex items-center gap-2 mt-2">
-        <span className="px-2 py-0.5 bg-purple-500 text-white text-xs rounded flex items-center gap-1"><Flag className="w-3 h-3" />Litigated</span>
-        <span className="px-2 py-0.5 bg-blue-500 text-white text-xs rounded">Attorney Rep</span>
-        <span className="px-2 py-0.5 bg-amber-500 text-white text-xs rounded">Subro Potential</span>
+        <span className="px-2 py-0.5 bg-blue-500 text-white text-xs rounded flex items-center gap-1"><Flag className="w-3 h-3" />Convention IRSI</span>
+        <span className="px-2 py-0.5 bg-amber-500 text-white text-xs rounded">Cat-Nat possible</span>
+        <span className="px-2 py-0.5 bg-emerald-600 text-white text-xs rounded">Garantie DDE</span>
       </div>
     </div>
   );
@@ -71,30 +71,31 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
   const [expandedSection, setExpandedSection] = useState<string>('liability');
 
   const liabilityEvents = [
-    { date: '03/01', type: 'Accident', desc: 'Rear-end collision at stoplight', impact: 'supports' },
-    { date: '03/01', type: 'Police Report', desc: 'Our insured cited for following too closely', impact: 'supports' },
-    { date: '03/02', type: 'Claimant Statement', desc: 'Sudden lane change before impact', impact: 'disputes' },
-    { date: '03/05', type: 'Witness', desc: 'Confirms claimant changed lanes abruptly', impact: 'disputes' },
-    { date: '03/08', type: 'Medical', desc: 'First chiropractic visit', impact: 'neutral' },
+    { date: '27/03', type: 'Tempête', desc: 'Tempête Gérard — vents 115 km/h (Météo France Bordeaux)', impact: 'supports' },
+    { date: '28/03', type: 'Constat', desc: 'Découverte de la cave inondée le matin — 15 cm d\'eau', impact: 'supports' },
+    { date: '28/03', type: 'Déclaration', desc: 'Déclaration de sinistre MERTENS LAFFITE — mlo@wine.com', impact: 'supports' },
+    { date: '29/03', type: 'Plombier', desc: 'SOS Plomberie Bordeaux — canalisation obstruée dégagée', impact: 'neutral' },
+    { date: '29/03', type: 'Photos', desc: 'Photos des dégâts transmises (cave, murs, bouteilles)', impact: 'supports' },
   ];
 
   const injuries = [
-    { diagnosis: 'Cervical strain', noted: '03/01/2024', related: 'Yes', status: 'Active' },
-    { diagnosis: 'Lumbar sprain', noted: '03/01/2024', related: 'Possible', status: 'Pre-existing' },
-    { diagnosis: 'Headaches', noted: '03/08/2024', related: 'Yes', status: 'Resolved' },
+    { diagnosis: 'Cave inondée (15 cm)', noted: '28/03/2026', related: 'Oui', status: 'Constaté' },
+    { diagnosis: 'Bouteilles de vin détruites', noted: '28/03/2026', related: 'Oui', status: 'À chiffrer' },
+    { diagnosis: 'Moisissures murales', noted: '29/03/2026', related: 'Possible', status: 'En cours' },
+    { diagnosis: 'Compteur électrique HS', noted: '28/03/2026', related: 'Oui', status: 'Réparé' },
   ];
 
   const evidenceItems = [
-    { source: 'Police Report', type: 'Liability', supports: true, challenges: false },
-    { source: 'Medical Records', type: 'Injury', supports: true, challenges: true },
-    { source: 'Witness Statement', type: 'Liability', supports: false, challenges: true },
-    { source: 'Photos', type: 'Damages', supports: true, challenges: false },
+    { source: 'Déclaration sinistre PDF', type: 'Couverture', supports: true, challenges: false },
+    { source: 'Photos dégâts cave', type: 'Dommages', supports: true, challenges: false },
+    { source: 'Facture plombier', type: 'Réparation', supports: true, challenges: false },
+    { source: 'Données Météo France', type: 'Tempête', supports: true, challenges: false },
   ];
 
   const tasks = [
-    { task: 'Generate settlement memo', due: 'Jul 18' },
-    { task: 'Review comparative negligence', due: 'Jul 20' },
-    { task: 'Verify policy limits', due: 'Jul 22' },
+    { task: 'Vérifier couverture CG Habitation', due: 'Mar 29' },
+    { task: 'Mandater expert si > 5 000€', due: 'Mar 30' },
+    { task: 'Appliquer franchise DDE (250€)', due: 'Avr 01' },
   ];
 
   return (
@@ -112,7 +113,7 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
             <div className="col-span-4 bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col overflow-hidden">
               <div className="px-3 py-2 border-b border-slate-100 flex items-center gap-2 bg-slate-50 flex-shrink-0">
                 <Scale className="w-4 h-4 text-indigo-600" />
-                <span className="font-semibold text-slate-900 text-sm">Liability Notes</span>
+                <span className="font-semibold text-slate-900 text-sm">Notes de responsabilité</span>
                 <span className="ml-auto text-xs text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">AI</span>
               </div>
               <div className="flex-1 overflow-auto p-3 text-sm">
@@ -123,14 +124,14 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
                   >
                     <div className="px-3 py-2 flex items-center justify-between hover:bg-slate-50">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-slate-900">Liability Assessment</span>
-                        <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded">80% Insured</span>
+                        <span className="font-medium text-slate-900">Évaluation de responsabilité</span>
+                        <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded">Événement climatique</span>
                       </div>
                       {expandedSection === 'liability' ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
                     </div>
                     {expandedSection === 'liability' && (
                       <div className="px-3 pb-2 text-slate-600 text-xs">
-                        Police report indicates our insured failed to maintain safe following distance. Claimant's sudden lane change contributes 20% comparative negligence.
+                        Tempête Gérard confirmée par Météo France (115 km/h). Infiltration par soupirail ouest. Responsabilité : événement climatique couvert par garantie TGN.
                       </div>
                     )}
                   </div>
@@ -139,12 +140,12 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
                     onClick={() => setExpandedSection(expandedSection === 'causation' ? '' : 'causation')}
                   >
                     <div className="px-3 py-2 flex items-center justify-between hover:bg-slate-50">
-                      <span className="font-medium text-slate-900">Causation & Pre-Existing</span>
+                      <span className="font-medium text-slate-900">État des lieux & Vétusté</span>
                       {expandedSection === 'causation' ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
                     </div>
                     {expandedSection === 'causation' && (
                       <div className="px-3 pb-2 text-slate-600 text-xs">
-                        Medical records show pre-existing lumbar condition. Impact likely aggravated but did not cause.
+                        Cave en bon état d'entretien avant sinistre. Vétusté des casiers bois : 20%. Bouteilles : valeur d'achat avec justificatifs.
                       </div>
                     )}
                   </div>
@@ -154,14 +155,14 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
                   >
                     <div className="px-3 py-2 flex items-center justify-between hover:bg-slate-50">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-slate-900">Red Flags</span>
+                        <span className="font-medium text-slate-900">Signaux d'alerte</span>
                         <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs rounded">2</span>
                       </div>
                       {expandedSection === 'redflags' ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
                     </div>
                     {expandedSection === 'redflags' && (
                       <div className="px-3 pb-2 text-slate-600 text-xs">
-                        • Attorney retained within 48 hours<br/>• Excessive chiropractic treatment pattern
+                        • Montant des vins élevé (4 880€) — demander factures originales<br/>• Vérifier plafond objets de valeur du contrat
                       </div>
                     )}
                   </div>
@@ -173,26 +174,26 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
             <div className="col-span-4 bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col overflow-hidden">
               <div className="px-3 py-2 border-b border-slate-100 flex items-center gap-2 bg-slate-50 flex-shrink-0">
                 <TrendingUp className="w-4 h-4 text-indigo-600" />
-                <span className="font-semibold text-slate-900 text-sm">Damages</span>
+                <span className="font-semibold text-slate-900 text-sm">Dommages</span>
               </div>
               <div className="flex-1 overflow-auto p-3 text-xs">
                 <div className="space-y-2">
                   <div>
-                    <div className="text-slate-500 mb-1">Economic</div>
-                    <div className="flex justify-between"><span className="text-slate-600">Medical Specials</span><span className="font-medium">$12,000</span></div>
-                    <div className="flex justify-between"><span className="text-slate-600">Lost Wages</span><span className="font-medium">$3,500</span></div>
+                    <div className="text-slate-500 mb-1">Biens endommagés</div>
+                    <div className="flex justify-between"><span className="text-slate-600">Collection de vins</span><span className="font-medium">5 880 €</span></div>
+                    <div className="flex justify-between"><span className="text-slate-600">Mobilier & équipements</span><span className="font-medium">4 945 €</span></div>
                   </div>
                   <div className="pt-2 border-t">
-                    <div className="text-slate-500 mb-1">Settlement Range</div>
-                    <div className="flex justify-between"><span className="text-slate-600">AI Estimate</span><span className="font-semibold text-indigo-600">$18K – $25K</span></div>
+                    <div className="text-slate-500 mb-1">Estimation IA</div>
+                    <div className="flex justify-between"><span className="text-slate-600">Montant total</span><span className="font-semibold text-indigo-600">10 575€ – 11 075€</span></div>
                   </div>
                   <div className="pt-2 border-t">
-                    <div className="text-emerald-700 font-medium">Strengths</div>
-                    <p className="text-slate-600">Clear liability, documented injuries</p>
+                    <div className="text-emerald-700 font-medium">Points forts</div>
+                    <p className="text-slate-600">Événement Météo France confirmé, photos fournies</p>
                   </div>
                   <div className="pt-1">
-                    <div className="text-rose-700 font-medium">Weaknesses</div>
-                    <p className="text-slate-600">Pre-existing condition, treatment gaps</p>
+                    <div className="text-rose-700 font-medium">Points d'attention</div>
+                    <p className="text-slate-600">Montant vins élevé, vérifier plafond OV</p>
                   </div>
                 </div>
               </div>
@@ -202,7 +203,7 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
             <div className="col-span-4 bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col overflow-hidden">
               <div className="px-3 py-2 border-b border-slate-100 flex items-center gap-2 bg-slate-50 flex-shrink-0">
                 <ListChecks className="w-4 h-4 text-indigo-600" />
-                <span className="font-semibold text-slate-900 text-sm">Tasks</span>
+                <span className="font-semibold text-slate-900 text-sm">Tâches</span>
                 <span className="ml-auto text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">{tasks.length - checkedTasks.length} pending</span>
               </div>
               <div className="flex-1 overflow-auto p-3">
@@ -221,7 +222,7 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
                   ))}
                 </div>
                 <button className="mt-3 w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
-                  Generate Settlement Memo
+                  Générer note de règlement
                 </button>
               </div>
             </div>
@@ -234,7 +235,7 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
             <div className="col-span-6 bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col overflow-hidden">
               <div className="px-3 py-2 border-b border-slate-100 flex items-center gap-2 bg-slate-50 flex-shrink-0">
                 <Activity className="w-4 h-4 text-indigo-600" />
-                <span className="font-semibold text-slate-900 text-sm">Timeline</span>
+                <span className="font-semibold text-slate-900 text-sm">Chronologie</span>
               </div>
               <div className="flex-1 overflow-auto p-3">
                 <div className="space-y-2">
@@ -259,14 +260,14 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
             <div className="col-span-6 bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col overflow-hidden">
               <div className="px-3 py-2 border-b border-slate-100 flex items-center gap-2 bg-slate-50 flex-shrink-0">
                 <Users className="w-4 h-4 text-indigo-600" />
-                <span className="font-semibold text-slate-900 text-sm">Injuries</span>
+                <span className="font-semibold text-slate-900 text-sm">Dommages constatés</span>
               </div>
               <div className="flex-1 overflow-auto p-3">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="text-slate-500 border-b">
-                      <th className="text-left py-1.5 font-normal">Diagnosis</th>
-                      <th className="text-left py-1.5 font-normal">Related?</th>
+                      <th className="text-left py-1.5 font-normal">Zone / Bien</th>
+                      <th className="text-left py-1.5 font-normal">Lié au sinistre ?</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -275,7 +276,7 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
                         <td className="py-2 text-slate-900">{inj.diagnosis}</td>
                         <td className="py-2">
                           <span className={clsx('px-1.5 py-0.5 rounded text-xs',
-                            inj.related === 'Yes' ? 'bg-emerald-100 text-emerald-700' :
+                            inj.related === 'Oui' ? 'bg-emerald-100 text-emerald-700' :
                             inj.related === 'Possible' ? 'bg-amber-100 text-amber-700' :
                             'bg-slate-100 text-slate-600'
                           )}>{inj.related}</span>
@@ -292,19 +293,19 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
           <div className="bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col overflow-hidden" style={{ flex: '1 1 35%' }}>
             <div className="px-4 py-2.5 border-b border-slate-100 flex items-center gap-2 bg-slate-50 flex-shrink-0">
               <FileText className="w-4 h-4 text-indigo-600" />
-              <span className="font-semibold text-slate-900 text-sm">Evidence & Documents</span>
+              <span className="font-semibold text-slate-900 text-sm">Pièces & Documents</span>
               <span className="ml-auto text-xs text-slate-500">{evidenceItems.length} items</span>
             </div>
             <div className="flex-1 overflow-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 sticky top-0">
                   <tr className="text-xs text-slate-500">
-                    <th className="px-4 py-2 text-left w-1/4">Source Document</th>
+                    <th className="px-4 py-2 text-left w-1/4">Document source</th>
                     <th className="px-4 py-2 text-left w-1/6">Type</th>
-                    <th className="px-4 py-2 text-center w-1/6">Supports Liability</th>
-                    <th className="px-4 py-2 text-center w-1/6">Challenges Liability</th>
-                    <th className="px-4 py-2 text-left">Summary</th>
-                    <th className="px-4 py-2 text-center w-16">View</th>
+                    <th className="px-4 py-2 text-center w-1/6">Confirme</th>
+                    <th className="px-4 py-2 text-center w-1/6">Contredit</th>
+                    <th className="px-4 py-2 text-left">Résumé</th>
+                    <th className="px-4 py-2 text-center w-16">Voir</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">

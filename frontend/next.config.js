@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const { execSync } = require('child_process');
+const createNextIntlPlugin = require('next-intl/plugin');
+
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 // Capture git commit SHA at build time
 let commitSha = process.env.COMMIT_SHA || '';
@@ -42,4 +45,4 @@ const nextConfig = {
   // This avoids build-time URL baking issues with rewrites
 };
 
-module.exports = nextConfig;
+module.exports = withNextIntl(nextConfig);

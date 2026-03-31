@@ -128,6 +128,9 @@ export default function WorkbenchView({
         if (currentPersona === 'property_casualty_claims') {
           return <PropertyCasualtyClaimsOverview application={selectedApp} />;
         }
+        if (currentPersona === 'habitation_claims') {
+          return <PropertyCasualtyClaimsOverview application={selectedApp} />;
+        }
         if (currentPersona === 'mortgage') {
           return <MortgageWorkbench applicationId={selectedApp.id} />;
         }

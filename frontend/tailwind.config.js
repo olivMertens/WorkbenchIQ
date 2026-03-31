@@ -8,18 +8,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Modern indigo/violet color scheme
+        // Groupama green brand color scheme
         primary: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
+          50: '#e6f7ee',
+          100: '#ccf0dd',
+          200: '#99e0bb',
+          300: '#66d199',
+          400: '#33c177',
+          500: '#00a651',
+          600: '#008c44',
+          700: '#006838',
+          800: '#004d2a',
+          900: '#00331c',
         },
         accent: {
           emerald: '#10b981',

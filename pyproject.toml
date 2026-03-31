@@ -1,8 +1,8 @@
 [project]
-name = "underwriting-assistant"
+name = "groupaiq"
 version = "0.3.0"
-description = "Customer-agnostic underwriting application using Azure Content Understanding prebuilt-documentSearch + Azure OpenAI, with FastAPI backend and Next.js frontend."
-requires-python = ">=3.10"
+description = "GroupaIQ - AI-powered document processing workbench for insurance underwriting, claims and mortgage, with FastAPI backend and Next.js frontend."
+requires-python = ">=3.11"
 dependencies = [
     "requests>=2.32.0",
     "python-dotenv>=1.0.1",
@@ -14,6 +14,11 @@ dependencies = [
     "gunicorn>=21.0.0",
     "asyncpg>=0.31.0",
     "tiktoken>=0.12.0",
+    "openai>=1.50.0",
+    "pydantic>=2.9.0",
+    "pgvector>=0.2.4",
+    "numpy>=1.24.0",
+    "pymupdf>=1.25.0",
 ]
 
 [project.optional-dependencies]
@@ -28,8 +33,8 @@ api-server = "api_server:main"
 
 [tool.black]
 line-length = 100
-target-version = ['py310']
+target-version = ['py311']
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"

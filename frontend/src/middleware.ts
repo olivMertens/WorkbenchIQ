@@ -8,7 +8,7 @@ const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 async function validateSessionToken(token: string): Promise<string | null> {
   if (!token) return null;
 
-  const secret = process.env.AUTH_SECRET || 'workbenchiq-default-secret-change-me';
+  const secret = process.env.AUTH_SECRET || 'groupaiq-default-secret-change-me';
 
   const parts = token.split('.');
   if (parts.length < 3) return null;

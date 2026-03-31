@@ -42,6 +42,11 @@ PERSONA_SEARCH_CONFIG = {
         "service_type": "pc_claims",
         "description": "Property & casualty claims policies",
     },
+    "habitation_claims": {
+        "table": "policy_chunks",
+        "service_type": "habitation_claims",
+        "description": "Groupama habitation claims policies (tempête, dégâts des eaux, cat-nat)",
+    },
     "mortgage": {
         "table": "mortgage_policy_chunks",
         "service_type": "mortgage",

@@ -16,12 +16,13 @@ class PersonaType(str, Enum):
     """Available persona types in WorkbenchIQ."""
     UNDERWRITING = "underwriting"
     LIFE_HEALTH_CLAIMS = "life_health_claims"
-    AUTOMOTIVE_CLAIMS = "automotive_claims"  # New multimodal automotive claims persona
-    MORTGAGE_UNDERWRITING = "mortgage_underwriting"  # Canadian mortgage underwriting
-    MORTGAGE = "mortgage"  # Legacy alias for MORTGAGE_UNDERWRITING
+    AUTOMOTIVE_CLAIMS = "automotive_claims"
+    HABITATION_CLAIMS = "habitation_claims"
+    MORTGAGE_UNDERWRITING = "mortgage_underwriting"
+    MORTGAGE = "mortgage"
     # Legacy aliases for backward compatibility
     CLAIMS = "claims"  # Maps to life_health_claims
-    PROPERTY_CASUALTY_CLAIMS = "property_casualty_claims"  # Alias for automotive_claims
+    PROPERTY_CASUALTY_CLAIMS = "property_casualty_claims"  # Legacy alias
 
 
 @dataclass

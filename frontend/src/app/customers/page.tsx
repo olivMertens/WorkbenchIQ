@@ -15,6 +15,7 @@ import { listCustomers, seedCustomer360Data } from '@/lib/customer360-api';
 import type { CustomerProfile } from '@/lib/customer360-types';
 import CustomerListView from '@/components/customer360/CustomerListView';
 import PersonaSelector from '@/components/PersonaSelector';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerProfile[]>([]);
@@ -80,10 +81,12 @@ export default function CustomersPage() {
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br from-indigo-500 to-indigo-600">
-                <span className="text-white font-bold text-xs">W.IQ</span>
-              </div>
-              <span className="font-semibold text-lg text-slate-900">WorkbenchIQ</span>
+              <img
+                src="/groupama-logo.png"
+                alt="GroupaIQ"
+                className="h-9 w-auto"
+              />
+              <span className="font-semibold text-lg text-slate-900">GroupaIQ</span>
             </Link>
 
             <PersonaSelector />
@@ -103,6 +106,8 @@ export default function CustomersPage() {
               <Settings className="w-4 h-4" />
               <span>Admin</span>
             </Link>
+
+            <LanguageSwitcher />
 
             {authEnabled && (
               <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-200">

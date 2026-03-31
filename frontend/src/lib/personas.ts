@@ -1,12 +1,12 @@
 /**
- * Persona definitions and types for WorkbenchIQ.
+ * Persona definitions and types for GroupaIQ.
  * This module defines the available personas and their UI configurations.
  */
 
-import { ClipboardList, HeartPulse, Home, Car, Stethoscope } from 'lucide-react';
+import { ClipboardList, HeartPulse, Home, Car, Stethoscope, CloudRain } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export type PersonaId = 'underwriting' | 'life_health_claims' | 'automotive_claims' | 'property_casualty_claims' | 'mortgage';
+export type PersonaId = 'underwriting' | 'life_health_claims' | 'automotive_claims' | 'property_casualty_claims' | 'habitation_claims' | 'mortgage';
 
 export interface Persona {
   id: PersonaId;
@@ -30,30 +30,30 @@ export interface PersonaConfig extends Persona {
 export const PERSONAS: Record<PersonaId, PersonaConfig> = {
   underwriting: {
     id: 'underwriting',
-    name: 'Underwriting',
-    description: 'Life insurance underwriting workbench for processing applications and medical documents',
+    name: 'Souscription',
+    description: 'Poste de travail de souscription pour le traitement des demandes et documents médicaux',
     icon: ClipboardList,
-    color: '#6366f1',
+    color: '#006838',
     enabled: true,
-    primaryColor: '#6366f1', // Indigo
-    secondaryColor: '#818cf8',
-    accentColor: '#4f46e5',
+    primaryColor: '#006838', // Groupama Dark Green
+    secondaryColor: '#00a651',
+    accentColor: '#004d2a',
   },
   life_health_claims: {
     id: 'life_health_claims',
-    name: 'Life & Health Claims',
-    description: 'Health insurance claims processing workbench for medical claims, eligibility verification, and benefits adjudication',
+    name: 'Sinistres Santé',
+    description: 'Poste de travail de traitement des sinistres santé, vérification d\'éligibilité et adjudication',
     icon: Stethoscope,
-    color: '#6366f1',
+    color: '#006838',
     enabled: true,
-    primaryColor: '#6366f1', // Indigo
-    secondaryColor: '#818cf8',
-    accentColor: '#4f46e5',
+    primaryColor: '#006838', // Groupama Dark Green
+    secondaryColor: '#00a651',
+    accentColor: '#004d2a',
   },
   automotive_claims: {
     id: 'automotive_claims',
-    name: 'Automotive Claims',
-    description: 'Multimodal automotive claims workbench for vehicle damage assessment with image, video, and document processing',
+    name: 'Sinistres Auto',
+    description: 'Poste de travail multimodal d\'évaluation des dommages automobiles avec traitement d\'images, vidéos et documents',
     icon: Car,
     color: '#dc2626',
     enabled: true,
@@ -63,19 +63,30 @@ export const PERSONAS: Record<PersonaId, PersonaConfig> = {
   },
   property_casualty_claims: {
     id: 'property_casualty_claims',
-    name: 'Property & Casualty Claims (Legacy)',
-    description: 'Legacy P&C claims - use Automotive Claims instead',
+    name: 'Sinistres IARD (Ancien)',
+    description: 'Ancien module IARD — utiliser Sinistres Habitation à la place',
     icon: Car,
-    color: '#6366f1',
-    enabled: false, // Deprecated - use automotive_claims
-    primaryColor: '#6366f1', // Indigo
-    secondaryColor: '#818cf8',
-    accentColor: '#4f46e5',
+    color: '#006838',
+    enabled: false, // Deprecated - use habitation_claims
+    primaryColor: '#006838',
+    secondaryColor: '#00a651',
+    accentColor: '#004d2a',
+  },
+  habitation_claims: {
+    id: 'habitation_claims',
+    name: 'Sinistres Habitation',
+    description: 'Poste de travail de traitement des sinistres habitation — dégâts des eaux, tempêtes, catastrophes naturelles, avec photos et documents',
+    icon: CloudRain,
+    color: '#2563eb',
+    enabled: true,
+    primaryColor: '#2563eb', // Blue
+    secondaryColor: '#3b82f6',
+    accentColor: '#1d4ed8',
   },
   mortgage: {
     id: 'mortgage',
-    name: 'Mortgage Underwriting',
-    description: 'Canadian mortgage underwriting workbench with OSFI B-20 compliance checks',
+    name: 'Souscription Hypothécaire',
+    description: 'Poste de travail de souscription hypothécaire avec vérifications de conformité BSIF B-20',
     icon: Home,
     color: '#059669',
     enabled: true,
@@ -114,4 +125,4 @@ export const DEFAULT_PERSONA: PersonaId = 'underwriting';
 /**
  * Local storage key for persisting selected persona
  */
-export const PERSONA_STORAGE_KEY = 'workbenchiq-persona';
+export const PERSONA_STORAGE_KEY = 'groupaiq-persona';

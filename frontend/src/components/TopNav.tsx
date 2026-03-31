@@ -19,6 +19,9 @@ import { useRouter } from 'next/navigation';
 import PersonaSelector from './PersonaSelector';
 import GlossaryDropdown from './GlossaryDropdown';
 import { usePersona } from '@/lib/PersonaContext';
+import { useTranslations } from 'next-intl';
+import LanguageSwitcher from './LanguageSwitcher';
+import DemoGuideModal from './DemoGuideModal';
 
 interface TopNavProps {
   applications: ApplicationListItem[];
@@ -42,6 +45,7 @@ export default function TopNav({
   const [appDropdownOpen, setAppDropdownOpen] = useState(false);
   const { personaConfig } = usePersona();
   const router = useRouter();
+  const t = useTranslations('nav');
   const [authUser, setAuthUser] = useState<string | null>(null);
   const [authEnabled, setAuthEnabled] = useState(false);
 
@@ -75,10 +79,10 @@ export default function TopNav({
   const isAutomotiveClaims = personaConfig.id === 'automotive_claims';
 
   const navItems = [
-    { id: 'overview' as const, label: 'Overview', icon: LayoutDashboard, enabled: true },
-    { id: 'timeline' as const, label: 'Timeline', icon: Clock, enabled: true, hidden: isAutomotiveClaims },
-    { id: 'documents' as const, label: 'Documents', icon: FileText, enabled: hasDocuments, count: selectedApp?.files?.length, hidden: isAutomotiveClaims },
-    { id: 'source' as const, label: 'Source Pages', icon: FileStack, enabled: hasSourcePages, count: selectedApp?.markdown_pages?.length },
+    { id: 'overview' as const, label: t('overview'), icon: LayoutDashboard, enabled: true },
+    { id: 'timeline' as const, label: t('timeline'), icon: Clock, enabled: true, hidden: isAutomotiveClaims },
+    { id: 'documents' as const, label: t('documents'), icon: FileText, enabled: hasDocuments, count: selectedApp?.files?.length, hidden: isAutomotiveClaims },
+    { id: 'source' as const, label: t('sourcePages'), icon: FileStack, enabled: hasSourcePages, count: selectedApp?.markdown_pages?.length },
   ].filter(item => !item.hidden);
 
   const selectedApplication = applications.find(a => a.id === selectedAppId);
@@ -90,13 +94,12 @@ export default function TopNav({
         {/* Logo & Brand */}
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
-            <div 
-              className="w-9 h-9 rounded-lg flex items-center justify-center shadow-sm"
-              style={{ background: `linear-gradient(135deg, ${personaConfig.primaryColor}, ${personaConfig.accentColor})` }}
-            >
-              <span className="text-white font-bold text-xs">W.IQ</span>
-            </div>
-            <span className="font-semibold text-lg text-slate-900">WorkbenchIQ</span>
+            <img
+              src="/groupama-logo.png"
+              alt="GroupaIQ"
+              className="h-9 w-auto"
+            />
+            <span className="font-semibold text-lg text-slate-900">GroupaIQ</span>
           </Link>
 
           {/* Persona Selector */}
@@ -110,7 +113,7 @@ export default function TopNav({
                 className="flex items-center gap-2 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
               >
                 <span className="text-slate-700">
-                  {selectedApplication?.summary_title || selectedApplication?.id?.substring(0, 8) || 'Select Application'}
+                  {selectedApplication?.summary_title || selectedApplication?.id?.substring(0, 8) || t('selectApplication')}
                 </span>
                 <ChevronDown className={clsx('w-4 h-4 text-slate-400 transition-transform', appDropdownOpen && 'rotate-180')} />
               </button>
@@ -136,7 +139,7 @@ export default function TopNav({
                             {app.summary_title || app.id.substring(0, 8)}
                           </div>
                           <div className="text-xs text-slate-500 flex items-center gap-2">
-                            {app.external_reference || 'No reference'}
+                            {app.external_reference || t('noReference')}
                             <span className={clsx(
                               'px-1.5 py-0.5 rounded text-[10px] font-medium',
                               app.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
@@ -156,7 +159,7 @@ export default function TopNav({
                         className="block w-full text-left px-4 py-2 text-sm text-indigo-600 hover:bg-indigo-50 transition-colors"
                         onClick={() => setAppDropdownOpen(false)}
                       >
-                        + New Application
+                        {t('newApplication')}
                       </Link>
                     </div>
                   </div>
@@ -176,15 +179,21 @@ export default function TopNav({
             className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
           >
             <Users className="w-4 h-4" />
-            <span>Customer 360</span>
+            <span>{t('customer360')}</span>
           </Link>
           <Link
             href="/admin"
             className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
           >
             <Settings className="w-4 h-4" />
-            <span>Admin</span>
+            <span>{t('admin')}</span>
           </Link>
+
+          {/* Language Switcher */}
+          <LanguageSwitcher />
+
+          {/* Demo Guide */}
+          <DemoGuideModal />
 
           {/* Auth: username & logout */}
           {authEnabled && (
@@ -198,7 +207,7 @@ export default function TopNav({
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                title="Sign out"
+                title={t('signOut')}
               >
                 <LogOut className="w-4 h-4" />
               </button>

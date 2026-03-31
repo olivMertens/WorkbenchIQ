@@ -470,6 +470,66 @@
           ]
         }
       ]
+    },
+    "habitation_claims": {
+      "name": "Sinistres Habitation",
+      "description": "Terminologie assurance habitation Groupama — sinistres, garanties, conventions",
+      "categories": [
+        {
+          "id": "garanties",
+          "name": "Garanties et Couvertures",
+          "terms": [
+            {"abbreviation": "MRH", "meaning": "Multirisque Habitation", "context": "Contrat couvrant l'ensemble des risques d'un logement"},
+            {"abbreviation": "RC", "meaning": "Responsabilité Civile", "context": "Garantie couvrant les dommages causés aux tiers"},
+            {"abbreviation": "DDE", "meaning": "Dégâts des eaux", "context": "Sinistre causé par l'eau (fuite, infiltration, débordement)"},
+            {"abbreviation": "TGN", "meaning": "Tempête, Grêle, Neige", "context": "Garantie couvrant les dommages liés aux événements climatiques"},
+            {"abbreviation": "Cat-Nat", "meaning": "Catastrophe Naturelle", "context": "Régime légal L.125-1 — arrêté interministériel au JO"},
+            {"abbreviation": "Vol", "meaning": "Vol et Vandalisme", "context": "Garantie couvrant le vol avec effraction et le vandalisme"},
+            {"abbreviation": "BG", "meaning": "Bris de Glace", "context": "Garantie couvrant les vitres, miroirs et parois vitrées"},
+            {"abbreviation": "PE", "meaning": "Protection Électrique", "context": "Garantie couvrant les dommages électriques (surtension, foudre)"},
+            {"abbreviation": "VAN", "meaning": "Valeur à Neuf", "context": "Indemnisation sans vétusté — remplacement à neuf"},
+            {"abbreviation": "VST", "meaning": "Vétusté", "context": "Coefficient de dépréciation appliqué aux biens endommagés"}
+          ]
+        },
+        {
+          "id": "conventions",
+          "name": "Conventions et Procédures",
+          "terms": [
+            {"abbreviation": "IRSI", "meaning": "Convention Inter-assureurs de Règlement des Sinistres Immeubles", "context": "Gestion simplifiée des DDE < 5000€ HT avec tiers"},
+            {"abbreviation": "CIDRE", "meaning": "Convention d'Indemnisation Directe et de Renonciation à Recours", "context": "Ancienne convention remplacée par IRSI"},
+            {"abbreviation": "PPR", "meaning": "Plan de Prévention des Risques", "context": "Document communal identifiant les zones à risque"},
+            {"abbreviation": "BRGM", "meaning": "Bureau de Recherches Géologiques et Minières", "context": "Cartographie des aléas (argile, inondation, cavités)"},
+            {"abbreviation": "JO", "meaning": "Journal Officiel", "context": "Publication des arrêtés Cat-Nat"},
+            {"abbreviation": "ALFA", "meaning": "Agence de Lutte contre la Fraude à l'Assurance", "context": "Base nationale de détection des fraudes multi-assureurs"},
+            {"abbreviation": "SIU", "meaning": "Special Investigation Unit", "context": "Unité spéciale d'investigation anti-fraude"}
+          ]
+        },
+        {
+          "id": "indemnisation",
+          "name": "Indemnisation",
+          "terms": [
+            {"abbreviation": "FRC", "meaning": "Franchise Contractuelle", "context": "Montant restant à charge de l'assuré par sinistre"},
+            {"abbreviation": "PLF", "meaning": "Plafond de Garantie", "context": "Montant maximum d'indemnisation par garantie"},
+            {"abbreviation": "GRE", "meaning": "Gré à Gré", "context": "Règlement amiable entre assureur et assuré"},
+            {"abbreviation": "EAD", "meaning": "Expert d'Assuré Dommages", "context": "Expert mandaté par l'assuré pour défendre ses intérêts"},
+            {"abbreviation": "OV", "meaning": "Objets de Valeur", "context": "Biens précieux avec plafond d'indemnisation spécifique (bijoux, collections)"},
+            {"abbreviation": "CPM", "meaning": "Capital Mobilier", "context": "Valeur totale du contenu assuré du logement"},
+            {"abbreviation": "RIT", "meaning": "Recours contre le Tiers", "context": "Action de l'assureur pour récupérer auprès du responsable"}
+          ]
+        },
+        {
+          "id": "batiment",
+          "name": "Bâtiment et Logement",
+          "terms": [
+            {"abbreviation": "PP", "meaning": "Propriétaire Non-Occupant (PNO)", "context": "Propriétaire bailleur d'un logement loué"},
+            {"abbreviation": "PO", "meaning": "Propriétaire Occupant", "context": "Propriétaire résidant dans le logement"},
+            {"abbreviation": "LOC", "meaning": "Locataire", "context": "Personne occupant le logement en location"},
+            {"abbreviation": "COP", "meaning": "Copropriété", "context": "Immeuble en copropriété — parties communes"},
+            {"abbreviation": "RDC", "meaning": "Rez-de-chaussée", "context": "Niveau du sol — vulnérable aux inondations"},
+            {"abbreviation": "SS", "meaning": "Sous-sol / Cave", "context": "Niveau inférieur — cave à vins, garage, stockage"}
+          ]
+        }
+      ]
     }
   }
 }

@@ -1,0 +1,13 @@
+# =============================================================================
+# Frontend .dockerignore — Keep frontend build context minimal
+# =============================================================================
+
+node_modules/
+.next/
+out/
+build/
+coverage/
+.env.local
+.env.production
+*.md
+.gitignore

@@ -271,7 +271,7 @@ export default function BodySystemDeepDiveModal({
   @media print { body { margin: 0; } }
 </style></head><body>
 <h1>Body System Deep Dive — ${esc(caseRef)}</h1>
-<p class="meta">Generated ${esc(now)} — WorkbenchIQ AI Analysis</p>
+<p class="meta">Generated ${esc(now)} — GroupaIQ AI Analysis</p>
 ${sections.join('\n')}
 </body></html>`;
 

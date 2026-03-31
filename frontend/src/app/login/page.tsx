@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import { useTranslations } from 'next-intl';
 
 export default function LoginPage() {
+  const t = useTranslations('auth');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -26,10 +28,10 @@ export default function LoginPage() {
         return;
       } else {
         const data = await res.json();
-        setError(data.error || 'Invalid credentials');
+        setError(data.error || t('error'));
       }
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError(t('error'));
     } finally {
       setLoading(false);
     }
@@ -40,11 +42,13 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 rounded-xl flex items-center justify-center shadow-md bg-gradient-to-br from-indigo-500 to-purple-600 mb-4">
-            <span className="text-white font-bold text-lg">W.IQ</span>
-          </div>
-          <h1 className="text-2xl font-semibold text-slate-900">WorkbenchIQ</h1>
-          <p className="text-sm text-slate-500 mt-1">Sign in to continue</p>
+          <img
+            src="/groupama-logo.png"
+            alt="GroupaIQ"
+            className="h-14 w-auto mb-4"
+          />
+          <h1 className="text-2xl font-semibold text-slate-900">GroupaIQ</h1>
+          <p className="text-sm text-slate-500 mt-1">Connectez-vous pour continuer</p>
         </div>
 
         {/* Login Form */}
@@ -57,7 +61,7 @@ export default function LoginPage() {
 
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-1.5">
-              Username
+              {t('username')}
             </label>
             <input
               id="username"
@@ -68,13 +72,13 @@ export default function LoginPage() {
               autoFocus
               autoComplete="username"
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-              placeholder="Enter username"
+              placeholder={t('username')}
             />
           </div>
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1.5">
-              Password
+              {t('password')}
             </label>
             <input
               id="password"
@@ -84,7 +88,7 @@ export default function LoginPage() {
               required
               autoComplete="current-password"
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-              placeholder="Enter password"
+              placeholder={t('password')}
             />
           </div>
 
@@ -93,7 +97,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? t('loggingIn') : t('loginButton')}
           </button>
         </form>
       </div>

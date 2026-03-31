@@ -29,7 +29,7 @@ export function isAuthEnabled(): boolean {
 }
 
 function getSecret(): string {
-  return process.env.AUTH_SECRET || 'workbenchiq-default-secret-change-me';
+  return process.env.AUTH_SECRET || 'groupaiq-default-secret-change-me';
 }
 
 /**

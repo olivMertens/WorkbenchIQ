@@ -186,7 +186,8 @@ def run_content_understanding_for_files(
     analyzer_used = None
 
     # Get persona-specific analyzer IDs
-    doc_analyzer_id = settings.content_understanding.custom_analyzer_id  # Default
+    # Default to prebuilt-documentSearch (always available, no custom setup needed)
+    doc_analyzer_id = settings.content_understanding.analyzer_id  # prebuilt-documentSearch
     image_analyzer_id = None
     video_analyzer_id = None
     is_multimodal_persona = False
@@ -194,7 +195,10 @@ def run_content_understanding_for_files(
     if app_md.persona:
         try:
             persona_config = get_persona_config(app_md.persona)
-            doc_analyzer_id = persona_config.custom_analyzer_id
+            # Only use custom analyzer if it differs from the default placeholder
+            custom_id = persona_config.custom_analyzer_id
+            if custom_id and custom_id != "underwritingAnalyzer":
+                doc_analyzer_id = custom_id
             image_analyzer_id = getattr(persona_config, 'image_analyzer_id', None)
             video_analyzer_id = getattr(persona_config, 'video_analyzer_id', None)
             is_multimodal_persona = image_analyzer_id is not None or video_analyzer_id is not None
@@ -204,6 +208,11 @@ def run_content_understanding_for_files(
             )
         except ValueError as e:
             logger.warning("Failed to get persona config for %s: %s. Using default analyzer.", app_md.persona, e)
+
+    # Enable image processing for all personas using prebuilt analyzer as fallback
+    if not image_analyzer_id:
+        image_analyzer_id = 'prebuilt-image'
+    is_multimodal_persona = True  # All personas can now process images
 
     for stored in app_md.files:
         logger.info("Analyzing file with Content Understanding: %s", stored.path)
@@ -261,8 +270,21 @@ def run_content_understanding_for_files(
                 
             except Exception as e:
                 logger.error("Image analysis failed for %s: %s", stored.filename, e)
-                # Fall back to document analyzer
-                logger.info("Falling back to document analyzer for image")
+                # Fall back to document analyzer for image
+                logger.info("Falling back to prebuilt-documentSearch for image %s", stored.filename)
+                try:
+                    payload = analyze_document(
+                        settings.content_understanding,
+                        file_path=stored.path,
+                        file_bytes=file_content,
+                    )
+                    analyzer_used = settings.content_understanding.analyzer_id
+                    md_text = extract_markdown_from_result(payload)
+                    if md_text:
+                        all_markdown_parts.append(f"# Image: {stored.filename}\n\n{md_text}")
+                    cu_payloads.append((stored.path, payload))
+                except Exception as e2:
+                    logger.error("Document fallback also failed for %s: %s", stored.filename, e2)
                 
         elif is_multimodal_persona and media_type == 'video' and video_analyzer_id:
             # Process as video with video analyzer
@@ -305,23 +327,17 @@ def run_content_understanding_for_files(
                 continue
         else:
             # Process as document (default path)
-            if use_confidence_scoring and settings.content_understanding.enable_confidence_scores:
-                # Temporarily override the custom_analyzer_id in settings for this call
-                original_analyzer = settings.content_understanding.custom_analyzer_id
-                settings.content_understanding.custom_analyzer_id = doc_analyzer_id
-                try:
-                    payload = analyze_document_with_confidence(
-                        settings.content_understanding, 
-                        stored.path,
-                        file_bytes=file_content
-                    )
-                    analyzer_used = doc_analyzer_id
-                finally:
-                    settings.content_understanding.custom_analyzer_id = original_analyzer
-                
-                # Extract fields with confidence
+            # Use prebuilt analyzer for reliable extraction (custom analyzers require explicit creation)
+            try:
+                payload = analyze_document(
+                    settings.content_understanding,
+                    file_path=stored.path,
+                    file_bytes=file_content,
+                )
+                analyzer_used = doc_analyzer_id
+
+                # Extract fields with confidence if available
                 fields = extract_fields_with_confidence(payload)
-                # Convert FieldConfidence objects to serializable dicts
                 for field_name, field_conf in fields.items():
                     all_fields[f"{stored.filename}:{field_name}"] = {
                         "field_name": field_conf.field_name,
@@ -333,9 +349,9 @@ def run_content_understanding_for_files(
                         "source_file": stored.filename,
                         "media_type": "document",
                     }
-            else:
-                payload = analyze_document(settings.content_understanding, stored.path, file_bytes=file_content)
-                analyzer_used = settings.content_understanding.analyzer_id
+            except Exception as e:
+                logger.error("Document analysis failed for %s: %s", stored.filename, e)
+                continue
             
             cu_payloads.append((stored.path, payload))
 
