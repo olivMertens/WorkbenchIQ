@@ -115,7 +115,6 @@ if (-not $SkipBackend) {
         --registry $ACR `
         --image "groupaiq-api:${Tag}" `
         --image "groupaiq-api:latest" `
-        --file Dockerfile `
         $StageDir `
         --no-logs
     
@@ -167,7 +166,6 @@ if (-not $SkipFrontend) {
         --registry $ACR `
         --image "groupaiq-frontend:${Tag}" `
         --image "groupaiq-frontend:latest" `
-        --file Dockerfile `
         --build-arg "API_URL=https://$API_FQDN" `
         $StageDir `
         --no-logs
