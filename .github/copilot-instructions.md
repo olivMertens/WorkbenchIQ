@@ -135,3 +135,101 @@ python scripts/index_pdf_policies.py --local --force   # Uses PyMuPDF fallback
 - `DATABASE_BACKEND` — `postgresql` or `json`
 - `RAG_ENABLED` — `true` to enable policy search
 - `API_KEY` — Backend auth key (min 32 chars)
+
+## TSX / React Best Practices
+
+### SOLID Principles
+- **Single Responsibility (SRP)**: One component = one concern. A tab panel should be its own component, not 500 lines inside a parent. Extract `<AdminDocumentsTab>`, `<AdminPromptsTab>`, `<AdminAnalyzerTab>`, `<AdminPoliciesTab>` from monolithic pages.
+- **Open/Closed (OCP)**: Extend via composition (render props, children, slots), not by adding more `if/else` branches to existing components. New persona → new overview component, not more conditionals in a shared one.
+- **Liskov Substitution (LSP)**: Shared prop interfaces (e.g. `ClaimsOverviewProps`) must be interchangeable across `AutomotiveClaimsOverview`, `PropertyCasualtyClaimsOverview`, `LifeHealthClaimsOverview`.
+- **Interface Segregation (ISP)**: Don't pass the entire application object when a component only needs `{ id, status }`. Keep prop types narrow.
+- **Dependency Inversion (DIP)**: Components depend on abstractions (API hooks, context), not on `fetch()` calls embedded inline. Extract data-fetching into custom hooks (`useApplications`, `usePolicies`).
+
+### YAGNI (You Aren't Gonna Need It)
+- Don't add features, config options, or abstractions "for later". Build only what the current task requires.
+- No speculative generalization: if only one persona uses a component, don't parameterize it for all five.
+- Delete dead code paths — unused props, commented-out JSX, unreachable branches.
+
+### DRY (Don't Repeat Yourself)
+- Extract repeated API call patterns into shared hooks (e.g. `useFetch<T>(url)`).
+- Shared form field patterns → reusable `<FormField label={t('key')} value={v} onChange={fn} />`.
+- Policy editor forms (automotive, health, underwriting) share identical field layouts — use a data-driven renderer instead of duplicating JSX.
+- Translation key patterns: use interpolation (`t('status', { name })`) over separate keys per variant.
+
+### Avoid God Components
+- **Rule**: No component file should exceed ~400 lines. Files above 600 lines must be refactored.
+- **Current offenders**: `admin/page.tsx` (2392 lines), `LandingPage.tsx` (873), `LifeHealthClaimsOverview.tsx` (875), `GlossaryManager.tsx` (773).
+- **Refactor pattern**: Extract each logical section (tab, panel, modal, form) into its own file under a co-located folder (e.g. `src/components/admin/DocumentsTab.tsx`).
+- **State management**: Lift shared state into a context or custom hook (`useAdminState`), pass only what each child needs.
+
+### Component Design Guidelines
+- Prefer composition over inheritance — never use class components.
+- Custom hooks for any logic reused across ≥2 components (`useToast`, `useApplications`, `usePolicyEditor`).
+- Co-locate related files: `components/admin/DocumentsTab.tsx`, `components/admin/useAdminState.ts`, `components/admin/types.ts`.
+- Keep JSX readable: extract complex conditions into named variables or helper functions before the return statement.
+- All user-facing strings via `useTranslations()` — no hardcoded French or English in JSX.
+
+## Demo Quality Standards
+
+### Data Coherence
+- Demo data must reflect realistic Groupama insurance scenarios: real French names, addresses, SIRET numbers, policy numbers matching Groupama formats.
+- Use the 5 persona workflows with plausible documents: attestation d'assurance habitation, déclaration de sinistre auto with photos, bulletin d'adhésion santé, dossier hypothécaire with property valuation.
+- Monetary values in EUR (€), dates in DD/MM/YYYY, phone numbers in +33 format.
+- Policy references must match the indexed Groupama PDFs (Conditions Générales Habitation, Complémentaire Santé, Conditions Auto, Flotte Auto).
+
+### Demo Flow — Fast & Coherent
+- Each persona demo should complete in under 3 minutes: upload → extraction → AI analysis → result display.
+- Pre-seed representative documents in Azure Blob so the demo starts with data already available (no waiting for uploads).
+- Show the full AI pipeline: Document Intelligence extraction → GPT-4.1 analysis → RAG policy search → risk assessment, not just one step.
+- Highlight what each AI agent does: Data Agent (extraction), Risk Agent (analysis), Policy Agent (RAG search).
+
+### Personas Demo Scenarios
+| Persona | Demo Scenario | Key Output |
+|---------|--------------|------------|
+| Souscription | Health underwriting: APS medical document → risk scoring | Risk rating, medical flags, policy recommendation |
+| Sinistres Santé | Health claim: hospital invoice → coverage check | Reimbursement calculation, policy match, exclusions |
+| Sinistres Auto | Auto claim: accident report + photos → damage assessment | Damage estimate, liability analysis, fraud indicators |
+| Souscription Hypothécaire | Mortgage: property + borrower docs → eligibility | LTV ratio, debt-to-income, property valuation |
+| Client 360 | Customer overview: aggregated view across all policies | Cross-sell opportunities, claim history, risk profile |
+
+## Insurance Workflow Improvement
+
+### How GroupaIQ Improves Claims Processing
+The document processing workbench accelerates the end-to-end insurance claims workflow:
+
+1. **FNOL (First Notice of Loss)** — High AI potential
+   - Document Intelligence extracts structured data from déclarations de sinistre (scanned forms, photos)
+   - GPT-4.1 validates data consistency, flags missing fields
+   - RAG searches Conditions Générales to verify initial coverage
+   - **Impact**: Automated data extraction replaces manual re-keying, reduces errors
+
+2. **Claim Analysis** — High AI potential
+   - Multi-modal analysis: text extraction + damage photo assessment (auto claims)
+   - Risk Agent scores claim severity and estimates liability
+   - Policy Agent cross-references coverage limits, deductibles, exclusions via RAG
+   - **Impact**: Faster triage, consistent analysis, auditable AI reasoning with source citations
+
+3. **Fraud Detection** — High AI potential
+   - Anomaly detection via claim history patterns (Client 360 persona)
+   - Cross-reference declared damages vs. photo evidence (auto multimodal)
+   - Flag inconsistencies between declaration and extracted document data
+   - **Impact**: Early fraud indicators surfaced during analysis, not after payment
+
+4. **Underwriting Policy Adjustments** — High AI potential
+   - RAG-powered policy search across all Groupama conditions générales
+   - AI-suggested adjustments based on claims frequency and severity
+   - Risk scoring models inform premium recalculation
+   - **Impact**: Data-driven underwriting decisions, faster policy updates
+
+5. **Financial Administration** — Medium AI potential
+   - Structured extraction of monetary amounts, dates, policy numbers
+   - Automated accuracy checks against policy terms
+   - **Impact**: Reduced back-and-forth with policyholders, higher data accuracy
+
+### Business Outcomes
+- **Less back-and-forth**: AI extracts and validates data upfront, reducing information requests
+- **Higher NPS/CSAT**: Faster claim resolution with transparent AI reasoning
+- **Lower expense ratio**: Automated extraction and analysis reduce manual processing time
+- **Higher productivity**: Agents focus on exceptions, not data entry
+- **Higher data accuracy**: Document Intelligence + LLM validation catch errors early
+- **Less fraud**: Multi-modal cross-referencing and anomaly detection at intake
