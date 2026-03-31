@@ -1,25 +1,26 @@
 """Seed data for 3 claims applications (1 health + 2 automotive).
 
-Provides rich, realistic data matching the Customer 360 narratives.
+Provides rich, realistic data matching French Groupama insurance scenarios.
+Uses GRP-xxx customer references from groupama_customers.py.
 """
 
 from typing import Any, Dict, List
 
 
-def _sarah_chen_auto() -> Dict[str, Any]:
-    """Sarah Chen — minor rear-end collision, other party at fault."""
+def _garcia_antonio_auto() -> Dict[str, Any]:
+    """GRP-007 GARCIA Antonio — collision arrière mineure à Toulouse, tiers responsable."""
     return {
         "id": "app-sc-auto-001",
         "created_at": "2024-11-18T14:32:00Z",
-        "external_reference": "CUST-SC-001",
+        "external_reference": "GRP-007",
         "status": "completed",
         "persona": "automotive_claims",
         "files": [
-            {"filename": "claim_form.pdf", "path": "applications/app-sc-auto-001/claim_form.pdf", "content_type": "application/pdf", "media_type": "document"},
-            {"filename": "police_report.pdf", "path": "applications/app-sc-auto-001/police_report.pdf", "content_type": "application/pdf", "media_type": "document"},
-            {"filename": "rear_bumper_photo.jpg", "path": "applications/app-sc-auto-001/rear_bumper_photo.jpg", "content_type": "image/jpeg", "media_type": "image"},
-            {"filename": "trunk_lid_photo.jpg", "path": "applications/app-sc-auto-001/trunk_lid_photo.jpg", "content_type": "image/jpeg", "media_type": "image"},
-            {"filename": "repair_estimate.pdf", "path": "applications/app-sc-auto-001/repair_estimate.pdf", "content_type": "application/pdf", "media_type": "document"},
+            {"filename": "constat_amiable.pdf", "path": "applications/app-sc-auto-001/constat_amiable.pdf", "content_type": "application/pdf", "media_type": "document"},
+            {"filename": "rapport_police.pdf", "path": "applications/app-sc-auto-001/rapport_police.pdf", "content_type": "application/pdf", "media_type": "document"},
+            {"filename": "photo_pare_chocs_arriere.jpg", "path": "applications/app-sc-auto-001/photo_pare_chocs_arriere.jpg", "content_type": "image/jpeg", "media_type": "image"},
+            {"filename": "photo_coffre.jpg", "path": "applications/app-sc-auto-001/photo_coffre.jpg", "content_type": "image/jpeg", "media_type": "image"},
+            {"filename": "devis_reparation.pdf", "path": "applications/app-sc-auto-001/devis_reparation.pdf", "content_type": "application/pdf", "media_type": "document"},
         ],
         "llm_outputs": {
             "damage_assessment": {
@@ -27,48 +28,50 @@ def _sarah_chen_auto() -> Dict[str, Any]:
                     "section": "damage_assessment",
                     "subsection": "visual_damage_analysis",
                     "raw": (
-                        "Insured vehicle is a 2021 Honda CR-V photographed at Maple Auto Body. "
-                        "Impact is localized to the rear of the vehicle. The rear bumper cover shows "
-                        "moderate deformation with cracking along the lower edge and paint transfer "
-                        "from the striking vehicle. The trunk lid has a visible buckle along the "
-                        "trailing edge with minor paint flaking. No structural intrusion to the "
-                        "passenger compartment. Tail lights intact. Exhaust system undamaged."
+                        "Véhicule assuré : Renault Clio V (2021), photographié au garage AD "
+                        "Toulouse Sud. Impact localisé à l'arrière du véhicule. Le pare-chocs arrière "
+                        "présente une déformation modérée avec fissuration le long du bord inférieur "
+                        "et un transfert de peinture du véhicule percuteur. Le coffre montre un léger "
+                        "flambage sur le bord arrière avec écaillage mineur de peinture. Aucune intrusion "
+                        "structurelle dans l'habitacle. Feux arrière intacts. Système d'échappement intact."
                     ),
                     "parsed": {
-                        "summary": "Moderate rear-end impact damage confined to bumper cover and trunk lid. Consistent with low-speed rear-end collision.",
+                        "summary": "Dommages modérés par impact arrière, limités au pare-chocs et au coffre. Cohérent avec une collision à basse vitesse.",
+                        "overall_severity": "moderate",
                         "damage_areas": [
-                            {"area": "Rear bumper cover", "severity": "moderate", "description": "Deformation and cracking along lower edge with paint transfer from striking vehicle"},
-                            {"area": "Trunk lid", "severity": "minor", "description": "Buckle along trailing edge with minor paint flaking; latch mechanism functional"},
-                            {"area": "Rear bumper reinforcement bar", "severity": "minor", "description": "Slight bend detected; replacement recommended"},
+                            {"location": "Pare-chocs arrière", "severity": "moderate", "description": "Déformation et fissuration le long du bord inférieur avec transfert de peinture", "estimated_cost": 850.00, "confidence": 0.92},
+                            {"location": "Coffre", "severity": "minor", "description": "Léger flambage sur le bord arrière avec écaillage de peinture ; mécanisme de verrouillage fonctionnel", "estimated_cost": 620.00, "confidence": 0.89},
+                            {"location": "Traverse arrière", "severity": "minor", "description": "Légère flexion détectée ; remplacement recommandé", "estimated_cost": 430.00, "confidence": 0.85},
                         ],
-                        "total_damage_estimate_CAD": 3200.00,
+                        "total_damage_estimate": 1900.00,
                         "airbag_deployment": False,
                         "vehicle_drivable": True,
-                        "recommended_action": "Approve repair",
+                        "recommended_action": "Approuver la réparation",
                     },
                 },
                 "estimate_validation": {
                     "section": "damage_assessment",
                     "subsection": "estimate_validation",
                     "raw": (
-                        "Repair estimate from Maple Auto Body reviewed against Mitchell benchmarks. "
-                        "Parts pricing for 2021 Honda CR-V rear bumper cover, reinforcement bar, and "
-                        "trunk lid are within OEM list pricing. Labour hours at 8.5 hours align with "
-                        "industry standard for R&I bumper assembly, refinish, and trunk lid replacement. "
-                        "Paint and materials allowance reasonable. No aftermarket parts substitutions noted."
+                        "Devis du garage AD Toulouse Sud vérifié par rapport aux barèmes Groupama. "
+                        "Le tarif des pièces pour Renault Clio V — pare-chocs arrière, traverse et "
+                        "coffre — est conforme aux prix catalogue constructeur. La main-d'œuvre de "
+                        "6,5 heures correspond aux standards du métier pour démontage/remontage du "
+                        "pare-chocs, remise en état et remplacement du coffre. L'allocation peinture "
+                        "et matériaux est raisonnable. Aucune substitution de pièces adaptables notée."
                     ),
                     "parsed": {
-                        "summary": "Estimate is reasonable and within market range for the described repairs on a 2021 Honda CR-V.",
-                        "estimate_id": "EST-SC-2024-0472",
-                        "parts_breakdown_CAD": 1800.00,
-                        "labor_hours": 8.5,
-                        "labor_rate_per_hour": 95.00,
-                        "labor_cost_CAD": 807.50,
+                        "summary": "Devis conforme aux barèmes pour les réparations décrites sur une Renault Clio V 2021.",
+                        "estimate_id": "DEV-AG-2024-0472",
+                        "parts_breakdown": 1050.00,
+                        "labor_hours": 6.5,
+                        "labor_rate_per_hour": 72.00,
+                        "labor_cost": 468.00,
                         "sublet_items": [],
-                        "paint_materials_CAD": 592.50,
-                        "estimate_accuracy": "Reasonable",
-                        "comparison_market": "Within market range",
-                        "recommended_action": "Approve",
+                        "paint_materials": 382.00,
+                        "estimate_accuracy": "Conforme",
+                        "comparison_market": "Dans la fourchette du marché",
+                        "recommended_action": "Approuver",
                     },
                 },
             },
@@ -77,20 +80,19 @@ def _sarah_chen_auto() -> Dict[str, Any]:
                     "section": "liability_assessment",
                     "subsection": "fault_determination",
                     "raw": (
-                        "Police report PR-2024-TPS-88214 confirms the insured vehicle was stationary "
-                        "at a red light at the intersection of King St and Bay St when struck from "
-                        "behind by a 2019 Toyota Camry. Witness statements from two bystanders "
-                        "corroborate that the other driver failed to stop in time. Other driver cited "
-                        "for careless driving under HTA s.130. No contributing factors from insured."
+                        "Le constat amiable n° CA-2024-TLS-88214 confirme que le véhicule assuré "
+                        "était à l'arrêt au feu rouge à l'intersection de l'avenue Jean Jaurès et "
+                        "de la rue de Metz à Toulouse lorsqu'il a été percuté par l'arrière par un "
+                        "Peugeot 308 (2019). Deux témoins indépendants corroborent que le conducteur "
+                        "tiers n'a pas freiné à temps. Le tiers est déclaré entièrement responsable."
                     ),
                     "parsed": {
-                        "summary": "Clear liability determination: insured 0% at fault; other party 100% at fault, confirmed by police report and witnesses.",
-                        "point_of_impact": "Rear of insured vehicle",
-                        "contributing_factors": ["Other driver following too closely", "Other driver cited for careless driving"],
-                        "fault_determination": "0% — other party 100% at fault",
-                        "police_report_status": "Obtained — confirms other party fault",
-                        "witness_statements": "Two independent witnesses corroborate insured account",
-                        "liability_risk": "Clear liability",
+                        "summary": "Responsabilité claire : assuré 0 % ; tiers 100 % responsable, confirmé par constat amiable et témoignages.",
+                        "fault_determination": "0 % — tiers 100 % responsable",
+                        "fault_percentage": 0,
+                        "contributing_factors": ["Tiers suivant de trop près", "Tiers n'a pas respecté la distance de sécurité"],
+                        "liability_risk": "Responsabilité claire",
+                        "rationale": "L'assuré était immobilisé au feu rouge. Le tiers l'a percuté par l'arrière.",
                     },
                 },
             },
@@ -99,18 +101,18 @@ def _sarah_chen_auto() -> Dict[str, Any]:
                     "section": "fraud_detection",
                     "subsection": "red_flag_analysis",
                     "raw": (
-                        "No fraud indicators detected for this claim. Damage pattern is fully "
-                        "consistent with the described rear-end collision. Reporting was prompt "
-                        "(same day). Police report obtained and corroborates claimant's account. "
-                        "No prior claims history of concern. Repair estimate is within market norms. "
-                        "No relationship between parties identified."
+                        "Aucun indicateur de fraude détecté pour ce sinistre. Le schéma de dommages "
+                        "est entièrement cohérent avec la collision arrière décrite. La déclaration "
+                        "a été rapide (le jour même). Le constat amiable est conforme et corrobore "
+                        "le récit de l'assuré. Aucun antécédent préoccupant. Le devis est dans "
+                        "les normes du marché. Aucun lien entre les parties identifié."
                     ),
                     "parsed": {
-                        "summary": "No fraud indicators detected. Claim circumstances, damage pattern, and documentation are consistent and credible.",
+                        "summary": "Aucun indicateur de fraude. Circonstances, dommages et documentation cohérents et crédibles.",
                         "red_flags": [],
-                        "fraud_risk": "Low",
+                        "fraud_risk": "Faible",
                         "fraud_score": 0.08,
-                        "recommended_action": "Proceed with claim",
+                        "recommended_action": "Poursuivre le traitement du sinistre",
                     },
                 },
             },
@@ -119,37 +121,41 @@ def _sarah_chen_auto() -> Dict[str, Any]:
                     "section": "payout_recommendation",
                     "subsection": "settlement_analysis",
                     "raw": (
-                        "Recommended settlement of $3,200 CAD for repair of rear bumper, reinforcement "
-                        "bar, and trunk lid. Insured carries a $500 deductible; however, since the "
-                        "insured is 0% at fault, subrogation will be initiated against the other "
-                        "party's insurer (Aviva Canada, policy AV-2019-8827341) to recover the full "
-                        "payout plus deductible. No injury claim component."
+                        "Indemnisation recommandée de 1 900 € pour réparation du pare-chocs arrière, "
+                        "de la traverse et du coffre. L'assuré bénéficie d'une franchise de 300 € ; "
+                        "cependant, comme il est 0 % responsable, un recours sera engagé contre "
+                        "l'assureur du tiers (MAIF, police n° MAIF-2019-337841) pour récupérer "
+                        "l'intégralité de l'indemnisation plus la franchise. Aucun dommage corporel."
                     ),
                     "parsed": {
-                        "summary": "Approve full repair payout of $3,200. Subrogation to recover from at-fault party's insurer.",
-                        "recommended_payout_CAD": 3200.00,
-                        "deductible_CAD": 500.00,
-                        "insured_responsibility_CAD": 0.00,
-                        "subrogation_target": "Aviva Canada — policy AV-2019-8827341",
+                        "summary": "Approuver l'indemnisation de 1 900 €. Recours contre l'assureur du tiers.",
+                        "recommended_amount": 1900.00,
+                        "deductible": 300.00,
+                        "insured_responsibility": 0.00,
+                        "subrogation_target": "MAIF — police MAIF-2019-337841",
                         "final_approval": True,
-                        "rationale": "Insured not at fault. Damage verified, estimate reasonable. Subrogation initiated to recover full amount from other party's insurer.",
+                        "rationale": "Assuré non responsable. Dommages vérifiés, devis conforme. Recours engagé pour récupération intégrale.",
+                        "policy_citations": [
+                            {"policy_id": "AC-GRP-001", "title": "Conditions Générales Auto Groupama — Art. 8.2", "section": "Garantie Dommages Collision", "text": "Prise en charge des dommages matériels en cas de collision avec un tiers identifié, sous déduction de la franchise contractuelle.", "relevance": 0.95},
+                            {"policy_id": "AC-GRP-002", "title": "Conditions Générales Auto Groupama — Art. 12.1", "section": "Recours et Subrogation", "text": "Groupama exerce un recours contre le tiers responsable ou son assureur pour le montant des indemnités versées.", "relevance": 0.92},
+                        ],
                     },
                 },
             },
         },
         "extracted_fields": {
-            "claim_form:ClaimNumber": {"field_name": "ClaimNumber", "value": "CLM-SC-241118-01", "confidence": 0.95, "source_file": "claim_form.pdf"},
-            "claim_form:PolicyNumber": {"field_name": "PolicyNumber", "value": "AUTO-ON-7724519", "confidence": 0.97, "source_file": "claim_form.pdf"},
-            "claim_form:InsuredName": {"field_name": "InsuredName", "value": "Sarah Chen", "confidence": 0.98, "source_file": "claim_form.pdf"},
-            "claim_form:DateOfLoss": {"field_name": "DateOfLoss", "value": "2024-11-15", "confidence": 0.96, "source_file": "claim_form.pdf"},
-            "claim_form:VehicleYear": {"field_name": "VehicleYear", "value": "2021", "confidence": 0.97, "source_file": "claim_form.pdf"},
-            "claim_form:VehicleMake": {"field_name": "VehicleMake", "value": "Honda", "confidence": 0.96, "source_file": "claim_form.pdf"},
-            "claim_form:VehicleModel": {"field_name": "VehicleModel", "value": "CR-V", "confidence": 0.96, "source_file": "claim_form.pdf"},
-            "claim_form:VehicleVIN": {"field_name": "VehicleVIN", "value": "2HKRW2H53MH604218", "confidence": 0.93, "source_file": "claim_form.pdf"},
-            "claim_form:DamageDescription": {"field_name": "DamageDescription", "value": "Rear bumper and trunk lid damage from rear-end collision", "confidence": 0.92, "source_file": "claim_form.pdf"},
-            "claim_form:RepairEstimate": {"field_name": "RepairEstimate", "value": "3200.00", "confidence": 0.95, "source_file": "repair_estimate.pdf"},
-            "police_report:ReportNumber": {"field_name": "ReportNumber", "value": "PR-2024-TPS-88214", "confidence": 0.94, "source_file": "police_report.pdf"},
-            "police_report:OtherPartyInsurer": {"field_name": "OtherPartyInsurer", "value": "Aviva Canada", "confidence": 0.91, "source_file": "police_report.pdf"},
+            "constat:NumeroSinistre": {"field_name": "NumeroSinistre", "value": "SIN-AG-241118-01", "confidence": 0.95, "source_file": "constat_amiable.pdf"},
+            "constat:NumeroPolice": {"field_name": "NumeroPolice", "value": "AUTO-GRP-7724519", "confidence": 0.97, "source_file": "constat_amiable.pdf"},
+            "constat:NomAssure": {"field_name": "NomAssure", "value": "GARCIA Antonio", "confidence": 0.98, "source_file": "constat_amiable.pdf"},
+            "constat:DateSinistre": {"field_name": "DateSinistre", "value": "15/11/2024", "confidence": 0.96, "source_file": "constat_amiable.pdf"},
+            "constat:AnneeVehicule": {"field_name": "AnneeVehicule", "value": "2021", "confidence": 0.97, "source_file": "constat_amiable.pdf"},
+            "constat:MarqueVehicule": {"field_name": "MarqueVehicule", "value": "Renault", "confidence": 0.96, "source_file": "constat_amiable.pdf"},
+            "constat:ModeleVehicule": {"field_name": "ModeleVehicule", "value": "Clio V", "confidence": 0.96, "source_file": "constat_amiable.pdf"},
+            "constat:Immatriculation": {"field_name": "Immatriculation", "value": "FG-472-MK", "confidence": 0.93, "source_file": "constat_amiable.pdf"},
+            "constat:DescriptionDommages": {"field_name": "DescriptionDommages", "value": "Dommages pare-chocs arrière et coffre suite à collision arrière", "confidence": 0.92, "source_file": "constat_amiable.pdf"},
+            "devis:MontantReparation": {"field_name": "MontantReparation", "value": "1900.00", "confidence": 0.95, "source_file": "devis_reparation.pdf"},
+            "rapport:NumeroRapport": {"field_name": "NumeroRapport", "value": "PV-2024-TLS-88214", "confidence": 0.94, "source_file": "rapport_police.pdf"},
+            "rapport:AssureurTiers": {"field_name": "AssureurTiers", "value": "MAIF", "confidence": 0.91, "source_file": "rapport_police.pdf"},
         },
         "confidence_summary": {
             "total_fields": 12,
@@ -158,39 +164,39 @@ def _sarah_chen_auto() -> Dict[str, Any]:
             "medium_confidence_count": 1,
             "low_confidence_count": 0,
             "high_confidence_fields": [
-                {"name": "claim_form:InsuredName", "confidence": 0.98},
-                {"name": "claim_form:PolicyNumber", "confidence": 0.97},
-                {"name": "claim_form:VehicleYear", "confidence": 0.97},
-                {"name": "claim_form:VehicleMake", "confidence": 0.96},
-                {"name": "claim_form:VehicleModel", "confidence": 0.96},
-                {"name": "claim_form:DateOfLoss", "confidence": 0.96},
-                {"name": "claim_form:ClaimNumber", "confidence": 0.95},
-                {"name": "claim_form:RepairEstimate", "confidence": 0.95},
-                {"name": "police_report:ReportNumber", "confidence": 0.94},
-                {"name": "claim_form:VehicleVIN", "confidence": 0.93},
-                {"name": "claim_form:DamageDescription", "confidence": 0.92},
+                {"name": "constat:NomAssure", "confidence": 0.98},
+                {"name": "constat:NumeroPolice", "confidence": 0.97},
+                {"name": "constat:AnneeVehicule", "confidence": 0.97},
+                {"name": "constat:MarqueVehicule", "confidence": 0.96},
+                {"name": "constat:ModeleVehicule", "confidence": 0.96},
+                {"name": "constat:DateSinistre", "confidence": 0.96},
+                {"name": "constat:NumeroSinistre", "confidence": 0.95},
+                {"name": "devis:MontantReparation", "confidence": 0.95},
+                {"name": "rapport:NumeroRapport", "confidence": 0.94},
+                {"name": "constat:Immatriculation", "confidence": 0.93},
+                {"name": "constat:DescriptionDommages", "confidence": 0.92},
             ],
             "medium_confidence_fields": [
-                {"name": "police_report:OtherPartyInsurer", "confidence": 0.91},
+                {"name": "rapport:AssureurTiers", "confidence": 0.91},
             ],
             "low_confidence_fields": [],
         },
     }
 
 
-def _marcus_williams_health() -> Dict[str, Any]:
-    """Marcus Williams — cardiac workup, all services approved."""
+def _rousseau_marc_health() -> Dict[str, Any]:
+    """GRP-017 ROUSSEAU Marc — hospitalisation genou, actes chirurgicaux remboursés."""
     return {
         "id": "app-mw-hc-001",
-        "created_at": "2023-07-10T09:15:00Z",
-        "external_reference": "CUST-MW-002",
+        "created_at": "2024-07-10T09:15:00Z",
+        "external_reference": "GRP-017",
         "status": "completed",
         "persona": "life_health_claims",
         "files": [
-            {"filename": "claim_form_health.pdf", "path": "applications/app-mw-hc-001/claim_form_health.pdf", "content_type": "application/pdf", "media_type": "document"},
-            {"filename": "eob_statement.pdf", "path": "applications/app-mw-hc-001/eob_statement.pdf", "content_type": "application/pdf", "media_type": "document"},
-            {"filename": "cardiology_notes.pdf", "path": "applications/app-mw-hc-001/cardiology_notes.pdf", "content_type": "application/pdf", "media_type": "document"},
-            {"filename": "lab_results.pdf", "path": "applications/app-mw-hc-001/lab_results.pdf", "content_type": "application/pdf", "media_type": "document"},
+            {"filename": "declaration_sinistre_sante.pdf", "path": "applications/app-mw-hc-001/declaration_sinistre_sante.pdf", "content_type": "application/pdf", "media_type": "document"},
+            {"filename": "decompte_securite_sociale.pdf", "path": "applications/app-mw-hc-001/decompte_securite_sociale.pdf", "content_type": "application/pdf", "media_type": "document"},
+            {"filename": "compte_rendu_chirurgical.pdf", "path": "applications/app-mw-hc-001/compte_rendu_chirurgical.pdf", "content_type": "application/pdf", "media_type": "document"},
+            {"filename": "facture_hospitalisation.pdf", "path": "applications/app-mw-hc-001/facture_hospitalisation.pdf", "content_type": "application/pdf", "media_type": "document"},
         ],
         "llm_outputs": {
             "clinical_case_notes": {
@@ -198,26 +204,25 @@ def _marcus_williams_health() -> Dict[str, Any]:
                     "section": "clinical_case_notes",
                     "subsection": "reason_for_visit",
                     "raw": (
-                        "Marcus Williams, 47-year-old male, presented to Dr. Anita Reddy (Cardiology) "
-                        "on 2023-06-05 for evaluation of episodic chest tightness and exertional dyspnea. "
-                        "Symptoms began approximately 3 months prior and occurred primarily with moderate "
-                        "physical activity such as climbing stairs or brisk walking. Patient has a known "
-                        "history of essential hypertension (diagnosed 2018) managed with lisinopril 20 mg "
-                        "daily, and hyperlipidemia managed with atorvastatin 40 mg daily. Family history "
-                        "significant for paternal MI at age 58. No prior cardiac events."
+                        "ROUSSEAU Marc, 66 ans, adressé au Dr Laurent MICHAUD (chirurgie orthopédique, "
+                        "CHU de Tours) le 15/05/2024 pour gonarthrose invalidante du genou droit. "
+                        "Douleurs progressives depuis 2 ans, limitation fonctionnelle croissante à la "
+                        "marche (< 500 m), escaliers impossibles. Traitements conservateurs épuisés : "
+                        "infiltrations corticoïdes (x3), kinésithérapie (30 séances), antalgiques "
+                        "palier II. IRM confirmant arthrose fémoro-tibiale médiale stade IV Kellgren-Lawrence. "
+                        "Indication chirurgicale retenue : prothèse totale de genou droit."
                     ),
                     "parsed": {
-                        "summary": "Patient presented for cardiac evaluation following episodes of chest discomfort.",
-                        "chief_complaint": "Episodic chest tightness and shortness of breath on exertion",
-                        "symptom_duration": "Intermittent over 3 months",
-                        "severity": "Moderate",
-                        "urgency": "Semi-Urgent",
+                        "summary": "Patient adressé pour chirurgie prothétique du genou droit suite à gonarthrose invalidante.",
+                        "chief_complaint": "Gonarthrose invalidante du genou droit avec limitation fonctionnelle majeure",
+                        "symptom_duration": "Progressive sur 2 ans",
+                        "severity": "Sévère",
+                        "urgency": "Programmée",
                         "history_of_present_illness": (
-                            "47-year-old male with HTN and hyperlipidemia presenting with 3-month history "
-                            "of exertional chest tightness and dyspnea. Episodes occur with moderate activity, "
-                            "resolve with rest within 5 minutes. No rest pain, syncope, or palpitations. "
-                            "Family history of premature CAD. Current medications: lisinopril 20 mg, "
-                            "atorvastatin 40 mg."
+                            "Homme de 66 ans avec gonarthrose stade IV Kellgren-Lawrence du genou droit. "
+                            "Traitements conservateurs épuisés (infiltrations x3, kiné 30 séances, antalgiques "
+                            "palier II). Limitation de marche < 500 m, escaliers impossibles. "
+                            "Indication de prothèse totale de genou retenue en RCP."
                         ),
                     },
                 },
@@ -225,51 +230,48 @@ def _marcus_williams_health() -> Dict[str, Any]:
                     "section": "clinical_case_notes",
                     "subsection": "key_diagnoses",
                     "raw": (
-                        "Following complete cardiac workup including stress test and echocardiogram, "
-                        "primary diagnosis is hypertensive heart disease with mild left ventricular "
-                        "hypertrophy (LVH). Stress test was negative for ischemia with adequate exercise "
-                        "tolerance. Echocardiogram confirmed concentric LVH with preserved ejection "
-                        "fraction (EF 60%). Lipid panel showed LDL 142 mg/dL, above target. ICD-10 codes "
-                        "assigned: I11.9, I10, E78.5."
+                        "Diagnostic principal : gonarthrose primitive du genou droit, stade IV "
+                        "Kellgren-Lawrence avec pincement complet de l'interligne fémoro-tibiale médiale. "
+                        "Comorbidités : hypertension artérielle traitée (amlodipine 5 mg), diabète de type 2 "
+                        "équilibré (metformine 1000 mg x2/j, HbA1c 6,8 %). Codes CIM-10 : M17.1 (gonarthrose "
+                        "primitive), I10 (HTA), E11.9 (diabète type 2)."
                     ),
                     "parsed": {
-                        "summary": "Mild LVH consistent with long-standing hypertension. No ischemic heart disease. Hyperlipidemia above target.",
-                        "primary_diagnosis": "I11.9 — Hypertensive heart disease without heart failure",
-                        "secondary_diagnoses": ["I10 — Essential hypertension", "E78.5 — Hyperlipidemia"],
-                        "diagnosis_consistency": "Yes",
-                        "coding_accuracy": "Accurate",
+                        "summary": "Gonarthrose primitive sévère du genou droit. Comorbidités contrôlées (HTA, diabète type 2).",
+                        "primary_diagnosis": "M17.1 — Gonarthrose primitive du genou droit",
+                        "secondary_diagnoses": ["I10 — Hypertension artérielle essentielle", "E11.9 — Diabète de type 2"],
+                        "diagnosis_consistency": "Oui",
+                        "coding_accuracy": "Conforme",
                     },
                 },
                 "medical_necessity": {
                     "section": "clinical_case_notes",
                     "subsection": "medical_necessity",
                     "raw": (
-                        "All services provided are medically necessary given the patient's cardiac risk "
-                        "profile. A 47-year-old male with hypertension, hyperlipidemia, family history "
-                        "of premature CAD, and new-onset exertional symptoms warrants a comprehensive "
-                        "cardiac evaluation. The stress test was appropriate to rule out ischemia. The "
-                        "echocardiogram was indicated to assess structural changes from long-standing "
-                        "hypertension. Lab work was necessary for lipid monitoring and metabolic assessment. "
-                        "Follow-up visit for medication adjustment was clinically appropriate."
+                        "Tous les actes réalisés sont médicalement justifiés compte tenu du tableau "
+                        "clinique. L'arthrose stade IV avec épuisement des traitements conservateurs "
+                        "constitue une indication chirurgicale validée par la HAS. La consultation "
+                        "pré-anesthésique était requise (ASA II). L'hospitalisation de 5 jours est "
+                        "conforme aux durées moyennes de séjour (DMS) pour PTG. La rééducation "
+                        "post-opératoire de 20 séances est dans les recommandations HAS."
                     ),
                     "parsed": {
-                        "summary": "All services medically necessary given cardiac risk profile.",
-                        "necessity_determination": "Necessary",
+                        "summary": "Tous les actes médicalement nécessaires conformément aux recommandations HAS.",
+                        "necessity_determination": "Nécessaire",
                         "clinical_rationale": (
-                            "Patient's combination of exertional symptoms, hypertension, hyperlipidemia, "
-                            "and family history of premature CAD justifies a full cardiac workup including "
-                            "stress test, echocardiogram, and laboratory evaluation. Follow-up for medication "
-                            "titration is standard of care."
+                            "Gonarthrose stade IV avec échec des traitements conservateurs. "
+                            "Indication chirurgicale validée par la HAS. Hospitalisation conforme "
+                            "à la DMS nationale. Rééducation dans les recommandations."
                         ),
                         "services_reviewed": [
-                            {"service": "Office Visit — Level 4", "code": "99214", "necessity_status": "Necessary", "rationale": "Complex cardiac risk assessment with multiple comorbidities"},
-                            {"service": "Stress Test", "code": "93015", "necessity_status": "Necessary", "rationale": "Rule out ischemia given exertional symptoms and risk factors"},
-                            {"service": "Echocardiogram", "code": "93306", "necessity_status": "Necessary", "rationale": "Evaluate cardiac structure given long-standing hypertension"},
-                            {"service": "Lab Panel", "code": "80061", "necessity_status": "Necessary", "rationale": "Lipid panel monitoring and metabolic assessment"},
-                            {"service": "Follow-up Visit", "code": "99213", "necessity_status": "Necessary", "rationale": "Review results and adjust antihypertensive and statin therapy"},
+                            {"service": "Consultation orthopédique", "code": "CCAM NZQK001", "necessity_status": "Nécessaire", "rationale": "Bilan pré-opératoire et pose d'indication chirurgicale"},
+                            {"service": "Consultation pré-anesthésique", "code": "CCAM ZZQM006", "necessity_status": "Nécessaire", "rationale": "Patient ASA II (HTA + diabète), anesthésie générale prévue"},
+                            {"service": "Prothèse totale de genou", "code": "CCAM NFKA007", "necessity_status": "Nécessaire", "rationale": "Gonarthrose stade IV, traitements conservateurs épuisés"},
+                            {"service": "Hospitalisation 5 jours", "code": "GHS 3682", "necessity_status": "Nécessaire", "rationale": "Conforme à la DMS nationale pour PTG"},
+                            {"service": "Rééducation (20 séances)", "code": "CCAM NZRB001", "necessity_status": "Nécessaire", "rationale": "Protocole post-PTG recommandé par la HAS"},
                         ],
-                        "documentation_quality": "Adequate",
-                        "recommended_action": "Approve all services",
+                        "documentation_quality": "Complète",
+                        "recommended_action": "Approuver tous les actes",
                     },
                 },
             },
@@ -278,26 +280,24 @@ def _marcus_williams_health() -> Dict[str, Any]:
                     "section": "clinical_timeline",
                     "subsection": "treatment_timeline",
                     "raw": (
-                        "Treatment spanned 30 days from initial consultation to follow-up. "
-                        "2023-06-05: Initial cardiology consultation with resting EKG showing LVH pattern. "
-                        "2023-06-12: Exercise stress test on treadmill, Bruce protocol — 10 minutes, "
-                        "negative for ischemia, adequate heart rate response. 2023-06-19: Transthoracic "
-                        "echocardiogram showing concentric LVH, EF 60%, no valvular abnormalities. "
-                        "2023-06-26: Fasting lab draw — lipid panel, CMP, CBC. 2023-07-05: Follow-up "
-                        "visit, lisinopril increased to 40 mg, atorvastatin increased to 80 mg, lifestyle "
-                        "counseling provided."
+                        "Parcours de soins sur 60 jours. 15/05/2024 : consultation orthopédique "
+                        "initiale, IRM confirmant indication chirurgicale. 22/05/2024 : consultation "
+                        "pré-anesthésique, bilan sanguin pré-opératoire. 03/06/2024 : admission CHU "
+                        "Tours, pose PTG genou droit sous AG. 04-07/06/2024 : hospitalisation, "
+                        "rééducation initiale. 08/06/2024 : sortie, transfert SSR. 10/06-15/07/2024 : "
+                        "20 séances de rééducation en centre SSR Touraine."
                     ),
                     "parsed": {
-                        "summary": "Diagnostic cardiac workup completed over 30 days with appropriate sequencing of tests and timely follow-up.",
+                        "summary": "Parcours chirurgical complet sur 60 jours avec suites opératoires conformes.",
                         "timeline_events": [
-                            {"date": "2023-06-05", "event": "Initial cardiac consultation with EKG", "duration_days": 0},
-                            {"date": "2023-06-12", "event": "Exercise stress test — negative for ischemia", "duration_days": 7},
-                            {"date": "2023-06-19", "event": "Echocardiogram — mild LVH detected", "duration_days": 14},
-                            {"date": "2023-06-26", "event": "Lab work — lipid panel, metabolic panel", "duration_days": 21},
-                            {"date": "2023-07-05", "event": "Follow-up with cardiologist — medication adjusted", "duration_days": 30},
+                            {"date": "2024-05-15", "event": "Consultation orthopédique initiale", "event_type": "visit", "description": "Bilan clinique et IRM, indication PTG retenue", "duration_days": 0},
+                            {"date": "2024-05-22", "event": "Consultation pré-anesthésique", "event_type": "visit", "description": "Bilan pré-opératoire, patient ASA II", "duration_days": 7},
+                            {"date": "2024-06-03", "event": "Chirurgie PTG genou droit", "event_type": "procedure", "description": "Pose de prothèse totale de genou sous anesthésie générale", "duration_days": 19},
+                            {"date": "2024-06-08", "event": "Sortie d'hospitalisation", "event_type": "visit", "description": "Sortie J+5, transfert en SSR", "duration_days": 24},
+                            {"date": "2024-07-15", "event": "Fin de rééducation", "event_type": "visit", "description": "20 séances de kinésithérapie, récupération fonctionnelle satisfaisante", "duration_days": 61},
                         ],
-                        "total_duration": 30,
-                        "treatment_pattern": "Episodic — diagnostic workup",
+                        "total_duration": 61,
+                        "treatment_pattern": "Chirurgie programmée + rééducation",
                     },
                 },
             },
@@ -306,56 +306,55 @@ def _marcus_williams_health() -> Dict[str, Any]:
                     "section": "benefits_policy",
                     "subsection": "eligibility_verification",
                     "raw": (
-                        "Member Marcus Williams (MEM-MW-47892) verified as active under group "
-                        "GRP-FIN-6621 (Meridian Financial Services). HealthPlus Preferred PPO plan "
-                        "effective 2021-03-01 with no termination date through 2024-12-31. All services "
-                        "rendered by in-network providers. No coordination of benefits required. "
-                        "Member in good standing with premiums current."
+                        "Adhérent ROUSSEAU Marc (n° adhérent GRP-SANTE-17892) vérifié comme actif "
+                        "au titre du contrat collectif Complémentaire Santé Groupama Vitalia (n° groupe "
+                        "GRP-COL-6621). Contrat en vigueur depuis le 20/01/2003, sans date de résiliation. "
+                        "Tous les soins dispensés par des praticiens conventionnés secteur 1. Aucune "
+                        "coordination inter-mutuelles requise. Cotisations à jour."
                     ),
                     "parsed": {
-                        "summary": "Member eligible for all claimed services.",
-                        "eligibility_status": "Eligible",
-                        "member_info": {"name": "Marcus Williams", "member_id": "MEM-MW-47892", "group": "GRP-FIN-6621"},
-                        "coverage_dates": {"effective_date": "2021-03-01", "termination_date": "2024-12-31"},
-                        "plan_details": {"plan_name": "HealthPlus Preferred PPO", "plan_type": "PPO", "network_status": "In-Network"},
+                        "summary": "Adhérent éligible pour l'ensemble des prestations demandées.",
+                        "eligibility_status": "Éligible",
+                        "member_info": {"name": "ROUSSEAU Marc", "member_id": "GRP-SANTE-17892", "group": "GRP-COL-6621"},
+                        "coverage_dates": {"effective_date": "2003-01-20", "termination_date": "2025-12-31"},
+                        "plan_details": {"plan_name": "Groupama Vitalia Confort+", "plan_type": "Complémentaire Santé", "network_status": "Conventionné Secteur 1"},
                         "eligibility_issues": [],
-                        "processing_action": "Proceed",
+                        "processing_action": "Poursuivre",
                     },
                 },
                 "exclusions_limitations": {
                     "section": "benefits_policy",
                     "subsection": "exclusions_limitations",
                     "raw": (
-                        "No applicable exclusions or limitations identified for this claim. "
-                        "Cardiac diagnostic services are covered under the plan's preventive and "
-                        "diagnostic benefit category. Hypertension was first diagnosed in 2018 while "
-                        "the member has been continuously covered since 2021-03-01, so pre-existing "
-                        "condition clauses do not apply. No waiting periods for diagnostic services."
+                        "Aucune exclusion ou limitation applicable à ce sinistre. Les actes "
+                        "chirurgicaux orthopédiques sont couverts au titre de la garantie hospitalisation. "
+                        "La gonarthrose a été diagnostiquée bien après l'adhésion (2003). Pas de "
+                        "délai de carence applicable. Pas de dépassements d'honoraires (secteur 1)."
                     ),
                     "parsed": {
-                        "summary": "No applicable exclusions or limitations.",
+                        "summary": "Aucune exclusion ni limitation applicable.",
                         "applicable_exclusions": [],
-                        "pre_existing_review": "Not applicable — condition onset during coverage period",
-                        "waiting_periods": "None applicable",
-                        "processing_action": "Approve",
+                        "pre_existing_review": "Non applicable — pathologie déclarée en cours de contrat",
+                        "waiting_periods": "Aucun applicable",
+                        "processing_action": "Approuver",
                     },
                 },
                 "benefit_limits": {
                     "section": "benefits_policy",
                     "subsection": "benefit_limits",
                     "raw": (
-                        "Member has utilized 4 specialist visits year-to-date against a plan maximum "
-                        "of 30. Annual benefit maximum of $75,000 with $2,340 utilized prior to this "
-                        "claim. Annual deductible of $750 has been met. Out-of-pocket maximum is $6,500 "
-                        "with $1,120 applied year-to-date. All services fall within benefit limits."
+                        "L'adhérent a utilisé 2 hospitalisations sur un maximum annuel de 5. "
+                        "Plafond annuel de remboursement de 50 000 € avec 3 240 € utilisés avant "
+                        "ce sinistre. Franchise annuelle de 150 € déjà atteinte. Plafond optique/dentaire "
+                        "non concerné. Tous les actes sont dans les limites de garantie."
                     ),
                     "parsed": {
-                        "summary": "All services within benefit limits.",
-                        "applicable_limits": {"max_visits": 30, "max_amount": 75000},
-                        "deductible_status": "Met for year",
-                        "oop_maximum": 6500,
+                        "summary": "Tous les actes dans les limites de garantie.",
+                        "applicable_limits": {"max_hospitalizations": 5, "max_amount": 50000},
+                        "deductible_status": "Franchise annuelle atteinte",
+                        "oop_maximum": 2500,
                         "limit_concerns": [],
-                        "processing_action": "Approve",
+                        "processing_action": "Approuver",
                     },
                 },
             },
@@ -364,31 +363,30 @@ def _marcus_williams_health() -> Dict[str, Any]:
                     "section": "claim_line_evaluation",
                     "subsection": "line_item_review",
                     "raw": (
-                        "Five claim lines reviewed. All CPT codes are appropriate for the documented "
-                        "services. Office visit Level 4 (99214) supported by complexity of cardiac "
-                        "risk assessment. Stress test (93015) and echocardiogram (93306) are distinct "
-                        "procedures performed on separate dates — no bundling concerns. Lab panel "
-                        "(80061) is the standard lipid panel code. Follow-up coded as Level 3 (99213) "
-                        "which is appropriate for a results-review visit. All billed amounts reduced "
-                        "to allowed amounts per PPO fee schedule. Member responsibility is 10% "
-                        "coinsurance after deductible."
+                        "Cinq lignes de prestations examinées. Tous les codes CCAM sont appropriés "
+                        "pour les actes documentés. La consultation orthopédique (C2 + MPC) est "
+                        "justifiée par la complexité du cas. La PTG (NFKA007) et l'hospitalisation "
+                        "(GHS 3682) sont des actes distincts. Le bilan pré-anesthésique (ZZQM006) "
+                        "est conforme. La rééducation (20 × NZRB001) est dans les recommandations HAS. "
+                        "Montants réduits aux tarifs conventionnels Sécurité sociale, complément "
+                        "pris en charge par la mutuelle à 100 % du TM."
                     ),
                     "parsed": {
-                        "summary": "All 5 claim lines reviewed and approved.",
-                        "total_billed": 4800.00,
-                        "total_allowed": 4200.00,
-                        "total_plan_pays": 3780.00,
-                        "total_member_pays": 420.00,
+                        "summary": "5 lignes de prestations examinées et approuvées.",
+                        "total_billed": 8450.00,
+                        "total_allowed": 7200.00,
+                        "total_plan_pays": 2160.00,
+                        "total_member_pays": 0.00,
                         "claim_lines": [
-                            {"line_num": 1, "description": "Office Visit — Level 4", "code": "99214", "billed": 285.00, "allowed": 250.00, "plan_pays": 225.00, "member_pays": 25.00, "status": "Approved"},
-                            {"line_num": 2, "description": "Exercise Stress Test", "code": "93015", "billed": 1450.00, "allowed": 1200.00, "plan_pays": 1080.00, "member_pays": 120.00, "status": "Approved"},
-                            {"line_num": 3, "description": "Echocardiogram", "code": "93306", "billed": 1580.00, "allowed": 1400.00, "plan_pays": 1260.00, "member_pays": 140.00, "status": "Approved"},
-                            {"line_num": 4, "description": "Comprehensive Lab Panel", "code": "80061", "billed": 765.00, "allowed": 650.00, "plan_pays": 585.00, "member_pays": 65.00, "status": "Approved"},
-                            {"line_num": 5, "description": "Follow-up Visit — Level 3", "code": "99213", "billed": 720.00, "allowed": 700.00, "plan_pays": 630.00, "member_pays": 70.00, "status": "Approved"},
+                            {"line_num": 1, "description": "Consultation orthopédique spécialisée", "code": "CCAM C2+MPC", "billed": "350,00 €", "allowed": "300,00 €", "plan_pays": "90,00 €", "member_pays": "0,00 €", "status": "Approuvé"},
+                            {"line_num": 2, "description": "Consultation pré-anesthésique", "code": "CCAM ZZQM006", "billed": "120,00 €", "allowed": "100,00 €", "plan_pays": "30,00 €", "member_pays": "0,00 €", "status": "Approuvé"},
+                            {"line_num": 3, "description": "Prothèse totale de genou", "code": "CCAM NFKA007", "billed": "4 800,00 €", "allowed": "4 200,00 €", "plan_pays": "1 260,00 €", "member_pays": "0,00 €", "status": "Approuvé"},
+                            {"line_num": 4, "description": "Hospitalisation 5 jours (GHS)", "code": "GHS 3682", "billed": "2 380,00 €", "allowed": "2 000,00 €", "plan_pays": "600,00 €", "member_pays": "0,00 €", "status": "Approuvé"},
+                            {"line_num": 5, "description": "Rééducation (20 séances kiné)", "code": "CCAM NZRB001", "billed": "800,00 €", "allowed": "600,00 €", "plan_pays": "180,00 €", "member_pays": "0,00 €", "status": "Approuvé"},
                         ],
                         "coding_issues": [],
                         "bundling_flags": [],
-                        "recommended_action": "Approve all lines",
+                        "recommended_action": "Approuver toutes les lignes",
                     },
                 },
             },
@@ -397,95 +395,98 @@ def _marcus_williams_health() -> Dict[str, Any]:
                     "section": "tasks_decisions",
                     "subsection": "final_decision",
                     "raw": (
-                        "Claim HC-MW-230710-01 is approved in full. All five service lines are "
-                        "medically necessary, correctly coded, and within plan benefits. Member is "
-                        "eligible and in-network. No exclusions or limitations apply. Total plan "
-                        "payment of $3,780.00 to be issued to Lakeview Cardiology Associates. "
-                        "Member responsibility of $420.00 (10% coinsurance). EOB to be mailed to "
-                        "member within 5 business days."
+                        "Sinistre SIN-MR-240710-01 approuvé en totalité. Les cinq lignes de "
+                        "prestations sont médicalement justifiées, correctement codifiées et dans "
+                        "les garanties du contrat. L'adhérent est éligible et les praticiens sont "
+                        "conventionnés secteur 1. Aucune exclusion applicable. Part mutuelle de "
+                        "2 160,00 € à verser au CHU de Tours. Reste à charge adhérent : 0,00 €. "
+                        "Décompte à adresser à l'adhérent sous 5 jours ouvrés."
                     ),
                     "parsed": {
-                        "summary": "Claim approved in full. All services medically necessary and within plan benefits.",
-                        "decision": "Approved",
+                        "summary": "Sinistre approuvé en totalité. Tous les actes médicalement justifiés et dans les garanties.",
+                        "decision": "Approuvé",
                         "decision_rationale": (
-                            "All services are medically necessary for a 47-year-old male with exertional "
-                            "symptoms, hypertension, hyperlipidemia, and family history of premature CAD. "
-                            "Coding is accurate, no bundling issues, and all providers are in-network. "
-                            "Member is eligible with deductible met."
+                            "Tous les actes sont médicalement nécessaires pour un patient de 66 ans "
+                            "présentant une gonarthrose stade IV avec échec des traitements conservateurs. "
+                            "Codification conforme, pas de problème de cumul, praticiens conventionnés. "
+                            "Adhérent éligible, franchise atteinte."
                         ),
-                        "payment_summary": {"total_plan_pays": 3780.00, "total_member_pays": 420.00, "deductible_applied": 0},
+                        "payment_summary": {"total_plan_pays": 2160.00, "total_member_pays": 0.00, "deductible_applied": 0},
                         "denial_reasons": [],
                         "pend_reasons": [],
-                        "appeal_rights": "Member may appeal within 30 days of EOB",
-                        "next_steps": ["Issue payment to provider", "Send EOB to member"],
-                        "reviewer_notes": "All documentation complete. Cardiac evaluation appropriate given risk factors.",
+                        "appeal_rights": "L'adhérent peut contester dans les 30 jours suivant le décompte",
+                        "next_steps": ["Virement au CHU de Tours", "Envoi du décompte à l'adhérent"],
+                        "reviewer_notes": "Documentation complète. Parcours de soins conforme aux recommandations HAS.",
                     },
                 },
             },
         },
         "extracted_fields": {
-            "claim_form:ClaimNumber": {"field_name": "ClaimNumber", "value": "HC-MW-230710-01", "confidence": 0.96, "source_file": "claim_form_health.pdf"},
-            "claim_form:MemberName": {"field_name": "MemberName", "value": "Marcus Williams", "confidence": 0.98, "source_file": "claim_form_health.pdf"},
-            "claim_form:MemberID": {"field_name": "MemberID", "value": "MEM-MW-47892", "confidence": 0.97, "source_file": "claim_form_health.pdf"},
-            "claim_form:GroupNumber": {"field_name": "GroupNumber", "value": "GRP-FIN-6621", "confidence": 0.96, "source_file": "claim_form_health.pdf"},
-            "claim_form:PlanName": {"field_name": "PlanName", "value": "HealthPlus Preferred PPO", "confidence": 0.95, "source_file": "claim_form_health.pdf"},
-            "claim_form:DiagnosisCode": {"field_name": "DiagnosisCode", "value": "I11.9", "confidence": 0.97, "source_file": "claim_form_health.pdf"},
-            "claim_form:DiagnosisDescription": {"field_name": "DiagnosisDescription", "value": "Hypertensive heart disease without heart failure", "confidence": 0.94, "source_file": "claim_form_health.pdf"},
-            "claim_form:ServiceDateFrom": {"field_name": "ServiceDateFrom", "value": "2023-06-05", "confidence": 0.96, "source_file": "claim_form_health.pdf"},
-            "claim_form:ServiceDateTo": {"field_name": "ServiceDateTo", "value": "2023-07-05", "confidence": 0.95, "source_file": "claim_form_health.pdf"},
-            "claim_form:TotalBilled": {"field_name": "TotalBilled", "value": "4800.00", "confidence": 0.97, "source_file": "claim_form_health.pdf"},
-            "claim_form:ProviderName": {"field_name": "ProviderName", "value": "Lakeview Cardiology Associates", "confidence": 0.93, "source_file": "claim_form_health.pdf"},
-            "claim_form:ProviderNPI": {"field_name": "ProviderNPI", "value": "1467823590", "confidence": 0.92, "source_file": "claim_form_health.pdf"},
-            "claim_form:RenderingPhysician": {"field_name": "RenderingPhysician", "value": "Dr. Anita Reddy, MD, FACC", "confidence": 0.94, "source_file": "cardiology_notes.pdf"},
-            "eob:TotalAllowed": {"field_name": "TotalAllowed", "value": "4200.00", "confidence": 0.96, "source_file": "eob_statement.pdf"},
-            "eob:PlanPays": {"field_name": "PlanPays", "value": "3780.00", "confidence": 0.96, "source_file": "eob_statement.pdf"},
-            "eob:MemberPays": {"field_name": "MemberPays", "value": "420.00", "confidence": 0.95, "source_file": "eob_statement.pdf"},
+            "declaration:NumeroSinistre": {"field_name": "NumeroSinistre", "value": "SIN-MR-240710-01", "confidence": 0.96, "source_file": "declaration_sinistre_sante.pdf"},
+            "declaration:NomAdherent": {"field_name": "NomAdherent", "value": "ROUSSEAU Marc", "confidence": 0.98, "source_file": "declaration_sinistre_sante.pdf"},
+            "declaration:NumeroAdherent": {"field_name": "NumeroAdherent", "value": "GRP-SANTE-17892", "confidence": 0.97, "source_file": "declaration_sinistre_sante.pdf"},
+            "declaration:NumeroGroupe": {"field_name": "NumeroGroupe", "value": "GRP-COL-6621", "confidence": 0.96, "source_file": "declaration_sinistre_sante.pdf"},
+            "declaration:NomContrat": {"field_name": "NomContrat", "value": "Groupama Vitalia Confort+", "confidence": 0.95, "source_file": "declaration_sinistre_sante.pdf"},
+            "compte_rendu:CodeDiagnostic": {"field_name": "CodeDiagnostic", "value": "M17.1", "confidence": 0.97, "source_file": "compte_rendu_chirurgical.pdf"},
+            "compte_rendu:DescriptionDiagnostic": {"field_name": "DescriptionDiagnostic", "value": "Gonarthrose primitive du genou droit", "confidence": 0.94, "source_file": "compte_rendu_chirurgical.pdf"},
+            "facture:DateDebut": {"field_name": "DateDebut", "value": "03/06/2024", "confidence": 0.96, "source_file": "facture_hospitalisation.pdf"},
+            "facture:DateFin": {"field_name": "DateFin", "value": "08/06/2024", "confidence": 0.95, "source_file": "facture_hospitalisation.pdf"},
+            "facture:MontantTotal": {"field_name": "MontantTotal", "value": "8450.00", "confidence": 0.97, "source_file": "facture_hospitalisation.pdf"},
+            "facture:NomEtablissement": {"field_name": "NomEtablissement", "value": "CHU de Tours — Service Orthopédie", "confidence": 0.93, "source_file": "facture_hospitalisation.pdf"},
+            "decompte:PartSecu": {"field_name": "PartSecu", "value": "5040.00", "confidence": 0.96, "source_file": "decompte_securite_sociale.pdf"},
+            "decompte:PartMutuelle": {"field_name": "PartMutuelle", "value": "2160.00", "confidence": 0.96, "source_file": "decompte_securite_sociale.pdf"},
+            "decompte:ResteACharge": {"field_name": "ResteACharge", "value": "0.00", "confidence": 0.95, "source_file": "decompte_securite_sociale.pdf"},
+            "compte_rendu:Chirurgien": {"field_name": "Chirurgien", "value": "Dr Laurent MICHAUD, CHU Tours", "confidence": 0.94, "source_file": "compte_rendu_chirurgical.pdf"},
+            "compte_rendu:ProcedureCodes": {"field_name": "ProcedureCodes", "value": [
+                {"valueObject": {"code": {"valueString": "CCAM NFKA007", "confidence": 0.96}, "description": {"valueString": "Prothèse totale de genou"}}},
+                {"valueObject": {"code": {"valueString": "CCAM ZZQM006", "confidence": 0.93}, "description": {"valueString": "Consultation pré-anesthésique"}}},
+                {"valueObject": {"code": {"valueString": "CCAM NZRB001", "confidence": 0.91}, "description": {"valueString": "Rééducation fonctionnelle"}}},
+            ], "confidence": 0.94, "source_file": "compte_rendu_chirurgical.pdf"},
         },
         "confidence_summary": {
-            "total_fields": 16,
+            "total_fields": 15,
             "average_confidence": 0.95,
-            "high_confidence_count": 14,
+            "high_confidence_count": 13,
             "medium_confidence_count": 2,
             "low_confidence_count": 0,
             "high_confidence_fields": [
-                {"name": "claim_form:MemberName", "confidence": 0.98},
-                {"name": "claim_form:MemberID", "confidence": 0.97},
-                {"name": "claim_form:DiagnosisCode", "confidence": 0.97},
-                {"name": "claim_form:TotalBilled", "confidence": 0.97},
-                {"name": "claim_form:ClaimNumber", "confidence": 0.96},
-                {"name": "claim_form:GroupNumber", "confidence": 0.96},
-                {"name": "claim_form:ServiceDateFrom", "confidence": 0.96},
-                {"name": "eob:TotalAllowed", "confidence": 0.96},
-                {"name": "eob:PlanPays", "confidence": 0.96},
-                {"name": "claim_form:PlanName", "confidence": 0.95},
-                {"name": "claim_form:ServiceDateTo", "confidence": 0.95},
-                {"name": "eob:MemberPays", "confidence": 0.95},
-                {"name": "claim_form:DiagnosisDescription", "confidence": 0.94},
-                {"name": "claim_form:RenderingPhysician", "confidence": 0.94},
+                {"name": "declaration:NomAdherent", "confidence": 0.98},
+                {"name": "declaration:NumeroAdherent", "confidence": 0.97},
+                {"name": "facture:MontantTotal", "confidence": 0.97},
+                {"name": "compte_rendu:CodeDiagnostic", "confidence": 0.97},
+                {"name": "declaration:NumeroSinistre", "confidence": 0.96},
+                {"name": "declaration:NumeroGroupe", "confidence": 0.96},
+                {"name": "facture:DateDebut", "confidence": 0.96},
+                {"name": "decompte:PartSecu", "confidence": 0.96},
+                {"name": "decompte:PartMutuelle", "confidence": 0.96},
+                {"name": "declaration:NomContrat", "confidence": 0.95},
+                {"name": "facture:DateFin", "confidence": 0.95},
+                {"name": "decompte:ResteACharge", "confidence": 0.95},
+                {"name": "compte_rendu:ProcedureCodes", "confidence": 0.94},
             ],
             "medium_confidence_fields": [
-                {"name": "claim_form:ProviderName", "confidence": 0.93},
-                {"name": "claim_form:ProviderNPI", "confidence": 0.92},
+                {"name": "compte_rendu:DescriptionDiagnostic", "confidence": 0.94},
+                {"name": "facture:NomEtablissement", "confidence": 0.93},
             ],
             "low_confidence_fields": [],
         },
     }
 
 
-def _priya_patel_auto() -> Dict[str, Any]:
-    """Priya Patel — major collision, high fraud risk, SIU investigation active."""
+def _arnaud_thierry_auto() -> Dict[str, Any]:
+    """GRP-025 ARNAUD Thierry — collision frontale majeure, risque de fraude, enquête SIU."""
     return {
         "id": "app-pp-auto-001",
         "created_at": "2024-12-03T11:48:00Z",
-        "external_reference": "CUST-PP-003",
+        "external_reference": "GRP-025",
         "status": "under_investigation",
         "persona": "automotive_claims",
         "files": [
-            {"filename": "claim_form.pdf", "path": "applications/app-pp-auto-001/claim_form.pdf", "content_type": "application/pdf", "media_type": "document"},
-            {"filename": "damage_photo_front.jpg", "path": "applications/app-pp-auto-001/damage_photo_front.jpg", "content_type": "image/jpeg", "media_type": "image"},
-            {"filename": "damage_photo_side.jpg", "path": "applications/app-pp-auto-001/damage_photo_side.jpg", "content_type": "image/jpeg", "media_type": "image"},
-            {"filename": "repair_estimate.pdf", "path": "applications/app-pp-auto-001/repair_estimate.pdf", "content_type": "application/pdf", "media_type": "document"},
-            {"filename": "tow_receipt.pdf", "path": "applications/app-pp-auto-001/tow_receipt.pdf", "content_type": "application/pdf", "media_type": "document"},
+            {"filename": "constat_amiable.pdf", "path": "applications/app-pp-auto-001/constat_amiable.pdf", "content_type": "application/pdf", "media_type": "document"},
+            {"filename": "photo_dommages_avant.jpg", "path": "applications/app-pp-auto-001/photo_dommages_avant.jpg", "content_type": "image/jpeg", "media_type": "image"},
+            {"filename": "photo_dommages_lateral.jpg", "path": "applications/app-pp-auto-001/photo_dommages_lateral.jpg", "content_type": "image/jpeg", "media_type": "image"},
+            {"filename": "devis_reparation.pdf", "path": "applications/app-pp-auto-001/devis_reparation.pdf", "content_type": "application/pdf", "media_type": "document"},
+            {"filename": "facture_remorquage.pdf", "path": "applications/app-pp-auto-001/facture_remorquage.pdf", "content_type": "application/pdf", "media_type": "document"},
         ],
         "llm_outputs": {
             "damage_assessment": {
@@ -493,57 +494,56 @@ def _priya_patel_auto() -> Dict[str, Any]:
                     "section": "damage_assessment",
                     "subsection": "visual_damage_analysis",
                     "raw": (
-                        "Insured vehicle is a 2023 BMW X5 xDrive40i photographed at Premium Collision "
-                        "Centre. Significant front-end damage observed: bumper cover destroyed, grille "
-                        "shattered, hood buckled with deep V-shaped deformation. Radiator support pushed "
-                        "back approximately 6 inches. Both headlamp assemblies cracked. Front fenders "
-                        "show stress wrinkling. Of note: pre-existing scuffs and oxidation visible on "
-                        "the left front fender and driver door — inconsistent with a 2023 model year "
-                        "vehicle in claimed condition. Right-side A-pillar appears undamaged, which is "
-                        "unusual given the stated swerve-to-avoid scenario."
+                        "Véhicule assuré : BMW Série 3 320d (2022), photographié au garage Prestige "
+                        "Carrosserie Nancy. Dommages frontaux significatifs : pare-chocs avant détruit, "
+                        "calandre brisée, capot plié avec déformation en V profonde. Traverse avant "
+                        "repoussée d'environ 15 cm. Les deux blocs optiques fissurés. Ailes avant "
+                        "présentant des plis de contrainte. À noter : rayures et oxydation préexistantes "
+                        "sur l'aile avant gauche et la portière conducteur — incohérent avec un véhicule "
+                        "de 2022 dans l'état déclaré. Le montant A côté droit semble intact, ce qui "
+                        "est inhabituel compte tenu du scénario d'évitement déclaré."
                     ),
                     "parsed": {
-                        "summary": "Major front-end impact damage to 2023 BMW X5. Damage pattern raises concerns — direct frontal impact inconsistent with claimed evasive swerve maneuver. Pre-existing wear noted on adjacent panels.",
+                        "summary": "Dommages frontaux majeurs sur BMW Série 3. Le schéma de dommages soulève des interrogations — impact frontal direct incohérent avec la manœuvre d'évitement déclarée. Usure préexistante sur panneaux adjacents.",
+                        "overall_severity": "severe",
                         "damage_areas": [
-                            {"area": "Front bumper cover", "severity": "severe", "description": "Completely destroyed; fragmented plastic and detached from mounting points"},
-                            {"area": "Hood", "severity": "severe", "description": "Deep V-shaped buckle indicating direct frontal impact; paint separation at crease lines"},
-                            {"area": "Grille and radiator support", "severity": "severe", "description": "Grille shattered; radiator support displaced approximately 6 inches rearward"},
-                            {"area": "Headlamp assemblies", "severity": "moderate", "description": "Both units cracked; left assembly partially dislodged from housing"},
-                            {"area": "Front fenders", "severity": "moderate", "description": "Stress wrinkling on both sides; pre-existing scuffs and oxidation on left fender inconsistent with vehicle age"},
-                            {"area": "Driver door", "severity": "minor", "description": "Pre-existing scuffs and paint oxidation noted — not consistent with 2023 model year"},
+                            {"location": "Pare-chocs avant", "severity": "severe", "description": "Complètement détruit ; plastique fragmenté et détaché des points de fixation", "estimated_cost": 2800.00, "confidence": 0.88},
+                            {"location": "Capot", "severity": "severe", "description": "Déformation en V profonde indiquant impact frontal direct ; décollement peinture aux pliures", "estimated_cost": 3200.00, "confidence": 0.86},
+                            {"location": "Calandre et traverse avant", "severity": "severe", "description": "Calandre brisée ; traverse repoussée d'environ 15 cm vers l'arrière", "estimated_cost": 4500.00, "confidence": 0.84},
+                            {"location": "Blocs optiques", "severity": "moderate", "description": "Les deux blocs fissurés ; optique gauche partiellement délogée", "estimated_cost": 1800.00, "confidence": 0.87},
+                            {"location": "Ailes avant", "severity": "moderate", "description": "Plis de contrainte des deux côtés ; rayures et oxydation préexistantes sur aile gauche incohérentes avec l'âge du véhicule", "estimated_cost": 2200.00, "confidence": 0.79},
+                            {"location": "Portière conducteur", "severity": "minor", "description": "Rayures et oxydation préexistantes — non cohérentes avec un véhicule de 2022", "estimated_cost": 0.00, "confidence": 0.72},
                         ],
-                        "total_damage_estimate_CAD": 18500.00,
+                        "total_damage_estimate": 14500.00,
                         "airbag_deployment": False,
                         "vehicle_drivable": False,
-                        "recommended_action": "Hold for SIU review — damage pattern inconsistencies require investigation",
+                        "recommended_action": "Suspendre pour enquête SIU — incohérences dans le schéma de dommages",
                     },
                 },
                 "estimate_validation": {
                     "section": "damage_assessment",
                     "subsection": "estimate_validation",
                     "raw": (
-                        "Repair estimate from Premium Collision Centre totals $18,500 CAD. OEM parts "
-                        "pricing for 2023 BMW X5 components is at the high end of market range but "
-                        "within BMW dealer pricing. Labour at 42 hours is on the upper bound for the "
-                        "documented damage scope. Several line items require clarification: estimate "
-                        "includes blending on rear quarter panels which are not adjacent to the impact "
-                        "zone. Paint and materials at $2,800 exceeds typical range for front-only refinish."
+                        "Devis du garage Prestige Carrosserie Nancy totalisant 14 500 €. Les tarifs "
+                        "pièces OEM pour BMW Série 3 sont dans la fourchette haute mais conformes aux "
+                        "prix catalogue BMW. La main-d'œuvre à 35 heures est à la limite supérieure "
+                        "pour l'étendue des dommages documentés. Plusieurs postes nécessitent "
+                        "des éclaircissements : le devis inclut un raccord peinture sur les panneaux "
+                        "arrière qui ne sont pas adjacents à la zone d'impact. Peinture et matériaux "
+                        "à 2 200 € dépassant la fourchette habituelle pour une remise en état frontale."
                     ),
                     "parsed": {
-                        "summary": "Estimate is at the high end of market range with several questionable line items requiring clarification.",
-                        "estimate_id": "EST-PP-2024-1187",
-                        "parts_breakdown_CAD": 10200.00,
-                        "labor_hours": 42.0,
-                        "labor_rate_per_hour": 110.00,
-                        "labor_cost_CAD": 4620.00,
-                        "sublet_items": [
-                            {"description": "Wheel alignment", "cost_CAD": 180.00},
-                            {"description": "AC recharge", "cost_CAD": 150.00},
-                        ],
-                        "paint_materials_CAD": 2800.00,
-                        "estimate_accuracy": "Questionable — several line items need clarification",
-                        "comparison_market": "High end of market range",
-                        "recommended_action": "Hold pending SIU review and independent appraisal",
+                        "summary": "Devis dans la fourchette haute. Plusieurs postes nécessitent justification.",
+                        "estimate_id": "DEV-AT-2024-0891",
+                        "parts_breakdown": 7800.00,
+                        "labor_hours": 35,
+                        "labor_rate_per_hour": 85.00,
+                        "labor_cost": 2975.00,
+                        "sublet_items": ["Equilibrage/géométrie : 350 €"],
+                        "paint_materials": 2200.00,
+                        "estimate_accuracy": "Fourchette haute — justification requise",
+                        "comparison_market": "Au-dessus de la médiane",
+                        "recommended_action": "Demander justification avant approbation",
                     },
                 },
             },
@@ -552,22 +552,26 @@ def _priya_patel_auto() -> Dict[str, Any]:
                     "section": "liability_assessment",
                     "subsection": "fault_determination",
                     "raw": (
-                        "Claimant reports swerving to avoid a deer on Highway 401 near Milton at "
-                        "approximately 10:45 PM on November 30, 2024, resulting in the vehicle "
-                        "striking a concrete median barrier. No police report was filed. Claimant "
-                        "states she did not call police because the vehicle was towed by a passing "
-                        "motorist to a nearby lot. No witnesses identified. No dashcam footage "
-                        "available. The damage pattern shows direct frontal impact which is more "
-                        "consistent with a head-on collision than a swerving maneuver into a median."
+                        "Le constat amiable rapporte que l'assuré a effectué une manœuvre d'évitement "
+                        "sur la RN57 près de Nancy pour éviter un animal traversant la chaussée. "
+                        "Le véhicule aurait percuté un poteau en béton. Aucun témoin indépendant. "
+                        "L'absence de traces de freinage et le schéma de dommages (impact frontal "
+                        "direct) sont difficiles à concilier avec un scénario d'évitement latéral. "
+                        "Les dommages préexistants sur l'aile gauche questionnent l'état antérieur "
+                        "du véhicule."
                     ),
                     "parsed": {
-                        "summary": "Single-vehicle incident on Highway 401; claimant alleges swerve to avoid deer. No police report, no witnesses. Damage pattern inconsistent with stated events.",
-                        "point_of_impact": "Direct frontal — center of vehicle",
-                        "contributing_factors": ["Alleged deer avoidance maneuver", "Nighttime driving", "No corroborating evidence"],
-                        "fault_determination": "100% — single vehicle, insured at fault (if claim is valid)",
-                        "police_report_status": "Not filed — claimant cites informal tow arrangement",
-                        "witness_statements": "None available",
-                        "liability_risk": "Undetermined pending investigation",
+                        "summary": "Responsabilité contestée. Le scénario déclaré est incohérent avec les constatations physiques.",
+                        "fault_determination": "En cours d'investigation",
+                        "fault_percentage": 100,
+                        "contributing_factors": [
+                            "Aucun témoin indépendant",
+                            "Absence de traces de freinage",
+                            "Schéma de dommages incohérent avec le scénario déclaré",
+                            "Dommages préexistants sur panneaux adjacents",
+                        ],
+                        "liability_risk": "Investigation requise",
+                        "rationale": "Le schéma de dommages frontaux directs est incohérent avec une manœuvre d'évitement latéral.",
                     },
                 },
             },
@@ -576,45 +580,28 @@ def _priya_patel_auto() -> Dict[str, Any]:
                     "section": "fraud_detection",
                     "subsection": "red_flag_analysis",
                     "raw": (
-                        "Two significant fraud red flags identified. First, the damage pattern is "
-                        "inconsistent with the claimed loss scenario: the claimant describes swerving "
-                        "to avoid a deer and striking a median barrier, but the damage shows a direct, "
-                        "centered frontal impact with a V-shaped hood deformation pattern — this is "
-                        "more consistent with striking a stationary object head-on at moderate speed, "
-                        "not a glancing or angled impact from a swerve. Airbags did not deploy despite "
-                        "significant frontal damage, which is unusual. Second, there was a 72-hour "
-                        "delay in reporting the loss. The incident allegedly occurred on November 30, "
-                        "2024, but the claim was not reported until December 3, 2024. No police report "
-                        "was filed despite significant damage and a non-drivable vehicle on a major "
-                        "highway. Additionally, the vehicle photos show pre-existing wear and oxidation "
-                        "on adjacent panels inconsistent with a 2023 model year vehicle."
+                        "Plusieurs indicateurs de fraude détectés. 1) Dommages préexistants sur "
+                        "un véhicule de 2022 : rayures et oxydation de l'aile gauche et de la portière "
+                        "incompatibles avec l'âge du véhicule. 2) Non-déploiement des airbags malgré "
+                        "un impact frontal sévère avec traverse repoussée de 15 cm. 3) Incohérence "
+                        "entre le scénario déclaré (évitement) et le schéma de dommages (impact "
+                        "frontal direct). 4) Historique de sinistres multiples de l'assuré (3 sinistres "
+                        "en 2 ans sur 2 véhicules différents). 5) Le devis inclut des réparations hors "
+                        "zone d'impact (raccord peinture arrière). Transfert recommandé au Service "
+                        "Investigation et Fraude (SIF)."
                     ),
                     "parsed": {
-                        "summary": "Two fraud red flags identified: (1) damage pattern inconsistent with claimed swerve maneuver, (2) 72-hour reporting delay with no police report.",
+                        "summary": "5 indicateurs de fraude majeurs détectés. Transfert au SIF recommandé.",
                         "red_flags": [
-                            {
-                                "flag": "Inconsistent damage pattern",
-                                "severity": "High",
-                                "description": (
-                                    "Direct centered frontal impact with V-shaped hood deformation is inconsistent "
-                                    "with claimed swerve-into-median scenario. Airbags did not deploy despite "
-                                    "significant frontal crush. Pre-existing wear on adjacent panels raises "
-                                    "concerns about vehicle condition prior to loss."
-                                ),
-                            },
-                            {
-                                "flag": "Delayed reporting and missing documentation",
-                                "severity": "High",
-                                "description": (
-                                    "72-hour delay between alleged loss date (Nov 30) and claim report (Dec 3). "
-                                    "No police report filed despite non-drivable vehicle on Highway 401. "
-                                    "No witnesses identified. Informal tow arrangement not verifiable."
-                                ),
-                            },
+                            {"category": "vehicle_condition", "indicator": "Dommages préexistants (rayures, oxydation) incohérents avec l'âge du véhicule (2022)", "severity": "high"},
+                            {"category": "damage_pattern", "indicator": "Non-déploiement airbags malgré impact frontal sévère (traverse 15 cm)", "severity": "high"},
+                            {"category": "scenario_inconsistency", "indicator": "Impact frontal direct incohérent avec manœuvre d'évitement déclarée", "severity": "high"},
+                            {"category": "claims_history", "indicator": "3 sinistres en 2 ans sur 2 véhicules — fréquence anormale", "severity": "medium"},
+                            {"category": "estimate_padding", "indicator": "Devis inclut réparations hors zone d'impact (raccord peinture arrière)", "severity": "medium"},
                         ],
-                        "fraud_risk": "High",
-                        "fraud_score": 0.78,
-                        "recommended_action": "Refer to SIU for full investigation before any payment",
+                        "fraud_risk": "Élevé",
+                        "fraud_score": 0.82,
+                        "recommended_action": "Transférer au Service Investigation et Fraude (SIF)",
                     },
                 },
             },
@@ -623,71 +610,68 @@ def _priya_patel_auto() -> Dict[str, Any]:
                     "section": "payout_recommendation",
                     "subsection": "settlement_analysis",
                     "raw": (
-                        "Payment is on hold pending completion of the Special Investigations Unit "
-                        "(SIU) review. The combination of inconsistent damage pattern, delayed "
-                        "reporting, absent police report, and pre-existing panel wear warrants a "
-                        "thorough investigation before any settlement is authorized. An independent "
-                        "appraisal has been ordered. SIU investigator assigned: K. Thornton, case "
-                        "reference SIU-2024-PP-0891. Estimated investigation timeline: 30-45 days."
+                        "Suspension de l'indemnisation recommandée en attendant les résultats de "
+                        "l'enquête SIF. Le montant demandé de 14 500 € est dans la fourchette haute "
+                        "et comporte des postes discutables. Expertise contradictoire recommandée. "
+                        "Si le sinistre est confirmé, l'indemnisation devrait être limitée aux dommages "
+                        "directement liés à l'accident, excluant les dommages préexistants et les "
+                        "réparations hors zone d'impact. Franchise de 600 € applicable (malus suite "
+                        "aux sinistres précédents)."
                     ),
                     "parsed": {
-                        "summary": "Under investigation — hold payment pending SIU review and independent appraisal.",
-                        "recommended_payout_CAD": 0.00,
-                        "deductible_CAD": 1000.00,
-                        "insured_responsibility_CAD": 1000.00,
-                        "subrogation_target": None,
+                        "summary": "Indemnisation suspendue. Expertise contradictoire et enquête SIF requises.",
+                        "recommended_amount": 0.00,
+                        "deductible": 600.00,
+                        "insured_responsibility": 14500.00,
+                        "subrogation_target": "Aucun — sinistre sans tiers identifié",
                         "final_approval": False,
-                        "rationale": (
-                            "Payment withheld pending SIU investigation. Two high-severity fraud red flags "
-                            "require resolution: inconsistent damage pattern and 72-hour reporting delay "
-                            "with no police report. Independent appraisal ordered. SIU case SIU-2024-PP-0891 "
-                            "assigned to investigator K. Thornton."
-                        ),
+                        "rationale": "Multiples incohérences détectées. Enquête SIF en cours. Expertise contradictoire mandatée.",
+                        "policy_citations": [
+                            {"policy_id": "AC-GRP-010", "title": "Conditions Générales Auto Groupama — Art. 15.3", "section": "Fraude et fausse déclaration", "text": "En cas de fausse déclaration ou de fraude avérée, Groupama peut refuser l'indemnisation et résilier le contrat.", "relevance": 0.97},
+                            {"policy_id": "AC-GRP-011", "title": "Conditions Générales Auto Groupama — Art. 9.1", "section": "Expertise contradictoire", "text": "Groupama peut mandater un expert pour vérifier les circonstances du sinistre et le montant des dommages.", "relevance": 0.94},
+                            {"policy_id": "AC-GRP-012", "title": "Conditions Générales Auto Groupama — Art. 8.5", "section": "Exclusion dommages préexistants", "text": "Les dommages préexistants au sinistre sont exclus de l'indemnisation.", "relevance": 0.91},
+                        ],
                     },
                 },
             },
         },
         "extracted_fields": {
-            "claim_form:ClaimNumber": {"field_name": "ClaimNumber", "value": "CLM-PP-241203-01", "confidence": 0.94, "source_file": "claim_form.pdf"},
-            "claim_form:PolicyNumber": {"field_name": "PolicyNumber", "value": "AUTO-ON-9918273", "confidence": 0.96, "source_file": "claim_form.pdf"},
-            "claim_form:InsuredName": {"field_name": "InsuredName", "value": "Priya Patel", "confidence": 0.97, "source_file": "claim_form.pdf"},
-            "claim_form:DateOfLoss": {"field_name": "DateOfLoss", "value": "2024-11-30", "confidence": 0.93, "source_file": "claim_form.pdf"},
-            "claim_form:DateReported": {"field_name": "DateReported", "value": "2024-12-03", "confidence": 0.95, "source_file": "claim_form.pdf"},
-            "claim_form:VehicleYear": {"field_name": "VehicleYear", "value": "2023", "confidence": 0.96, "source_file": "claim_form.pdf"},
-            "claim_form:VehicleMake": {"field_name": "VehicleMake", "value": "BMW", "confidence": 0.97, "source_file": "claim_form.pdf"},
-            "claim_form:VehicleModel": {"field_name": "VehicleModel", "value": "X5 xDrive40i", "confidence": 0.95, "source_file": "claim_form.pdf"},
-            "claim_form:VehicleVIN": {"field_name": "VehicleVIN", "value": "5UXCR6C05P9K78432", "confidence": 0.88, "source_file": "claim_form.pdf"},
-            "claim_form:DamageDescription": {"field_name": "DamageDescription", "value": "Major front-end collision damage — hood, bumper, grille, radiator support", "confidence": 0.91, "source_file": "claim_form.pdf"},
-            "claim_form:RepairEstimate": {"field_name": "RepairEstimate", "value": "18500.00", "confidence": 0.94, "source_file": "repair_estimate.pdf"},
-            "claim_form:LossLocation": {"field_name": "LossLocation", "value": "Highway 401 near Milton, ON", "confidence": 0.89, "source_file": "claim_form.pdf"},
-            "claim_form:PoliceReportFiled": {"field_name": "PoliceReportFiled", "value": "No", "confidence": 0.92, "source_file": "claim_form.pdf"},
-            "tow_receipt:TowCompany": {"field_name": "TowCompany", "value": "Not documented — informal arrangement", "confidence": 0.65, "source_file": "tow_receipt.pdf"},
+            "constat:NumeroSinistre": {"field_name": "NumeroSinistre", "value": "SIN-AT-241203-01", "confidence": 0.95, "source_file": "constat_amiable.pdf"},
+            "constat:NumeroPolice": {"field_name": "NumeroPolice", "value": "AUTO-GRP-2538714", "confidence": 0.93, "source_file": "constat_amiable.pdf"},
+            "constat:NomAssure": {"field_name": "NomAssure", "value": "ARNAUD Thierry", "confidence": 0.97, "source_file": "constat_amiable.pdf"},
+            "constat:DateSinistre": {"field_name": "DateSinistre", "value": "01/12/2024", "confidence": 0.94, "source_file": "constat_amiable.pdf"},
+            "constat:AnneeVehicule": {"field_name": "AnneeVehicule", "value": "2022", "confidence": 0.96, "source_file": "constat_amiable.pdf"},
+            "constat:MarqueVehicule": {"field_name": "MarqueVehicule", "value": "BMW", "confidence": 0.97, "source_file": "constat_amiable.pdf"},
+            "constat:ModeleVehicule": {"field_name": "ModeleVehicule", "value": "Série 3 320d", "confidence": 0.95, "source_file": "constat_amiable.pdf"},
+            "constat:Immatriculation": {"field_name": "Immatriculation", "value": "GH-892-LP", "confidence": 0.91, "source_file": "constat_amiable.pdf"},
+            "constat:Circonstances": {"field_name": "Circonstances", "value": "Manœuvre d'évitement d'un animal sur RN57 — impact poteau béton", "confidence": 0.88, "source_file": "constat_amiable.pdf"},
+            "devis:MontantReparation": {"field_name": "MontantReparation", "value": "14500.00", "confidence": 0.94, "source_file": "devis_reparation.pdf"},
+            "remorquage:Montant": {"field_name": "Montant", "value": "285.00", "confidence": 0.92, "source_file": "facture_remorquage.pdf"},
+            "remorquage:Societe": {"field_name": "Societe", "value": "Lorraine Dépannage Auto", "confidence": 0.65, "source_file": "facture_remorquage.pdf"},
         },
         "confidence_summary": {
-            "total_fields": 14,
+            "total_fields": 12,
             "average_confidence": 0.92,
-            "high_confidence_count": 9,
-            "medium_confidence_count": 4,
+            "high_confidence_count": 8,
+            "medium_confidence_count": 3,
             "low_confidence_count": 1,
             "high_confidence_fields": [
-                {"name": "claim_form:InsuredName", "confidence": 0.97},
-                {"name": "claim_form:VehicleMake", "confidence": 0.97},
-                {"name": "claim_form:PolicyNumber", "confidence": 0.96},
-                {"name": "claim_form:VehicleYear", "confidence": 0.96},
-                {"name": "claim_form:DateReported", "confidence": 0.95},
-                {"name": "claim_form:VehicleModel", "confidence": 0.95},
-                {"name": "claim_form:ClaimNumber", "confidence": 0.94},
-                {"name": "claim_form:RepairEstimate", "confidence": 0.94},
-                {"name": "claim_form:DateOfLoss", "confidence": 0.93},
+                {"name": "constat:NomAssure", "confidence": 0.97},
+                {"name": "constat:MarqueVehicule", "confidence": 0.97},
+                {"name": "constat:AnneeVehicule", "confidence": 0.96},
+                {"name": "constat:NumeroSinistre", "confidence": 0.95},
+                {"name": "constat:ModeleVehicule", "confidence": 0.95},
+                {"name": "devis:MontantReparation", "confidence": 0.94},
+                {"name": "constat:DateSinistre", "confidence": 0.94},
+                {"name": "constat:NumeroPolice", "confidence": 0.93},
             ],
             "medium_confidence_fields": [
-                {"name": "claim_form:PoliceReportFiled", "confidence": 0.92},
-                {"name": "claim_form:DamageDescription", "confidence": 0.91},
-                {"name": "claim_form:LossLocation", "confidence": 0.89},
-                {"name": "claim_form:VehicleVIN", "confidence": 0.88},
+                {"name": "remorquage:Montant", "confidence": 0.92},
+                {"name": "constat:Immatriculation", "confidence": 0.91},
+                {"name": "constat:Circonstances", "confidence": 0.88},
             ],
             "low_confidence_fields": [
-                {"name": "tow_receipt:TowCompany", "confidence": 0.65},
+                {"name": "remorquage:Societe", "confidence": 0.65},
             ],
         },
     }
@@ -696,7 +680,7 @@ def _priya_patel_auto() -> Dict[str, Any]:
 def get_claims_apps() -> List[Dict[str, Any]]:
     """Return seed data for 3 claims applications (1 health + 2 automotive)."""
     return [
-        _sarah_chen_auto(),
-        _marcus_williams_health(),
-        _priya_patel_auto(),
+        _garcia_antonio_auto(),
+        _rousseau_marc_health(),
+        _arnaud_thierry_auto(),
     ]

@@ -103,26 +103,32 @@ def _get_assessment_from_files(claim_id: str) -> Optional[dict]:
         total_estimated_damage = 0.0
         for i, area in enumerate(visual_parsed.get("damage_areas", [])):
             if isinstance(area, dict):
-                # Parse cost range to get estimated cost
-                cost_range = area.get("estimated_cost_range", "$0")
+                # Parse cost — supports numeric estimated_cost or string estimated_cost_range
                 estimated_cost = 0.0
-                if cost_range:
-                    try:
-                        # Extract first number from cost range like "$2,200 - $3,800"
-                        cost_str = cost_range.replace("$", "").replace(",", "").split("-")[0].strip()
-                        estimated_cost = float(cost_str)
-                    except:
-                        pass
+                if isinstance(area.get("estimated_cost"), (int, float)):
+                    estimated_cost = float(area["estimated_cost"])
+                else:
+                    cost_range = area.get("estimated_cost_range", "0")
+                    if cost_range:
+                        try:
+                            cost_str = str(cost_range).replace("$", "").replace("€", "").replace(",", "").replace("\u202f", "").split("-")[0].strip()
+                            estimated_cost = float(cost_str)
+                        except Exception:
+                            pass
                 
                 total_estimated_damage += estimated_cost
                 
+                # Flexible key names: location/area, description or composed from damage_type+repair_method
+                loc = area.get("location") or area.get("area", "unknown")
+                desc = area.get("description") or f"{area.get('damage_type', 'Dommage')} — {area.get('repair_method', 'Réparation nécessaire')}"
+                
                 damage_areas.append({
                     "area_id": str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{claim_id}-damage-{i}")),
-                    "location": area.get("location", "unknown"),
+                    "location": loc,
                     "severity": area.get("severity", "moderate").lower(),
-                    "confidence": 0.85,
+                    "confidence": area.get("confidence", 0.85),
                     "estimated_cost": estimated_cost,
-                    "description": f"{area.get('damage_type', 'Damage')} - {area.get('repair_method', 'Repair needed')}",
+                    "description": desc,
                     "bounding_box": None,
                     "source_media_id": None,
                 })
@@ -130,13 +136,17 @@ def _get_assessment_from_files(claim_id: str) -> Optional[dict]:
         # Parse payout amounts
         payout_amount = 0.0
         if payout_parsed:
-            recommended = payout_parsed.get("recommended_settlement", payout_parsed.get("recommended_amount", 0))
+            recommended = payout_parsed.get(
+                "recommended_settlement",
+                payout_parsed.get("recommended_amount",
+                payout_parsed.get("recommended_payout", 0))
+            )
             if isinstance(recommended, (int, float)):
                 payout_amount = float(recommended)
             elif isinstance(recommended, str):
                 try:
-                    payout_amount = float(recommended.replace(",", "").replace("$", ""))
-                except:
+                    payout_amount = float(recommended.replace(",", "").replace("$", "").replace("€", "").replace("\u202f", ""))
+                except Exception:
                     pass
         
         # Build fraud indicators

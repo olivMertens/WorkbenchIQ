@@ -94,12 +94,12 @@ export function AutomotiveClaimsOverview({
           <div className="flex items-start gap-8">
             <div className="flex-shrink-0">
               <p className="text-xs text-emerald-600 font-medium uppercase tracking-wider mb-1">Recommended Payout</p>
-              <p className="text-4xl font-bold text-emerald-700">${d.assessment?.payout_recommendation?.recommended_amount?.toLocaleString() || 0}</p>
+              <p className="text-4xl font-bold text-emerald-700">{d.assessment?.payout_recommendation?.recommended_amount?.toLocaleString('fr-FR') || 0} €</p>
             </div>
             <div className="flex gap-6 border-l border-slate-200 pl-8">
-              <div><p className="text-xs text-slate-500 mb-1">Minimum</p><p className="text-xl font-semibold text-slate-900">${d.assessment?.payout_recommendation?.min_amount?.toLocaleString() || 0}</p></div>
-              <div><p className="text-xs text-slate-500 mb-1">Maximum</p><p className="text-xl font-semibold text-slate-900">${d.assessment?.payout_recommendation?.max_amount?.toLocaleString() || 0}</p></div>
-              <div><p className="text-xs text-slate-500 mb-1">Total Estimated</p><p className="text-xl font-semibold text-slate-900">${d.assessment?.total_estimated_damage?.toLocaleString() || 0}</p></div>
+              <div><p className="text-xs text-slate-500 mb-1">Minimum</p><p className="text-xl font-semibold text-slate-900">{d.assessment?.payout_recommendation?.min_amount?.toLocaleString('fr-FR') || 0} €</p></div>
+              <div><p className="text-xs text-slate-500 mb-1">Maximum</p><p className="text-xl font-semibold text-slate-900">{d.assessment?.payout_recommendation?.max_amount?.toLocaleString('fr-FR') || 0} €</p></div>
+              <div><p className="text-xs text-slate-500 mb-1">Estimation totale</p><p className="text-xl font-semibold text-slate-900">{d.assessment?.total_estimated_damage?.toLocaleString('fr-FR') || 0} €</p></div>
             </div>
             <div className="flex gap-6 border-l border-slate-200 pl-8 ml-auto">
               <div className="text-center"><p className="text-2xl font-bold text-slate-900">{d.mediaItems.length}</p><p className="text-xs text-slate-500">Evidence Files</p></div>
@@ -123,7 +123,7 @@ export function AutomotiveClaimsOverview({
           </div>
           {d.assessment?.damage_areas && d.assessment.damage_areas.length > 0 ? (
             <p className="text-sm text-slate-700 leading-relaxed">
-              This claim involves <strong>{d.assessment.damage_areas.length} identified damage areas</strong> with an estimated total of <strong>${d.assessment.total_estimated_damage?.toLocaleString() || 0}</strong>.
+              Ce sinistre comporte <strong>{d.assessment.damage_areas.length} zones de dommages identifiées</strong> pour un total estimé de <strong>{d.assessment.total_estimated_damage?.toLocaleString('fr-FR') || 0} €</strong>.
               {d.assessment.liability?.fault_determination && <> Liability assessment indicates <strong>{d.assessment.liability.fault_determination}</strong> with {d.assessment.liability.fault_percentage || 0}% fault determination.</>}
               {d.assessment.fraud_indicators && d.assessment.fraud_indicators.length > 0 && <> <span className="text-amber-600">⚠ {d.assessment.fraud_indicators.length} potential fraud indicator(s) detected.</span></>}
             </p>
@@ -167,7 +167,7 @@ export function AutomotiveClaimsOverview({
                 <span className={`text-lg font-semibold ${(d.assessment?.fraud_indicators?.length || 0) > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
                   {(d.assessment?.fraud_indicators?.length || 0) > 0 ? 'Review Required' : 'Approve'}
                 </span>
-                <span className="text-slate-600">Recommended: <strong className="text-slate-900">${d.assessment?.payout_recommendation?.recommended_amount?.toLocaleString() || 0}</strong></span>
+                <span className="text-slate-600">Recommandé : <strong className="text-slate-900">{d.assessment?.payout_recommendation?.recommended_amount?.toLocaleString('fr-FR') || 0} €</strong></span>
               </div>
             </div>
             <div className="pt-4 border-t border-slate-100">
