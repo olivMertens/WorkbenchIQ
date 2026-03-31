@@ -48,13 +48,19 @@ scripts/*.json
 scripts/README*
 
 # Frontend (separate image with own build context)
+frontend
 frontend/
+frontend/**
 
 # Assets — PDFs indexed into DB, not baked into image
+assets
 assets/
+assets/**
 
 # Infra (Bicep, deploy scripts)
+infra
 infra/
+infra/**
 
 # Python build artifacts
 __pycache__/
@@ -70,8 +76,11 @@ env/
 dist/
 build/
 
-# Node artifacts (root level)
+# Node artifacts (root level and nested)
+node_modules
 node_modules/
+**/node_modules
+**/node_modules/**
 package-lock.json
 
 # Data directories
