@@ -40,6 +40,7 @@ import type { IndexStats } from '@/lib/api';
 import PersonaSelector from '@/components/PersonaSelector';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import GlossaryManager from '@/components/GlossaryManager';
+import Toast, { ToastMessage } from '@/components/Toast';
 import { usePersona } from '@/lib/PersonaContext';
 import { useTranslations } from 'next-intl';
 
@@ -437,10 +438,12 @@ export default function AdminPage() {
       pollForProcessingCompletion(app.id);
       
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Processing failed';
       setProcessing({
         step: 'error',
-        message: err instanceof Error ? err.message : 'Processing failed',
+        message: msg,
       });
+      addToast('error', `Erreur de traitement: ${msg}`);
     }
   };
 
@@ -475,10 +478,12 @@ export default function AdminPage() {
       pollForProcessingCompletion(appId);
       
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Reprocessing failed';
       setProcessing({
         step: 'error',
-        message: err instanceof Error ? err.message : 'Reprocessing failed',
+        message: msg,
       });
+      addToast('error', `Erreur de réanalyse: ${msg}`);
     }
   };
 
@@ -755,6 +760,16 @@ export default function AdminPage() {
   // Reanalyze menu state
   const [reanalyzeMenuOpen, setReanalyzeMenuOpen] = useState<string | null>(null);
 
+  // Toast notifications
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const addToast = useCallback((type: ToastMessage['type'], message: string) => {
+    const id = Date.now().toString();
+    setToasts(prev => [...prev, { id, type, message }]);
+  }, []);
+  const dismissToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
   // Render Documents Tab content
   const renderDocumentsTab = () => (
     <>
@@ -762,7 +777,7 @@ export default function AdminPage() {
         {/* Upload Section */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-slate-900">Upload New Application</h2>
+            <h2 className="text-xl font-semibold text-slate-900">{t('uploadNewApplication')}</h2>
           </div>
 
           {/* Processing Status - Moved to top of upload panel */}
@@ -881,12 +896,12 @@ export default function AdminPage() {
                     disabled={isProcessing}
                   />
                 </label>
-                <span> or drag and drop</span>
+                <span> {t('orDragAndDrop')}</span>
               </div>
               <p className="text-xs text-slate-500">
                 {isAutomotiveClaimsPersona 
-                  ? 'Images (PNG, JPG), Videos (MP4, MOV), and PDF documents' 
-                  : 'PDF files only'}
+                  ? t('evidenceFilesDesc') 
+                  : t('pdfOnly')}
               </p>
             </div>
           </div>
@@ -922,7 +937,7 @@ export default function AdminPage() {
           {/* External Reference */}
           <div className="mt-4">
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              External Reference (optional)
+              {t('externalReference')}
             </label>
             <input
               type="text"
@@ -942,7 +957,7 @@ export default function AdminPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
               <label className="text-sm font-medium text-slate-700">
-                Condense Context
+                {t('condenseContext')}
               </label>
             </div>
             <div className="flex gap-2">
@@ -956,7 +971,7 @@ export default function AdminPage() {
                     : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700'
                 } ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
-                Auto
+                {t('auto')}
                 {useLargeDocMode === 'auto' && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
               </button>
               <button
@@ -969,7 +984,7 @@ export default function AdminPage() {
                     : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700'
                 } ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
-                Always
+                {t('always')}
                 {useLargeDocMode === 'on' && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
               </button>
               <button
@@ -982,12 +997,12 @@ export default function AdminPage() {
                     : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700'
                 } ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
-                Never
+                {t('never')}
                 {useLargeDocMode === 'off' && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
               </button>
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              Summarizes large documents to fit within AI context limits. Auto enables for docs &gt;1.5MB.
+              {t('condenseHelp')}
             </p>
           </div>
           )}
@@ -1021,7 +1036,7 @@ export default function AdminPage() {
 
           {loading ? (
             <div className="text-center py-8 text-slate-500">
-              Loading applications...
+              {t('loadingApplications')}
             </div>
           ) : error ? (
             <div className="text-center py-8 text-rose-500">{error}</div>
@@ -1043,8 +1058,8 @@ export default function AdminPage() {
                         {app.processing_status ? (
                           <span className="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700 flex items-center gap-1">
                             <span className="inline-block w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
-                            {app.processing_status === 'extracting' ? 'Data Agent...' : 
-                             app.processing_status === 'analyzing' ? 'Risk Agent...' : 
+                            {app.processing_status === 'extracting' ? t('dataAgent') : 
+                             app.processing_status === 'analyzing' ? t('riskAgent') : 
                              app.processing_status}
                           </span>
                         ) : (
@@ -1059,12 +1074,12 @@ export default function AdminPage() {
                       </div>
                       {app.external_reference && (
                         <p className="text-sm text-slate-500">
-                          Ref: {app.external_reference}
+                          {t('ref')} {app.external_reference}
                         </p>
                       )}
                       {app.created_at && (
                         <p className="text-xs text-slate-400">
-                          Created:{' '}
+                          {t('created')}{' '}
                           {new Date(app.created_at).toLocaleDateString()}
                         </p>
                       )}
@@ -1081,14 +1096,14 @@ export default function AdminPage() {
                           {processing.appId === app.id ? (
                             <>
                               <span className="inline-block w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
-                              Tracking...
+                              {t('tracking')}
                             </>
                           ) : (
                             <>
                               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M8 5v14l11-7z"/>
                               </svg>
-                              Resume
+                              {t('resume')}
                             </>
                           )}
                         </button>
@@ -1099,7 +1114,7 @@ export default function AdminPage() {
                           disabled={isProcessing}
                           className="text-xs px-2 py-1 bg-sky-100 text-sky-700 rounded-lg hover:bg-sky-200 disabled:opacity-50 transition-colors"
                         >
-                          Extract
+                          {t('extract')}
                         </button>
                       )}
                       {app.status === 'extracted' && !app.processing_status && (
@@ -1108,7 +1123,7 @@ export default function AdminPage() {
                           disabled={isProcessing}
                           className="text-xs px-2 py-1 bg-violet-100 text-violet-700 rounded-lg hover:bg-violet-200 disabled:opacity-50 transition-colors"
                         >
-                          Analyze
+                          {t('analyze')}
                         </button>
                       )}
                       {app.status === 'completed' && (
@@ -1116,7 +1131,7 @@ export default function AdminPage() {
                           href={`/?id=${app.id}`}
                           className="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors"
                         >
-                          View
+                          {t('view')}
                         </Link>
                       )}
                       {/* Reanalyze Dropdown Menu */}
@@ -1136,7 +1151,7 @@ export default function AdminPage() {
                         {reanalyzeMenuOpen === app.id && (
                           <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-slate-200 z-10">
                             <div className="p-2">
-                              <div className="text-xs font-semibold text-slate-500 uppercase px-2 py-1">Reanalyze Options</div>
+                              <div className="text-xs font-semibold text-slate-500 uppercase px-2 py-1">{t('reanalyzeOptions')}</div>
                               <button
                                 onClick={() => {
                                   setReanalyzeMenuOpen(null);
@@ -1144,8 +1159,8 @@ export default function AdminPage() {
                                 }}
                                 className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md"
                               >
-                                <div className="font-medium">Full Extraction</div>
-                                <div className="text-xs text-slate-500">Re-run document extraction + all prompts</div>
+                                <div className="font-medium">{t('fullExtraction')}</div>
+                                <div className="text-xs text-slate-500">{t('fullExtractionDesc')}</div>
                               </button>
                               <button
                                 onClick={() => {
@@ -1154,11 +1169,11 @@ export default function AdminPage() {
                                 }}
                                 className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md"
                               >
-                                <div className="font-medium">All Prompts Only</div>
-                                <div className="text-xs text-slate-500">Re-run all underwriting prompts</div>
+                                <div className="font-medium">{t('allPromptsOnly')}</div>
+                                <div className="text-xs text-slate-500">{t('allPromptsOnlyDesc')}</div>
                               </button>
                               <div className="border-t border-slate-100 my-1"></div>
-                              <div className="text-xs font-semibold text-slate-500 uppercase px-2 py-1">Specific Sections</div>
+                              <div className="text-xs font-semibold text-slate-500 uppercase px-2 py-1">{t('specificSections')}</div>
                               <button
                                 onClick={() => {
                                   setReanalyzeMenuOpen(null);
@@ -1166,7 +1181,7 @@ export default function AdminPage() {
                                 }}
                                 className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md"
                               >
-                                Application Summary
+                                {t('applicationSummary')}
                               </button>
                               <button
                                 onClick={() => {
@@ -1175,7 +1190,7 @@ export default function AdminPage() {
                                 }}
                                 className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md"
                               >
-                                Medical Summary
+                                {t('medicalSummary')}
                               </button>
                               <button
                                 onClick={() => {
@@ -1184,7 +1199,7 @@ export default function AdminPage() {
                                 }}
                                 className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md"
                               >
-                                Risk Assessment
+                                {t('riskAssessment')}
                               </button>
                             </div>
                           </div>
@@ -1196,9 +1211,10 @@ export default function AdminPage() {
                           if (confirm(`Supprimer le dossier ${app.id} ?`)) {
                             try {
                               await deleteApplication(app.id);
+                              addToast('success', `Dossier ${app.id} supprimé avec succès`);
                               loadApplications();
                             } catch (e) {
-                              console.error('Delete failed:', e);
+                              addToast('error', `Échec de la suppression du dossier ${app.id}: ${e instanceof Error ? e.message : 'Erreur inconnue'}`);
                             }
                           }
                         }}
@@ -1227,13 +1243,13 @@ export default function AdminPage() {
         <h2 className="text-xl font-semibold mb-4 text-slate-900">{t('agentSkills')}</h2>
         
         {promptsLoading ? (
-          <div className="text-center py-8 text-slate-500">Loading agent skills...</div>
+          <div className="text-center py-8 text-slate-500">{t('loadingAgentSkills')}</div>
         ) : promptsData ? (
           <div className="space-y-4">
             {/* Section Selector */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Section
+                {t('section')}
               </label>
               <select
                 value={selectedSection}
@@ -1257,7 +1273,7 @@ export default function AdminPage() {
             {/* Subsection Selector */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Subsection
+                {t('subsection')}
               </label>
               <select
                 value={selectedSubsection}
@@ -1277,7 +1293,7 @@ export default function AdminPage() {
 
             {/* Prompt List */}
             <div className="border-t pt-4 mt-4">
-              <h3 className="text-sm font-medium text-slate-700 mb-2">All Prompts</h3>
+              <h3 className="text-sm font-medium text-slate-700 mb-2">{t('allPrompts')}</h3>
               <div className="max-h-64 overflow-y-auto space-y-1">
                 {Object.entries(promptsData.prompts).map(([section, subsections]) => (
                   <div key={section}>
@@ -1322,7 +1338,7 @@ export default function AdminPage() {
           <h2 className="text-xl font-semibold text-slate-900">
             {selectedSection && selectedSubsection
               ? `${selectedSection.replace(/_/g, ' ')} / ${selectedSubsection.replace(/_/g, ' ')}`
-              : 'Select a Prompt'}
+              : t('selectPrompt')}
           </h2>
           <div className="flex items-center gap-2">
             <button
@@ -1330,14 +1346,14 @@ export default function AdminPage() {
               disabled={!selectedSection || !selectedSubsection || promptsSaving}
               className="px-3 py-1.5 text-sm text-rose-600 border border-rose-300 rounded-lg hover:bg-rose-50 disabled:opacity-50 transition-colors"
             >
-              Reset to Default
+              {t('resetToDefault')}
             </button>
             <button
               onClick={handleSavePrompt}
               disabled={!selectedSection || !selectedSubsection || promptsSaving}
               className="px-4 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
             >
-              {promptsSaving ? 'Saving...' : 'Save'}
+              {promptsSaving ? t('saving') : t('save')}
             </button>
           </div>
         </div>
@@ -1359,13 +1375,13 @@ export default function AdminPage() {
           value={promptText}
           onChange={(e) => setPromptText(e.target.value)}
           className="w-full h-96 px-4 py-3 border border-slate-300 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-          placeholder="Select a prompt to edit..."
+          placeholder={t('selectPromptToEdit')}
           disabled={!selectedSection || !selectedSubsection}
         />
 
         {/* Help Text */}
         <p className="mt-2 text-xs text-slate-500">
-          Prompts should return valid JSON. Use markdown formatting for instructions.
+          {t('promptsHelp')}
         </p>
       </div>
 
@@ -1373,12 +1389,12 @@ export default function AdminPage() {
       {showNewPromptForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4">
-            <h3 className="text-lg font-semibold mb-4">Create New Prompt</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('createNewPrompt')}</h3>
             
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Section
+                  {t('section')}
                 </label>
                 <input
                   type="text"
@@ -1391,7 +1407,7 @@ export default function AdminPage() {
               
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Subsection
+                  {t('subsection')}
                 </label>
                 <input
                   type="text"
@@ -1404,7 +1420,7 @@ export default function AdminPage() {
               
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Prompt Text
+                  {t('promptText')}
                 </label>
                 <textarea
                   value={newPromptText}
@@ -1425,14 +1441,14 @@ export default function AdminPage() {
                 }}
                 className="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 onClick={handleCreatePrompt}
                 disabled={promptsSaving}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
               >
-                {promptsSaving ? 'Creating...' : 'Create'}
+                {promptsSaving ? t('creating') : t('createNewPrompt')}
               </button>
             </div>
           </div>
@@ -1446,10 +1462,10 @@ export default function AdminPage() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* Analyzer Status */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <h2 className="text-xl font-semibold mb-4 text-slate-900">Content Understanding Analyzer</h2>
+        <h2 className="text-xl font-semibold mb-4 text-slate-900">{t('contentUnderstandingAnalyzer')}</h2>
 
         {analyzerLoading ? (
-          <div className="text-center py-8 text-slate-500">Loading analyzer status...</div>
+          <div className="text-center py-8 text-slate-500">{t('loadingAnalyzerStatus')}</div>
         ) : analyzerError ? (
           <div className="p-4 bg-rose-50 text-rose-700 rounded-lg">{analyzerError}</div>
         ) : analyzerStatus ? (
@@ -1464,7 +1480,7 @@ export default function AdminPage() {
             {/* Current Status */}
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-slate-50 p-4 rounded-lg">
-                <div className="text-xs text-slate-500 uppercase mb-1">Custom Analyzer</div>
+                <div className="text-xs text-slate-500 uppercase mb-1">{t('customAnalyzer')}</div>
                 <div className="font-mono text-sm">{analyzerStatus.analyzer_id}</div>
                 <span
                   className={`inline-block mt-2 px-2 py-0.5 text-xs rounded-full ${
@@ -1473,17 +1489,17 @@ export default function AdminPage() {
                       : 'bg-amber-100 text-amber-700'
                   }`}
                 >
-                  {analyzerStatus.exists ? 'Exists' : 'Not Created'}
+                  {analyzerStatus.exists ? t('exists') : t('notCreated')}
                 </span>
               </div>
               
               <div className="bg-slate-50 p-4 rounded-lg">
-                <div className="text-xs text-slate-500 uppercase mb-1">Confidence Scoring</div>
+                <div className="text-xs text-slate-500 uppercase mb-1">{t('confidenceScoring')}</div>
                 <div className="font-medium">
-                  {analyzerStatus.confidence_scoring_enabled ? 'Enabled' : 'Disabled'}
+                  {analyzerStatus.confidence_scoring_enabled ? t('enabled') : t('disabled')}
                 </div>
                 <div className="text-xs text-slate-500 mt-1">
-                  Default: {analyzerStatus.default_analyzer_id}
+                  {t('defaultLabel')} {analyzerStatus.default_analyzer_id}
                 </div>
               </div>
             </div>
@@ -1495,7 +1511,7 @@ export default function AdminPage() {
                 disabled={analyzerProcessing}
                 className="flex-1 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
               >
-                {analyzerProcessing ? 'Processing...' : analyzerStatus.exists ? 'Update Analyzer' : 'Create Analyzer'}
+                {analyzerProcessing ? t('processing') : analyzerStatus.exists ? t('updateAnalyzer') : t('createAnalyzer')}
               </button>
               
               {analyzerStatus.exists && (
@@ -1511,17 +1527,15 @@ export default function AdminPage() {
 
             {/* Info Box */}
             <div className="bg-sky-50 border border-sky-200 rounded-lg p-4 mt-4">
-              <h4 className="font-medium text-sky-900 mb-2">💡 About Custom Analyzers</h4>
+              <h4 className="font-medium text-sky-900 mb-2">💡 {t('aboutAnalyzers')}</h4>
               <p className="text-sm text-sky-800">
-                The custom analyzer extracts structured fields from underwriting documents with confidence scores.
-                This enables better validation and review of extracted data. After creating or updating the analyzer,
-                re-run extraction on existing applications to get confidence scores.
+                {t('aboutAnalyzersDesc')}
               </p>
             </div>
 
             {/* Available Analyzers */}
             <div className="border-t pt-4 mt-4">
-              <h3 className="font-medium text-slate-900 mb-3">Available Analyzers</h3>
+              <h3 className="font-medium text-slate-900 mb-3">{t('availableAnalyzers')}</h3>
               <ul className="space-y-2">
                 {analyzers.map((analyzer) => (
                   <li
@@ -1531,13 +1545,13 @@ export default function AdminPage() {
                     <div>
                       <div className="font-mono text-sm">{analyzer.id}</div>
                       <div className="text-xs text-slate-500">
-                        {analyzer.type === 'prebuilt' ? 'Azure Prebuilt' : 'Custom'} • {analyzer.description}
+                        {analyzer.type === 'prebuilt' ? t('azurePrebuilt') : t('custom')} • {analyzer.description}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       {analyzer.exists ? (
                         <span className="px-2 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700">
-                          Ready
+                          {t('ready')}
                         </span>
                       ) : analyzer.type === 'custom' ? (
                         <button
@@ -1545,11 +1559,11 @@ export default function AdminPage() {
                           disabled={analyzerProcessing}
                           className="px-3 py-1 text-xs bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                         >
-                          {analyzerProcessing ? '...' : 'Create'}
+                          {analyzerProcessing ? '...' : t('createAnalyzer')}
                         </button>
                       ) : (
                         <span className="px-2 py-0.5 text-xs rounded-full bg-slate-200 text-slate-600">
-                          Not Created
+                          {t('notCreated')}
                         </span>
                       )}
                     </div>
@@ -1564,10 +1578,10 @@ export default function AdminPage() {
       {/* Field Schema */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-slate-900">Field Schema</h2>
+          <h2 className="text-xl font-semibold text-slate-900">{t('fieldSchema')}</h2>
           {analyzerSchema && (
             <span className="text-sm text-slate-500">
-              {analyzerSchema.field_count} fields defined
+              {analyzerSchema.field_count} {t('fieldsDefinedCount')}
             </span>
           )}
         </div>
@@ -1579,9 +1593,9 @@ export default function AdminPage() {
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-white">
                   <tr className="border-b">
-                    <th className="text-left py-2 font-medium text-slate-700">Field Name</th>
-                    <th className="text-left py-2 font-medium text-slate-700">Type</th>
-                    <th className="text-left py-2 font-medium text-slate-700">Confidence</th>
+                    <th className="text-left py-2 font-medium text-slate-700">{t('fieldName')}</th>
+                    <th className="text-left py-2 font-medium text-slate-700">{t('type')}</th>
+                    <th className="text-left py-2 font-medium text-slate-700">{t('confidence')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -1614,7 +1628,7 @@ export default function AdminPage() {
             {/* Raw Schema Toggle */}
             <details className="border-t pt-4">
               <summary className="cursor-pointer text-sm text-indigo-600 hover:text-indigo-700">
-                View Raw Schema JSON
+                {t('viewRawSchemaJson')}
               </summary>
               <pre className="mt-2 p-4 bg-slate-900 text-slate-100 rounded-lg overflow-x-auto text-xs max-h-64">
                 {JSON.stringify(analyzerSchema.schema, null, 2)}
@@ -1622,7 +1636,7 @@ export default function AdminPage() {
             </details>
           </div>
         ) : analyzerLoading ? (
-          <div className="text-center py-8 text-slate-500">Loading schema...</div>
+          <div className="text-center py-8 text-slate-500">{t('loadingSchema')}</div>
         ) : null}
       </div>
     </div>
@@ -1649,14 +1663,14 @@ export default function AdminPage() {
               title="Reindex all policies for RAG search"
             >
               <RefreshCw className={`w-4 h-4 ${reindexing ? 'animate-spin' : ''}`} />
-              {reindexing ? 'Indexing...' : 'Reindex'}
+              {reindexing ? t('indexing') : t('reindex')}
             </button>
             <button
               onClick={handleNewPolicyClick}
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              New Policy
+              {t('newPolicy')}
             </button>
           </div>
         </div>
@@ -1666,7 +1680,7 @@ export default function AdminPage() {
           <div className="px-5 py-3 bg-emerald-50 border-b border-emerald-100 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
             <span className="text-xs font-medium text-emerald-800">
-              RAG Index: {indexStats.total_chunks || indexStats.chunk_count || 0} chunks from {indexStats.policy_count} policies
+              RAG Index: {indexStats.total_chunks || indexStats.chunk_count || 0} {t('chunksFrom')} {indexStats.policy_count} {t('policies')}
             </span>
           </div>
         )}
@@ -1680,8 +1694,8 @@ export default function AdminPage() {
           ) : policies.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-              <p className="text-sm text-slate-500">No policies found</p>
-              <p className="text-xs text-slate-400 mt-1">Create your first policy to get started</p>
+              <p className="text-sm text-slate-500">{t('noPoliciesFound')}</p>
+              <p className="text-xs text-slate-400 mt-1">{t('createFirstPolicy')}</p>
             </div>
           ) : (
             <div className="space-y-1.5 max-h-[550px] overflow-y-auto">
@@ -1736,7 +1750,7 @@ export default function AdminPage() {
             {/* Editor Header */}
             <div className="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
               <h2 className="text-base font-semibold text-slate-900">
-                {showNewPolicyForm ? 'Create New Policy' : `Edit Policy: ${selectedPolicy?.name || selectedPolicy?.id}`}
+                {showNewPolicyForm ? t('createNewPolicy') : `${t('editPolicy')} ${selectedPolicy?.name || selectedPolicy?.id}`}
               </h2>
               {selectedPolicy && !showNewPolicyForm && (
                 <button
@@ -1744,7 +1758,7 @@ export default function AdminPage() {
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
-                  Delete
+                  {t('delete')}
                 </button>
               )}
             </div>
@@ -1756,7 +1770,7 @@ export default function AdminPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Policy ID</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('policyId')}</label>
                     <input
                       type="text"
                       value={claimsPolicyFormData.id || ''}
@@ -1767,7 +1781,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Policy Name</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('policyName')}</label>
                     <input
                       type="text"
                       value={claimsPolicyFormData.name || ''}
@@ -1780,7 +1794,7 @@ export default function AdminPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('category')}</label>
                     <select
                       value={claimsPolicyFormData.category || 'damage_assessment'}
                       onChange={(e) => setClaimsPolicyFormData(prev => ({ ...prev, category: e.target.value }))}
@@ -1797,7 +1811,7 @@ export default function AdminPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Subcategory</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('subcategory')}</label>
                     <input
                       type="text"
                       value={claimsPolicyFormData.subcategory || ''}
@@ -1809,7 +1823,7 @@ export default function AdminPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('descriptionLabel')}</label>
                   <textarea
                     value={claimsPolicyFormData.description || ''}
                     onChange={(e) => setClaimsPolicyFormData(prev => ({ ...prev, description: e.target.value }))}
@@ -1821,7 +1835,7 @@ export default function AdminPage() {
                 {/* Criteria Section */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-slate-700">Policy Criteria</label>
+                    <label className="block text-sm font-medium text-slate-700">{t('policyCriteria')}</label>
                     <button
                       type="button"
                       onClick={() => {
@@ -1836,14 +1850,14 @@ export default function AdminPage() {
                       }}
                       className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
                     >
-                      + Add Criterion
+                      {t('addCriterion')}
                     </button>
                   </div>
                   <div className="space-y-3">
                     {(claimsPolicyFormData.criteria || []).map((criterion: { id: string; condition: string; severity: string; action: string; rationale: string }, idx: number) => (
                       <div key={idx} className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-slate-500">Criterion {idx + 1}</span>
+                          <span className="text-xs font-medium text-slate-500">{t('criterion')} {idx + 1}</span>
                           <button
                             type="button"
                             onClick={() => {
@@ -1853,7 +1867,7 @@ export default function AdminPage() {
                             }}
                             className="text-xs text-rose-500 hover:text-rose-600"
                           >
-                            Remove
+                            {t('remove')}
                           </button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
@@ -1866,7 +1880,7 @@ export default function AdminPage() {
                               setClaimsPolicyFormData(prev => ({ ...prev, criteria: newCriteria }));
                             }}
                             className="px-2 py-1.5 border border-slate-300 rounded text-xs"
-                            placeholder="ID (e.g., C1)"
+                            placeholder={t('idExample')}
                           />
                           <select
                             value={criterion.severity || 'moderate'}
@@ -1877,11 +1891,11 @@ export default function AdminPage() {
                             }}
                             className="px-2 py-1.5 border border-slate-300 rounded text-xs"
                           >
-                            <option value="minor">Minor</option>
-                            <option value="moderate">Moderate</option>
-                            <option value="major">Major</option>
-                            <option value="severe">Severe</option>
-                            <option value="total_loss">Total Loss</option>
+                            <option value="minor">{t('minor')}</option>
+                            <option value="moderate">{t('moderate')}</option>
+                            <option value="major">{t('major')}</option>
+                            <option value="severe">{t('severe')}</option>
+                            <option value="total_loss">{t('totalLoss')}</option>
                           </select>
                         </div>
                         <input
@@ -1893,7 +1907,7 @@ export default function AdminPage() {
                             setClaimsPolicyFormData(prev => ({ ...prev, criteria: newCriteria }));
                           }}
                           className="w-full px-2 py-1.5 border border-slate-300 rounded text-xs"
-                          placeholder="Condition (when does this apply)"
+                          placeholder={t('conditionPlaceholder')}
                         />
                         <input
                           type="text"
@@ -1904,7 +1918,7 @@ export default function AdminPage() {
                             setClaimsPolicyFormData(prev => ({ ...prev, criteria: newCriteria }));
                           }}
                           className="w-full px-2 py-1.5 border border-slate-300 rounded text-xs"
-                          placeholder="Action (what should be done)"
+                          placeholder={t('actionPlaceholder')}
                         />
                         <input
                           type="text"
@@ -1915,12 +1929,12 @@ export default function AdminPage() {
                             setClaimsPolicyFormData(prev => ({ ...prev, criteria: newCriteria }));
                           }}
                           className="w-full px-2 py-1.5 border border-slate-300 rounded text-xs"
-                          placeholder="Rationale (why this applies)"
+                          placeholder={t('rationalePlaceholder')}
                         />
                       </div>
                     ))}
                     {(!claimsPolicyFormData.criteria || claimsPolicyFormData.criteria.length === 0) && (
-                      <p className="text-xs text-slate-400 italic">No criteria defined. Click &quot;Add Criterion&quot; to add one.</p>
+                      <p className="text-xs text-slate-400 italic">{t('noCriteriaDefined')}</p>
                     )}
                   </div>
                 </div>
@@ -1928,7 +1942,7 @@ export default function AdminPage() {
                 {/* Modifying Factors Section */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-slate-700">Modifying Factors</label>
+                    <label className="block text-sm font-medium text-slate-700">{t('modifyingFactors')}</label>
                     <button
                       type="button"
                       onClick={() => {
@@ -1940,7 +1954,7 @@ export default function AdminPage() {
                       }}
                       className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
                     >
-                      + Add Factor
+                      {t('addFactor')}
                     </button>
                   </div>
                   <div className="space-y-2">
@@ -1955,7 +1969,7 @@ export default function AdminPage() {
                             setClaimsPolicyFormData(prev => ({ ...prev, modifying_factors: newFactors }));
                           }}
                           className="flex-1 px-2 py-1.5 border border-slate-300 rounded text-xs"
-                          placeholder="Factor name"
+                          placeholder={t('factorName')}
                         />
                         <input
                           type="text"
@@ -1966,7 +1980,7 @@ export default function AdminPage() {
                             setClaimsPolicyFormData(prev => ({ ...prev, modifying_factors: newFactors }));
                           }}
                           className="flex-1 px-2 py-1.5 border border-slate-300 rounded text-xs"
-                          placeholder="Impact description"
+                          placeholder={t('impactDescription')}
                         />
                         <button
                           type="button"
@@ -1982,14 +1996,14 @@ export default function AdminPage() {
                       </div>
                     ))}
                     {(!claimsPolicyFormData.modifying_factors || claimsPolicyFormData.modifying_factors.length === 0) && (
-                      <p className="text-xs text-slate-400 italic">No modifying factors. Click &quot;Add Factor&quot; to add one.</p>
+                      <p className="text-xs text-slate-400 italic">{t('noModifyingFactors')}</p>
                     )}
                   </div>
                 </div>
 
                 {/* References Section */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">References</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('references')}</label>
                   <textarea
                     value={Array.isArray(claimsPolicyFormData.references) ? claimsPolicyFormData.references.join('\n') : ''}
                     onChange={(e) => setClaimsPolicyFormData(prev => ({ 
@@ -2006,7 +2020,7 @@ export default function AdminPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Plan Name</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('planName')}</label>
                     <input
                       type="text"
                       value={claimsPolicyFormData.plan_name || claimsPolicyFormData.name || ''}
@@ -2017,7 +2031,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Plan Type</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('planType')}</label>
                     <select
                       value={claimsPolicyFormData.plan_type || 'HMO'}
                       onChange={(e) => setClaimsPolicyFormData(prev => ({ ...prev, plan_type: e.target.value }))}
@@ -2032,7 +2046,7 @@ export default function AdminPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Network</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('network')}</label>
                   <input
                     type="text"
                     value={claimsPolicyFormData.network || ''}
@@ -2044,10 +2058,10 @@ export default function AdminPage() {
 
                 {/* Deductible */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Deductible</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">{t('deductible')}</label>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs text-slate-500 mb-1">Individual</label>
+                      <label className="block text-xs text-slate-500 mb-1">{t('individual')}</label>
                       <input
                         type="text"
                         value={claimsPolicyFormData.deductible?.individual || ''}
@@ -2060,7 +2074,7 @@ export default function AdminPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-500 mb-1">Family</label>
+                      <label className="block text-xs text-slate-500 mb-1">{t('family')}</label>
                       <input
                         type="text"
                         value={claimsPolicyFormData.deductible?.family || ''}
@@ -2077,10 +2091,10 @@ export default function AdminPage() {
 
                 {/* Out-of-Pocket Max */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Out-of-Pocket Maximum</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">{t('outOfPocketMax')}</label>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs text-slate-500 mb-1">Individual</label>
+                      <label className="block text-xs text-slate-500 mb-1">{t('individual')}</label>
                       <input
                         type="text"
                         value={claimsPolicyFormData.oop_max?.individual || ''}
@@ -2093,7 +2107,7 @@ export default function AdminPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-500 mb-1">Family</label>
+                      <label className="block text-xs text-slate-500 mb-1">{t('family')}</label>
                       <input
                         type="text"
                         value={claimsPolicyFormData.oop_max?.family || ''}
@@ -2110,10 +2124,10 @@ export default function AdminPage() {
 
                 {/* Copays */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Copays</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">{t('copays')}</label>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs text-slate-500 mb-1">PCP Visit</label>
+                      <label className="block text-xs text-slate-500 mb-1">{t('pcpVisit')}</label>
                       <input
                         type="text"
                         value={claimsPolicyFormData.copays?.pcp_visit || ''}
@@ -2126,7 +2140,7 @@ export default function AdminPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-500 mb-1">Specialist Visit</label>
+                      <label className="block text-xs text-slate-500 mb-1">{t('specialistVisit')}</label>
                       <input
                         type="text"
                         value={claimsPolicyFormData.copays?.specialist_visit || ''}
@@ -2139,7 +2153,7 @@ export default function AdminPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-500 mb-1">Urgent Care</label>
+                      <label className="block text-xs text-slate-500 mb-1">{t('urgentCare')}</label>
                       <input
                         type="text"
                         value={claimsPolicyFormData.copays?.urgent_care || ''}
@@ -2152,7 +2166,7 @@ export default function AdminPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-500 mb-1">ER Visit</label>
+                      <label className="block text-xs text-slate-500 mb-1">{t('erVisit')}</label>
                       <input
                         type="text"
                         value={claimsPolicyFormData.copays?.er_visit || ''}
@@ -2169,7 +2183,7 @@ export default function AdminPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Coinsurance</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('coinsurance')}</label>
                     <input
                       type="text"
                       value={claimsPolicyFormData.coinsurance || ''}
@@ -2179,7 +2193,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Preventive Care</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('preventiveCare')}</label>
                     <input
                       type="text"
                       value={claimsPolicyFormData.preventive_care || ''}
@@ -2192,7 +2206,7 @@ export default function AdminPage() {
 
                 {/* Exclusions */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Exclusions</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('exclusions')}</label>
                   <textarea
                     value={Array.isArray(claimsPolicyFormData.exclusions) ? claimsPolicyFormData.exclusions.join('\n') : ''}
                     onChange={(e) => setClaimsPolicyFormData(prev => ({ 
@@ -2200,7 +2214,7 @@ export default function AdminPage() {
                       exclusions: e.target.value.split('\n').filter(Boolean)
                     }))}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm h-20"
-                    placeholder="One exclusion per line"
+                    placeholder={t('exclusionsPlaceholder')}
                   />
                 </div>
               </div>
@@ -2210,7 +2224,7 @@ export default function AdminPage() {
                 {/* Basic Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Policy ID</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('policyId')}</label>
                     <input
                       type="text"
                       value={policyFormData.id}
@@ -2221,7 +2235,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Name</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('name')}</label>
                     <input
                       type="text"
                       value={policyFormData.name}
@@ -2231,7 +2245,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Category</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('category')}</label>
                     <input
                       type="text"
                       value={policyFormData.category}
@@ -2241,7 +2255,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Subcategory</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('subcategory')}</label>
                     <input
                       type="text"
                       value={policyFormData.subcategory}
@@ -2253,7 +2267,7 @@ export default function AdminPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('descriptionLabel')}</label>
                   <textarea
                     value={policyFormData.description}
                     onChange={(e) => setPolicyFormData(prev => ({ ...prev, description: e.target.value }))}
@@ -2265,14 +2279,14 @@ export default function AdminPage() {
                 {/* Criteria Section */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <label className="block text-sm font-medium text-slate-700">Criteria</label>
+                    <label className="block text-sm font-medium text-slate-700">{t('criteria')}</label>
                     <button
                       type="button"
                       onClick={handleAddCriteria}
                       className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
                     >
                       <Plus className="w-4 h-4" />
-                      Add Criteria
+                      {t('addCriteria')}
                     </button>
                   </div>
                   <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
@@ -2285,7 +2299,7 @@ export default function AdminPage() {
                             onClick={() => handleRemoveCriteria(index)}
                             className="inline-flex items-center gap-1 text-rose-500 hover:text-rose-700 text-xs font-medium transition-colors"
                           >
-                            Remove
+                            {t('remove')}
                           </button>
                         </div>
                         <div className="grid grid-cols-2 gap-3 mb-3">
@@ -2344,7 +2358,7 @@ export default function AdminPage() {
                 disabled={policiesSaving}
                 className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
               >
-                {policiesSaving ? 'Saving...' : showNewPolicyForm ? 'Create Policy' : 'Save Changes'}
+                {policiesSaving ? t('saving') : showNewPolicyForm ? t('createPolicy') : t('saveChanges')}
               </button>
             </div>
             </div>
@@ -2352,8 +2366,8 @@ export default function AdminPage() {
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-slate-500">
             <FileText className="w-12 h-12 text-slate-300 mb-4" />
-            <p className="text-base font-medium mb-1">Select a policy to edit</p>
-            <p className="text-sm text-slate-400">Or click &quot;New Policy&quot; to create one</p>
+            <p className="text-base font-medium mb-1">{t('selectPolicyToEdit')}</p>
+            <p className="text-sm text-slate-400">{t('orCreateNew')}</p>
           </div>
         )}
       </div>
@@ -2362,6 +2376,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <Toast toasts={toasts} onDismiss={dismissToast} />
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -2376,7 +2391,7 @@ export default function AdminPage() {
             </Link>
             <span className="text-slate-300">|</span>
             <h1 className="text-xl font-semibold text-slate-700">
-              Admin Panel
+              {t('title')}
             </h1>
           </div>
           <div className="flex items-center gap-4">
@@ -2384,7 +2399,7 @@ export default function AdminPage() {
             <LanguageSwitcher />
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-              <span className="text-sm text-slate-600">Backend Connected</span>
+              <span className="text-sm text-slate-600">{t('backendConnected')}</span>
             </div>
           </div>
         </div>
