@@ -87,23 +87,49 @@ az group update --name $RG --tags SecurityControl=ignore CostControl=ignore Proj
 if (-not $SkipBackend) {
     Write-Host ""
     Write-Host ">>> Building backend: groupaiq-api:$Tag" -ForegroundColor Yellow
-    Write-Host "    Context: . (root), Dockerfile: ./Dockerfile"
     
-    Push-Location $PSScriptRoot\..
+    # Create minimal tar to avoid az acr build ignoring .dockerignore on Windows
+    # Excludes .venv (137 MiB), frontend (489 MiB), assets, docs, tests, etc.
+    $RepoRoot = "$PSScriptRoot\.."
+    $TarFile = [System.IO.Path]::GetTempFileName() + ".tar.gz"
+    
+    Write-Host "    Creating minimal build context..."
+    tar -czf $TarFile `
+        --exclude='.venv' `
+        --exclude='.git' `
+        --exclude='frontend' `
+        --exclude='assets' `
+        --exclude='node_modules' `
+        --exclude='__pycache__' `
+        --exclude='.mypy_cache' `
+        --exclude='docs' `
+        --exclude='specs' `
+        --exclude='tests' `
+        --exclude='infra' `
+        --exclude='.github' `
+        --exclude='.vscode' `
+        --exclude='data' `
+        --exclude='*.pyc' `
+        -C "$RepoRoot" .
+    
+    $TarSizeMB = [math]::Round((Get-Item $TarFile).Length / 1MB, 2)
+    Write-Host "    Context: $TarSizeMB MiB (tar.gz)" -ForegroundColor Cyan
+    
     az acr build `
         --registry $ACR `
         --image "groupaiq-api:${Tag}" `
         --image "groupaiq-api:latest" `
         --file Dockerfile `
-        . `
+        $TarFile `
         --no-logs
     
-    if ($LASTEXITCODE -ne 0) {
+    $buildResult = $LASTEXITCODE
+    Remove-Item -Path $TarFile -Force -ErrorAction SilentlyContinue
+    
+    if ($buildResult -ne 0) {
         Write-Host "    FAILED — backend image build failed" -ForegroundColor Red
-        Pop-Location
         exit 1
     }
-    Pop-Location
     Write-Host "    Backend image pushed" -ForegroundColor Green
 }
 
@@ -113,27 +139,45 @@ if (-not $SkipBackend) {
 if (-not $SkipFrontend) {
     Write-Host ""
     Write-Host ">>> Building frontend: groupaiq-frontend:$Tag" -ForegroundColor Yellow
-    Write-Host "    Context: frontend/, Dockerfile: frontend/Dockerfile"
     
     # Get API URL for the build arg
     $API_FQDN = az containerapp show -n $API_APP -g $RG --query "properties.configuration.ingress.fqdn" -o tsv 2>$null
     
-    Push-Location "$PSScriptRoot\..\frontend"
+    # Create minimal tar to avoid az acr build ignoring .dockerignore on Windows
+    # This sends ~1 MiB instead of ~100 MiB (node_modules bloat)
+    $FrontendDir = "$PSScriptRoot\..\frontend"
+    $TarFile = [System.IO.Path]::GetTempFileName() + ".tar.gz"
+    
+    Write-Host "    Creating minimal build context..."
+    Push-Location $FrontendDir
+    tar -czf $TarFile `
+        --exclude='node_modules' `
+        --exclude='.next' `
+        --exclude='.gitignore' `
+        --exclude='coverage' `
+        --exclude='*.md' `
+        -C "$FrontendDir" .
+    Pop-Location
+    
+    $TarSizeMB = [math]::Round((Get-Item $TarFile).Length / 1MB, 2)
+    Write-Host "    Context: $TarSizeMB MiB (tar.gz)" -ForegroundColor Cyan
+    
     az acr build `
         --registry $ACR `
         --image "groupaiq-frontend:${Tag}" `
         --image "groupaiq-frontend:latest" `
         --file Dockerfile `
         --build-arg "API_URL=https://$API_FQDN" `
-        . `
+        $TarFile `
         --no-logs
     
-    if ($LASTEXITCODE -ne 0) {
+    $buildResult = $LASTEXITCODE
+    Remove-Item -Path $TarFile -Force -ErrorAction SilentlyContinue
+    
+    if ($buildResult -ne 0) {
         Write-Host "    FAILED — frontend image build failed" -ForegroundColor Red
-        Pop-Location
         exit 1
     }
-    Pop-Location
     Write-Host "    Frontend image pushed" -ForegroundColor Green
 }
 
