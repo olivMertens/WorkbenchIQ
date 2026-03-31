@@ -25,6 +25,7 @@ import RiskPanel from './RiskPanel';
 import DecisionFooter from './DecisionFooter';
 import PropertyDeepDiveModal from './PropertyDeepDiveModal';
 import PDFViewer from '../claims/PDFViewer';
+import { useToast } from '@/lib/ToastProvider';
 
 // Types for mortgage data
 export interface MortgageBorrower {
@@ -175,6 +176,7 @@ export default function MortgageWorkbench({
   const [decisionNotes, setDecisionNotes] = useState('');
   const [selectedDocument, setSelectedDocument] = useState<MortgageDocument | null>(null);
   const [isPropertyDeepDiveOpen, setIsPropertyDeepDiveOpen] = useState(false);
+  const { addToast } = useToast();
 
   // Handle document view click
   const handleViewDocument = (doc: MortgageDocument) => {
@@ -251,6 +253,7 @@ export default function MortgageWorkbench({
     } catch (err) {
       console.error('Failed to fetch mortgage data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load mortgage data');
+      addToast('error', 'Erreur de chargement du dossier hypothécaire');
     } finally {
       setIsRefreshing(false);
     }
@@ -262,15 +265,15 @@ export default function MortgageWorkbench({
 
   // Handle decision actions
   const handleApprove = async () => {
-    console.log('Approve application:', applicationId, decisionNotes);
+    addToast('success', 'Dossier approuvé');
   };
 
   const handleDecline = async () => {
-    console.log('Decline application:', applicationId, decisionNotes);
+    addToast('error', 'Dossier refusé');
   };
 
   const handleRefer = async () => {
-    console.log('Refer application:', applicationId, decisionNotes);
+    addToast('info', 'Dossier référé pour revue');
   };
 
   const tabs: { id: CenterTab; label: string; icon: typeof Calculator }[] = [

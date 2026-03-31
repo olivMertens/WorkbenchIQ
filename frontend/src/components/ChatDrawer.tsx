@@ -5,6 +5,7 @@ import { X, Send, MessageSquare, Bot, User, Loader2, Trash2, Info, BookOpen, Che
 import { StructuredContentRenderer } from './chat/ChatCards';
 import ChatHistoryPanel from './chat/ChatHistoryPanel';
 import PolicyDetailModal from './chat/PolicyDetailModal';
+import { useToast } from '@/lib/ToastProvider';
 
 // Citation data from RAG response
 interface RAGCitation {
@@ -253,6 +254,7 @@ export default function ChatDrawer({
   applicationId,
   persona = 'underwriting',
 }: ChatDrawerProps) {
+  const { addToast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -339,6 +341,7 @@ export default function ChatDrawer({
       }
     } catch (e) {
       console.error('Failed to load conversation:', e);
+      addToast('error', 'Impossible de charger la conversation');
     } finally {
       setIsLoadingConversation(false);
     }
@@ -431,6 +434,7 @@ export default function ChatDrawer({
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Chat error:', error);
+      addToast('error', 'Erreur de communication avec l\'assistant');
       const errorMessage: ChatMessage = {
         role: 'assistant',
         content: 'Sorry, I encountered an error. Please try again.',

@@ -14,8 +14,10 @@ import {
   searchClaimsPolicies,
   ClaimsPolicySearchResult,
 } from '@/lib/api';
+import { useToast } from '@/lib/ToastProvider';
 
 export default function useAutomotiveClaimData(applicationId: string) {
+  const { addToast } = useToast();
   const [assessment, setAssessment] = useState<ClaimAssessmentResponse | null>(null);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [keyframes, setKeyframes] = useState<Keyframe[]>([]);
@@ -67,9 +69,11 @@ export default function useAutomotiveClaimData(applicationId: string) {
     setError(null);
     try {
       await uploadClaimFiles(applicationId, Array.from(files));
+      addToast('success', 'Fichiers téléversés avec succès');
       await fetchClaimData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload files');
+      addToast('error', 'Échec du téléversement des fichiers');
     } finally {
       setIsUploading(false);
     }
@@ -100,6 +104,7 @@ export default function useAutomotiveClaimData(applicationId: string) {
       };
       await updateAdjusterDecision(applicationId, request);
       await fetchClaimData();
+      addToast('success', `Décision "${decision}" enregistrée`);
       switch (decision) {
         case 'approve': callbacks?.onApprove?.(); break;
         case 'adjust': callbacks?.onAdjust?.(); break;
@@ -108,6 +113,7 @@ export default function useAutomotiveClaimData(applicationId: string) {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit decision');
+      addToast('error', 'Erreur lors de l\'enregistrement de la décision');
     }
   };
 

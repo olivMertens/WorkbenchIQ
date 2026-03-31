@@ -3,8 +3,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { getAnalyzerStatus, getAnalyzerSchema, listAnalyzers, createAnalyzer, deleteAnalyzer } from '@/lib/api';
 import type { AnalyzerStatus, AnalyzerInfo, FieldSchema } from '@/lib/types';
+import { useToast } from '@/lib/ToastProvider';
 
 export function useAnalyzerManager(currentPersona: string, isActive: boolean) {
+  const { addToast } = useToast();
   const [analyzerStatus, setAnalyzerStatus] = useState<AnalyzerStatus | null>(null);
   const [analyzerSchema, setAnalyzerSchema] = useState<FieldSchema | null>(null);
   const [analyzers, setAnalyzers] = useState<AnalyzerInfo[]>([]);
@@ -53,6 +55,7 @@ export function useAnalyzerManager(currentPersona: string, isActive: boolean) {
     try {
       const result = await createAnalyzer(analyzerId, currentPersona, undefined, mediaType);
       setAnalyzerSuccess(`Analyzer "${result.analyzer_id}" created successfully!`);
+      addToast('success', 'Analyseur créé avec succès');
       await loadAnalyzerData();
       setTimeout(() => setAnalyzerSuccess(null), 5000);
     } catch (err) {
@@ -69,6 +72,7 @@ export function useAnalyzerManager(currentPersona: string, isActive: boolean) {
     try {
       await deleteAnalyzer(analyzerId);
       setAnalyzerSuccess('Analyzer deleted successfully');
+      addToast('info', 'Analyseur supprimé');
       await loadAnalyzerData();
       setTimeout(() => setAnalyzerSuccess(null), 3000);
     } catch (err) {

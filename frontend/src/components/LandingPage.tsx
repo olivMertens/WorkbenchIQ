@@ -16,6 +16,7 @@ import { ApplicationListItem } from '@/lib/types';
 import { createApplication, startProcessing, getApplication } from '@/lib/api';
 import clsx from 'clsx';
 import { useTranslations } from 'next-intl';
+import { useToast } from '@/lib/ToastProvider';
 import ProcessingBanner from './landing/ProcessingBanner';
 import PriorityQueues from './landing/PriorityQueues';
 import ApplicationsList from './landing/ApplicationsList';
@@ -39,6 +40,7 @@ export default function LandingPage({
 }: LandingPageProps) {
   const { currentPersona, personaConfig } = usePersona();
   const t = useTranslations('dashboard');
+  const { addToast } = useToast();
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -132,11 +134,13 @@ export default function LandingPage({
           setProcessingMessage(status.processing_error || 'An error occurred.');
           pollingRef.current = null;
           onRefreshApps();
+          addToast('error', status.processing_error || 'Erreur lors du traitement');
         } else if (!status.processing_status) {
           setProcessingStep('complete');
           setProcessingMessage('Analysis complete! Opening application...');
           pollingRef.current = null;
           onRefreshApps();
+          addToast('success', 'Analyse terminée avec succès');
           setTimeout(() => onSelectApp(appId), 1500);
         }
       } catch {
@@ -190,6 +194,7 @@ export default function LandingPage({
       setProcessingStep('error');
       setProcessingMessage(msg);
       setUploading(false);
+      addToast('error', msg);
     }
   };
 

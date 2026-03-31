@@ -19,12 +19,14 @@ import { FinalDecisionModal, LineItemOverrideModal } from './Modals';
 import { FieldWithConfidence } from './lifeHealthHelpers';
 import LifeHealthHeaderStrip from './LifeHealthHeaderStrip';
 import useLifeHealthData from './useLifeHealthData';
+import { useToast } from '@/lib/ToastProvider';
 
 interface LifeHealthClaimsOverviewProps {
   application: ApplicationMetadata | null;
 }
 
 export default function LifeHealthClaimsOverview({ application }: LifeHealthClaimsOverviewProps) {
+  const { addToast } = useToast();
   const [checkedTasks, setCheckedTasks] = useState<number[]>([]);
   const [expandedSection, setExpandedSection] = useState<string>('reason');
   const [activeTab, setActiveTab] = useState<'timeline' | 'documents'>('timeline');
@@ -38,12 +40,12 @@ export default function LifeHealthClaimsOverview({ application }: LifeHealthClai
 
   const handleFinalDecisionConfirm = (decision: any) => {
     setFinalDecisionStatus(decision.decision);
-    console.log('Final Decision Submitted:', decision);
+    addToast('success', `Décision "${decision.decision}" enregistrée`);
   };
 
   const handleOverrideConfirm = (override: any) => {
     setLineItemOverrides(prev => ({ ...prev, [override.line]: override }));
-    console.log('Line Item Override:', override);
+    addToast('info', 'Override appliqué sur la ligne');
   };
 
   const toggleExpand = (idx: number) => {

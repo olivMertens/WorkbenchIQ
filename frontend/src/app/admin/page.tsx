@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import PersonaSelector from '@/components/PersonaSelector';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import GlossaryManager from '@/components/GlossaryManager';
-import Toast, { ToastMessage } from '@/components/Toast';
+import { useToast } from '@/lib/ToastProvider';
 import { usePersona } from '@/lib/PersonaContext';
 import { useTranslations } from 'next-intl';
 import { useDocumentProcessing } from '@/components/admin/useDocumentProcessing';
@@ -24,15 +24,7 @@ export default function AdminPage() {
   const t = useTranslations('adminPanel');
   const [activeTab, setActiveTab] = useState<AdminTab>('documents');
 
-  // Toast notifications
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const addToast = useCallback((type: ToastMessage['type'], message: string) => {
-    const id = Date.now().toString();
-    setToasts(prev => [...prev, { id, type, message }]);
-  }, []);
-  const dismissToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
+  const { addToast } = useToast();
 
   // Hooks for each tab
   const docs = useDocumentProcessing(currentPersona);
@@ -50,8 +42,6 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <Toast toasts={toasts} onDismiss={dismissToast} />
-
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">

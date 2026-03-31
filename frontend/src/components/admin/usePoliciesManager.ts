@@ -11,8 +11,10 @@ import {
 } from '@/lib/api';
 import type { UnderwritingPolicy, PolicyCriteriaItem } from '@/lib/types';
 import type { IndexStats } from '@/lib/api';
+import { useToast } from '@/lib/ToastProvider';
 
 export function usePoliciesManager(currentPersona: string, isActive: boolean) {
+  const { addToast } = useToast();
   const [policies, setPolicies] = useState<UnderwritingPolicy[]>([]);
   const [policiesLoading, setPoliciesLoading] = useState(false);
   const [policiesSaving, setPoliciesSaving] = useState(false);
@@ -133,11 +135,13 @@ export function usePoliciesManager(currentPersona: string, isActive: boolean) {
       if (showNewPolicyForm) {
         await createPolicyApi(policyFormData);
         setPoliciesSuccess('Policy created successfully!');
+        addToast('success', 'Politique créée');
         setShowNewPolicyForm(false);
       } else if (selectedPolicy) {
         const { id, ...updateData } = policyFormData;
         await updatePolicyApi(selectedPolicy.id, updateData);
         setPoliciesSuccess('Policy updated successfully!');
+        addToast('success', 'Politique mise à jour');
       }
       await loadPolicies();
       setTimeout(() => setPoliciesSuccess(null), 3000);
@@ -156,6 +160,7 @@ export function usePoliciesManager(currentPersona: string, isActive: boolean) {
     try {
       await deletePolicyApi(selectedPolicy.id);
       setPoliciesSuccess('Policy deleted successfully');
+      addToast('info', 'Politique supprimée');
       setSelectedPolicy(null);
       await loadPolicies();
       setTimeout(() => setPoliciesSuccess(null), 3000);

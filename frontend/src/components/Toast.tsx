@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { X, AlertCircle, CheckCircle2, Info, AlertTriangle } from 'lucide-react';
 
 export interface ToastMessage {
   id: string;
-  type: 'success' | 'error' | 'info';
+  type: 'success' | 'error' | 'info' | 'warning';
   message: string;
 }
 
@@ -28,13 +28,20 @@ function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: () =>
     return () => clearTimeout(timer);
   }, [onDismiss]);
 
-  const styles = {
+  const styles: Record<ToastMessage['type'], string> = {
     success: 'bg-emerald-50 border-emerald-300 text-emerald-800',
     error: 'bg-rose-50 border-rose-300 text-rose-800',
     info: 'bg-sky-50 border-sky-300 text-sky-800',
+    warning: 'bg-amber-50 border-amber-300 text-amber-800',
   };
 
-  const Icon = toast.type === 'success' ? CheckCircle2 : toast.type === 'error' ? AlertCircle : Info;
+  const icons: Record<ToastMessage['type'], typeof CheckCircle2> = {
+    success: CheckCircle2,
+    error: AlertCircle,
+    info: Info,
+    warning: AlertTriangle,
+  };
+  const Icon = icons[toast.type];
 
   return (
     <div

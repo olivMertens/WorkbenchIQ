@@ -12,6 +12,7 @@ import FloatingPdfPreview from './FloatingPdfPreview';
 import { PageRefBadges } from './PageRefBadge';
 import type { ApplicationMetadata, DeepDiveData, ParsedOutput } from '@/lib/types';
 import { getDeepDiveData, runDeepDiveAnalysis, pollForDeepDiveCompletion } from '@/lib/api';
+import { useToast } from '@/lib/ToastProvider';
 
 interface BodySystemDeepDiveModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export default function BodySystemDeepDiveModal({
   onRerunAnalysis,
   onApplicationUpdate,
 }: BodySystemDeepDiveModalProps) {
+  const { addToast } = useToast();
   const modalRef = useRef<HTMLDivElement>(null);
   const detailPanelRef = useRef<HTMLDivElement>(null);
   const systemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -314,6 +316,7 @@ ${sections.join('\n')}
       }, 2000);
     } catch (err) {
       console.error('Failed to run deep dive:', err);
+      addToast('error', 'Échec du deep dive. Veuillez réessayer.');
       setRerunStatus('Deep dive failed. Please try again.');
       timeoutRef.current = setTimeout(() => {
         setRerunStatus('');

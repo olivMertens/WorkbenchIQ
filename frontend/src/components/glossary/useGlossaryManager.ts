@@ -12,10 +12,12 @@ import {
   deleteGlossaryCategory,
 } from '@/lib/api';
 import type { PersonaGlossary, GlossaryCategory, GlossaryTerm } from '@/lib/api';
+import { useToast } from '@/lib/ToastProvider';
 
 export type { PersonaGlossary, GlossaryCategory, GlossaryTerm };
 
 export default function useGlossaryManager(persona: string) {
+  const { addToast } = useToast();
   const [glossary, setGlossary] = useState<PersonaGlossary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -131,9 +133,11 @@ export default function useGlossaryManager(persona: string) {
   const showMessage = (message: string, isError: boolean = false) => {
     if (isError) {
       setError(message);
+      addToast('error', message);
       setTimeout(() => setError(null), 5000);
     } else {
       setSuccess(message);
+      addToast('success', message);
       setTimeout(() => setSuccess(null), 3000);
     }
   };

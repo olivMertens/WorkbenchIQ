@@ -5,6 +5,7 @@ import { Book, ChevronDown, Search, X } from 'lucide-react';
 import { usePersona } from '@/lib/PersonaContext';
 import { searchGlossary, getGlossary } from '@/lib/api';
 import type { GlossaryTerm, PersonaGlossary } from '@/lib/api';
+import { useToast } from '@/lib/ToastProvider';
 
 interface GlossaryDropdownProps {
   className?: string;
@@ -12,6 +13,7 @@ interface GlossaryDropdownProps {
 
 export default function GlossaryDropdown({ className = '' }: GlossaryDropdownProps) {
   const { currentPersona, personaConfig } = usePersona();
+  const { addToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<GlossaryTerm[]>([]);
@@ -60,6 +62,7 @@ export default function GlossaryDropdown({ className = '' }: GlossaryDropdownPro
         setAllTerms(terms);
       } catch (err) {
         console.error('Failed to load glossary:', err);
+        addToast('error', 'Impossible de charger le glossaire');
       } finally {
         setLoading(false);
       }

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { PersonaProvider } from '@/lib/PersonaContext';
+import { ToastProvider } from '@/lib/ToastProvider';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getLocale } from 'next-intl/server';
 
@@ -28,7 +29,9 @@ export default async function RootLayout({
       <body className={inter.className}>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <PersonaProvider>
-            {children}
+            <ToastProvider>
+              {children}
+            </ToastProvider>
           </PersonaProvider>
         </NextIntlClientProvider>
       </body>

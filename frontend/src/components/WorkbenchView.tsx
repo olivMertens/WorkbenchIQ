@@ -25,6 +25,7 @@ import PropertyCasualtyClaimsOverview from '@/components/claims/PropertyCasualty
 import AutomotiveClaimsOverview from '@/components/claims/AutomotiveClaimsOverview';
 import { MortgageWorkbench } from '@/components/mortgage';
 import { usePersona } from '@/lib/PersonaContext';
+import { useToast } from '@/lib/ToastProvider';
 import { getApplication } from '@/lib/api';
 import type { ApplicationMetadata, ApplicationListItem } from '@/lib/types';
 
@@ -52,6 +53,7 @@ export default function WorkbenchView({
   const [isDeepDiveOpen, setIsDeepDiveOpen] = useState(false);
   const [sourcePageNumber, setSourcePageNumber] = useState<number | undefined>(undefined);
   const { currentPersona, personaConfig } = usePersona();
+  const { addToast } = useToast();
 
   // Load application details
   useEffect(() => {
@@ -69,6 +71,7 @@ export default function WorkbenchView({
       } catch (err) {
         console.error('Failed to load application:', err);
         setError('Failed to load application details');
+        addToast('error', 'Impossible de charger le dossier');
       } finally {
         setLoading(false);
       }
@@ -155,6 +158,7 @@ export default function WorkbenchView({
         }
       } catch (err) {
         console.error('Failed to re-run risk analysis:', err);
+        addToast('error', 'Erreur lors de la ré-analyse des risques');
       }
     };
     

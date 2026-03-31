@@ -3,8 +3,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { getPrompts, updatePrompt, createPrompt, deletePrompt } from '@/lib/api';
 import type { PromptsData } from '@/lib/types';
+import { useToast } from '@/lib/ToastProvider';
 
 export function usePromptsManager(currentPersona: string, isActive: boolean) {
+  const { addToast } = useToast();
   const [promptsData, setPromptsData] = useState<PromptsData | null>(null);
   const [selectedSection, setSelectedSection] = useState('');
   const [selectedSubsection, setSelectedSubsection] = useState('');
@@ -80,6 +82,7 @@ export function usePromptsManager(currentPersona: string, isActive: boolean) {
     try {
       await updatePrompt(selectedSection, selectedSubsection, promptText, currentPersona);
       setPromptsSuccess('Prompt saved successfully!');
+      addToast('success', 'Prompt sauvegardé');
       await loadPrompts(false);
       setTimeout(() => setPromptsSuccess(null), 3000);
     } catch (err) {
@@ -116,6 +119,7 @@ export function usePromptsManager(currentPersona: string, isActive: boolean) {
     try {
       await createPrompt(newSection, newSubsection, newPromptText, currentPersona);
       setPromptsSuccess('New prompt created!');
+      addToast('success', 'Nouveau prompt créé');
       setShowNewPromptForm(false);
       setNewSection('');
       setNewSubsection('');
