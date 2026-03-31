@@ -91,7 +91,32 @@
     "fileType": "Type",
     "fileSize": "Size",
     "uploadDate": "Upload date",
-    "tip": "Tip"
+    "tip": "Tip",
+    "tipText": "These are the original documents uploaded for this application. The extracted text and analysis are available in the Source Pages view."
+  },
+  "adminPanel": {
+    "workbench": "Workbench",
+    "description": "AI-powered document processing workbench",
+    "documentProcessing": "Document Processing",
+    "agentSkills": "Agent Skills",
+    "claimsPolicies": "Claims Policies",
+    "underwritingPolicies": "Underwriting Policies",
+    "analyzerManagement": "Analyzer Management",
+    "glossaryTab": "Glossary",
+    "uploadNew": "New Application",
+    "applications": "Applications",
+    "refresh": "Refresh",
+    "uploadFiles": "Upload files",
+    "uploadFilesDesc": "or drag and drop",
+    "pdfOnly": "PDF files only",
+    "evidenceFiles": "Upload evidence files",
+    "evidenceFilesDesc": "Images (PNG, JPG), Videos (MP4, MOV), and PDF documents",
+    "externalReference": "External Reference (optional)",
+    "uploadAndProcess": "Upload & Process",
+    "selectedFiles": "Selected Files",
+    "deleteConfirm": "Delete application",
+    "noApplications": "No applications",
+    "backendConnected": "Backend Connected"
   },
   "patient": {
     "name": "Patient name",

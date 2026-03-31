@@ -430,6 +430,13 @@ PERSONA_CHAT_CONFIG = {
         "decision_type": "claims processing decisions",
         "example_policy_id": "PC-COV-001",
     },
+    "habitation_claims": {
+        "role": "expert en sinistres habitation spécialisé dans les dégâts des eaux et tempêtes en France",
+        "context_type": "politiques sinistres habitation MRH",
+        "item_type": "sinistre habitation",
+        "decision_type": "décisions de règlement sinistre",
+        "example_policy_id": "HAB-DDE-001",
+    },
     "mortgage_underwriting": {
         "role": "expert Canadian mortgage underwriter specializing in OSFI B-20 compliance",
         "context_type": "mortgage underwriting policies including OSFI B-20 guidelines",

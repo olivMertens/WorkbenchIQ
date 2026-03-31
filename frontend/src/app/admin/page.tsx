@@ -41,6 +41,7 @@ import PersonaSelector from '@/components/PersonaSelector';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import GlossaryManager from '@/components/GlossaryManager';
 import { usePersona } from '@/lib/PersonaContext';
+import { useTranslations } from 'next-intl';
 
 type ProcessingStep = 'idle' | 'uploading' | 'extracting' | 'analyzing' | 'complete' | 'error';
 type AdminTab = 'documents' | 'prompts' | 'policies' | 'analyzer' | 'glossary';
@@ -54,6 +55,7 @@ interface ProcessingState {
 export default function AdminPage() {
   // Persona context
   const { currentPersona, personaConfig } = usePersona();
+  const t = useTranslations('adminPanel');
 
   // Tab state
   const [activeTab, setActiveTab] = useState<AdminTab>('documents');
@@ -869,7 +871,7 @@ export default function AdminPage() {
               </svg>
               <div className="text-slate-600">
                 <label className="cursor-pointer text-indigo-600 hover:text-indigo-500">
-                  <span>{isAutomotiveClaimsPersona ? 'Upload evidence files' : 'Upload PDF files'}</span>
+                  <span>{isAutomotiveClaimsPersona ? t('evidenceFiles') : t('uploadFiles')}</span>
                   <input
                     type="file"
                     className="sr-only"
@@ -1000,14 +1002,14 @@ export default function AdminPage() {
                 : 'bg-indigo-600 text-white hover:bg-indigo-700'
             }`}
           >
-            {isProcessing ? 'Processing...' : 'Upload & Process'}
+            {isProcessing ? t('uploadAndProcess') + '...' : t('uploadAndProcess')}
           </button>
         </div>
 
         {/* Applications List */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-slate-900">Applications</h2>
+            <h2 className="text-xl font-semibold text-slate-900">{t('applications')}</h2>
             <button
               onClick={loadApplications}
               className="text-sm text-indigo-600 hover:text-indigo-700"
@@ -1025,7 +1027,7 @@ export default function AdminPage() {
             <div className="text-center py-8 text-rose-500">{error}</div>
           ) : applications.length === 0 ? (
             <div className="text-center py-8 text-slate-500">
-              No applications found. Upload documents to get started.
+              {t('noApplications')}
             </div>
           ) : (
             <ul className="divide-y divide-slate-200">
@@ -1222,7 +1224,7 @@ export default function AdminPage() {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Skill Selector */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <h2 className="text-xl font-semibold mb-4 text-slate-900">Agent Skills</h2>
+        <h2 className="text-xl font-semibold mb-4 text-slate-900">{t('agentSkills')}</h2>
         
         {promptsLoading ? (
           <div className="text-center py-8 text-slate-500">Loading agent skills...</div>
@@ -1635,7 +1637,7 @@ export default function AdminPage() {
         <div className="px-5 py-4 border-b border-slate-200 bg-slate-50">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-slate-900">
-              {isAutomotiveClaimsPersona ? 'Automotive Claims Policies' : isClaimsPersona ? 'Claims Policies' : 'Underwriting Policies'}
+              {isClaimsPersona ? t('claimsPolicies') : t('underwritingPolicies')}
             </h2>
           </div>
           {/* Action Buttons */}
@@ -2399,7 +2401,7 @@ export default function AdminPage() {
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
           <personaConfig.icon className="w-6 h-6" style={{ color: personaConfig.color }} />
           <div>
-            <h2 className="font-medium text-slate-900">{personaConfig.name} Workbench</h2>
+            <h2 className="font-medium text-slate-900">{personaConfig.name} — {t('workbench')}</h2>
             <p className="text-sm text-slate-600">{personaConfig.description}</p>
           </div>
         </div>
@@ -2417,7 +2419,7 @@ export default function AdminPage() {
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
               }`}
             >
-              Document Processing
+              {t('documentProcessing')}
             </button>
             <button
               onClick={() => setActiveTab('prompts')}
@@ -2427,7 +2429,7 @@ export default function AdminPage() {
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
               }`}
             >
-              Agent Skills
+              {t('agentSkills')}
             </button>
             <button
               onClick={() => setActiveTab('policies')}
@@ -2437,7 +2439,7 @@ export default function AdminPage() {
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
               }`}
             >
-              {currentPersona.includes('claims') ? 'Claims Policies' : 'Underwriting Policies'}
+              {currentPersona.includes('claims') ? t('claimsPolicies') : t('underwritingPolicies')}
             </button>
             <button
               onClick={() => setActiveTab('analyzer')}
@@ -2447,7 +2449,7 @@ export default function AdminPage() {
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
               }`}
             >
-              Analyzer Management
+              {t('analyzerManagement')}
             </button>
             <button
               onClick={() => setActiveTab('glossary')}
@@ -2457,7 +2459,7 @@ export default function AdminPage() {
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
               }`}
             >
-              Glossary
+              {t('glossaryTab')}
             </button>
           </nav>
         </div>

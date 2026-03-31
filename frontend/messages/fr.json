@@ -85,7 +85,32 @@
     "fileType": "Type",
     "fileSize": "Taille",
     "uploadDate": "Date d'envoi",
-    "tip": "Conseil"
+    "tip": "Conseil",
+    "tipText": "Ce sont les documents originaux téléchargés pour ce dossier. Le texte extrait et l'analyse sont disponibles dans la vue Pages sources."
+  },
+  "adminPanel": {
+    "workbench": "Poste de travail",
+    "description": "Poste de travail intelligent de traitement de documents",
+    "documentProcessing": "Traitement des documents",
+    "agentSkills": "Compétences des agents",
+    "claimsPolicies": "Polices de sinistres",
+    "underwritingPolicies": "Polices de souscription",
+    "analyzerManagement": "Gestion des analyseurs",
+    "glossaryTab": "Glossaire",
+    "uploadNew": "Nouveau dossier",
+    "applications": "Dossiers",
+    "refresh": "Actualiser",
+    "uploadFiles": "Télécharger des fichiers",
+    "uploadFilesDesc": "Glissez-déposez vos fichiers ici",
+    "pdfOnly": "PDF uniquement",
+    "evidenceFiles": "Fichiers de preuves",
+    "evidenceFilesDesc": "Images (PNG, JPG), Vidéos (MP4, MOV) et documents PDF",
+    "externalReference": "Référence externe (optionnel)",
+    "uploadAndProcess": "Charger et traiter",
+    "selectedFiles": "Fichiers sélectionnés",
+    "deleteConfirm": "Supprimer le dossier",
+    "noApplications": "Aucun dossier",
+    "backendConnected": "Backend connecté"
   },
   "patient": {
     "name": "Nom du patient",

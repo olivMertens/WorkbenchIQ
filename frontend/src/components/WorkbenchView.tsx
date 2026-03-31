@@ -108,7 +108,7 @@ export default function WorkbenchView({
       case 'documents':
         return (
           <div className="flex-1 overflow-auto p-6">
-            <DocumentsPanel files={selectedApp.files || []} />
+            <DocumentsPanel files={selectedApp.files || []} applicationId={selectedApp.id} />
           </div>
         );
       case 'source':
