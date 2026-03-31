@@ -88,43 +88,39 @@ if (-not $SkipBackend) {
     Write-Host ""
     Write-Host ">>> Building backend: groupaiq-api:$Tag" -ForegroundColor Yellow
     
-    # Create minimal tar to avoid az acr build ignoring .dockerignore on Windows
-    # Excludes .venv (137 MiB), frontend (489 MiB), assets, docs, tests, etc.
-    $RepoRoot = "$PSScriptRoot\.."
-    $TarFile = [System.IO.Path]::GetTempFileName() + ".tar.gz"
+    # Stage minimal context — az acr build ignores .dockerignore on Windows
+    # Without this: 113 MiB uploaded. With staging: ~1 MiB.
+    $RepoRoot = Resolve-Path "$PSScriptRoot\.."
+    $StageDir = Join-Path ([System.IO.Path]::GetTempPath()) "groupaiq-api-ctx-$Tag"
+    if (Test-Path $StageDir) { Remove-Item $StageDir -Recurse -Force }
+    New-Item $StageDir -ItemType Directory -Force | Out-Null
     
-    Write-Host "    Creating minimal build context..."
-    tar -czf $TarFile `
-        --exclude='.venv' `
-        --exclude='.git' `
-        --exclude='frontend' `
-        --exclude='assets' `
-        --exclude='node_modules' `
-        --exclude='__pycache__' `
-        --exclude='.mypy_cache' `
-        --exclude='docs' `
-        --exclude='specs' `
-        --exclude='tests' `
-        --exclude='infra' `
-        --exclude='.github' `
-        --exclude='.vscode' `
-        --exclude='data' `
-        --exclude='*.pyc' `
-        -C "$RepoRoot" .
+    Write-Host "    Staging minimal context..."
+    # Copy only what the Dockerfile needs
+    Copy-Item "$RepoRoot\Dockerfile"       $StageDir
+    Copy-Item "$RepoRoot\pyproject.toml"   $StageDir
+    Copy-Item "$RepoRoot\uv.lock"          $StageDir
+    Copy-Item "$RepoRoot\requirements.txt" $StageDir -ErrorAction SilentlyContinue
+    Copy-Item "$RepoRoot\api_server.py"    $StageDir
+    Copy-Item "$RepoRoot\app"              "$StageDir\app" -Recurse
+    Copy-Item "$RepoRoot\prompts"          "$StageDir\prompts" -Recurse
+    # scripts/startup.sh for entrypoint
+    New-Item "$StageDir\scripts" -ItemType Directory -Force | Out-Null
+    Copy-Item "$RepoRoot\scripts\startup.sh" "$StageDir\scripts\" -ErrorAction SilentlyContinue
     
-    $TarSizeMB = [math]::Round((Get-Item $TarFile).Length / 1MB, 2)
-    Write-Host "    Context: $TarSizeMB MiB (tar.gz)" -ForegroundColor Cyan
+    $CtxSizeMB = [math]::Round((Get-ChildItem $StageDir -Recurse -File | Measure-Object Length -Sum).Sum / 1MB, 2)
+    Write-Host "    Context: $CtxSizeMB MiB" -ForegroundColor Cyan
     
     az acr build `
         --registry $ACR `
         --image "groupaiq-api:${Tag}" `
         --image "groupaiq-api:latest" `
         --file Dockerfile `
-        $TarFile `
+        $StageDir `
         --no-logs
     
     $buildResult = $LASTEXITCODE
-    Remove-Item -Path $TarFile -Force -ErrorAction SilentlyContinue
+    Remove-Item $StageDir -Recurse -Force -ErrorAction SilentlyContinue
     
     if ($buildResult -ne 0) {
         Write-Host "    FAILED — backend image build failed" -ForegroundColor Red
@@ -143,24 +139,29 @@ if (-not $SkipFrontend) {
     # Get API URL for the build arg
     $API_FQDN = az containerapp show -n $API_APP -g $RG --query "properties.configuration.ingress.fqdn" -o tsv 2>$null
     
-    # Create minimal tar to avoid az acr build ignoring .dockerignore on Windows
-    # This sends ~1 MiB instead of ~100 MiB (node_modules bloat)
-    $FrontendDir = "$PSScriptRoot\..\frontend"
-    $TarFile = [System.IO.Path]::GetTempFileName() + ".tar.gz"
+    # Stage minimal context — az acr build ignores .dockerignore on Windows
+    # Without this: 103 MiB uploaded. With staging: ~1 MiB.
+    $FrontendDir = Resolve-Path "$PSScriptRoot\..\frontend"
+    $StageDir = Join-Path ([System.IO.Path]::GetTempPath()) "groupaiq-fe-ctx-$Tag"
+    if (Test-Path $StageDir) { Remove-Item $StageDir -Recurse -Force }
+    New-Item $StageDir -ItemType Directory -Force | Out-Null
     
-    Write-Host "    Creating minimal build context..."
-    Push-Location $FrontendDir
-    tar -czf $TarFile `
-        --exclude='node_modules' `
-        --exclude='.next' `
-        --exclude='.gitignore' `
-        --exclude='coverage' `
-        --exclude='*.md' `
-        -C "$FrontendDir" .
-    Pop-Location
+    Write-Host "    Staging minimal context..."
+    # Copy only what the Dockerfile needs (no node_modules, no .next)
+    Copy-Item "$FrontendDir\Dockerfile"         $StageDir
+    Copy-Item "$FrontendDir\package.json"        $StageDir
+    Copy-Item "$FrontendDir\package-lock.json"   $StageDir -ErrorAction SilentlyContinue
+    Copy-Item "$FrontendDir\next.config.js"      $StageDir
+    Copy-Item "$FrontendDir\postcss.config.js"   $StageDir
+    Copy-Item "$FrontendDir\tailwind.config.js"  $StageDir
+    Copy-Item "$FrontendDir\tsconfig.json"       $StageDir
+    Copy-Item "$FrontendDir\next-env.d.ts"       $StageDir -ErrorAction SilentlyContinue
+    Copy-Item "$FrontendDir\src"                 "$StageDir\src" -Recurse
+    Copy-Item "$FrontendDir\public"              "$StageDir\public" -Recurse
+    Copy-Item "$FrontendDir\messages"            "$StageDir\messages" -Recurse
     
-    $TarSizeMB = [math]::Round((Get-Item $TarFile).Length / 1MB, 2)
-    Write-Host "    Context: $TarSizeMB MiB (tar.gz)" -ForegroundColor Cyan
+    $CtxSizeMB = [math]::Round((Get-ChildItem $StageDir -Recurse -File | Measure-Object Length -Sum).Sum / 1MB, 2)
+    Write-Host "    Context: $CtxSizeMB MiB" -ForegroundColor Cyan
     
     az acr build `
         --registry $ACR `
@@ -168,11 +169,11 @@ if (-not $SkipFrontend) {
         --image "groupaiq-frontend:latest" `
         --file Dockerfile `
         --build-arg "API_URL=https://$API_FQDN" `
-        $TarFile `
+        $StageDir `
         --no-logs
     
     $buildResult = $LASTEXITCODE
-    Remove-Item -Path $TarFile -Force -ErrorAction SilentlyContinue
+    Remove-Item $StageDir -Recurse -Force -ErrorAction SilentlyContinue
     
     if ($buildResult -ne 0) {
         Write-Host "    FAILED — frontend image build failed" -ForegroundColor Red
