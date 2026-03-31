@@ -447,3 +447,247 @@ python scripts/index_pdf_policies.py --force
 | GET | `/api/personas` | Liste des personas disponibles |
 | POST | `/api/applications` | Créer un dossier (souscription) |
 | POST | `/api/chat` | Ask IQ — chat contextuel |
+| GET | `/api/prompts?persona=X` | Récupérer les prompts d'un persona |
+| PUT | `/api/prompts/{section}/{subsection}` | Modifier un prompt |
+| POST | `/api/prompts/{section}/{subsection}` | Créer un nouveau prompt |
+| DELETE | `/api/prompts/{section}/{subsection}` | Supprimer un prompt |
+
+---
+
+## Architecture Interne : Système de Prompts et Content Understanding
+
+### Pipeline de Traitement en 3 Couches
+
+L'analyse IA de GroupaIQ repose sur un pipeline séquentiel à 3 couches :
+
+```
+┌─────────────────┐     ┌──────────────────────┐     ┌──────────────────┐
+│  Couche 1       │     │  Couche 2             │     │  Couche 3        │
+│  EXTRACTION CU  │ ──▶ │  TEMPLATES PROMPTS    │ ──▶ │  ANALYSE LLM     │
+│                 │     │                       │     │                  │
+│  Azure Content  │     │  prompts.json         │     │  GPT-4.1         │
+│  Understanding  │     │  (sections/subsections)│    │  STRICT JSON out │
+│                 │     │                       │     │                  │
+│  → Markdown     │     │  + {underwriting_     │     │  Résultat stocké │
+│  → Champs       │     │     policies}         │     │  dans llm_outputs│
+│    structurés   │     │  + document_markdown  │     │  [section]       │
+│  → Data confiance│    │  + additional_context  │     │  [subsection]    │
+└─────────────────┘     └──────────────────────┘     └──────────────────┘
+```
+
+### Couche 1 — Content Understanding (Azure CU)
+
+**Point d'entrée** : `run_content_understanding_for_files()`
+
+Pour chaque fichier uploadé, le système route automatiquement vers l'analyseur approprié :
+
+| Type de fichier | Analyseur | Données extraites |
+|----------------|-----------|-------------------|
+| PDF / Documents | `prebuilt-documentSearch` (défaut) ou analyseur custom | Markdown + champs structurés |
+| Images (.jpg/.png) | `prebuilt-image` ou `autoClaimsImageAnalyzer` (auto) | Zones de dommages, sévérité, confiance |
+| Vidéos (.mp4/.mov) | `autoClaimsVideoAnalyzer` (auto) | Keyframes, segments, transcription |
+
+**Analyseurs par persona** :
+
+| Persona | Analyseur Documents | Analyseur Images | Analyseur Vidéo |
+|---------|-------------------|-----------------|-----------------|
+| Souscription | prebuilt-documentSearch | prebuilt-image | — |
+| Sinistres Santé | prebuilt-documentSearch | prebuilt-image | — |
+| Sinistres Auto | autoClaimsDocAnalyzer | autoClaimsImageAnalyzer | autoClaimsVideoAnalyzer |
+| Sinistres Habitation | prebuilt-documentSearch | prebuilt-image | — |
+| Hypothécaire | prebuilt-documentSearch | prebuilt-image | — |
+
+**Schéma de champs par persona** (défini dans `app/personas.py`) :
+
+| Persona | Schéma de champs | Focus extraction |
+|---------|-----------------|------------------|
+| Souscription | `UNDERWRITING_FIELD_SCHEMA` | Nom, date naissance, tension artérielle, lipides, antécédents familiaux, médicaments |
+| Sinistres Santé | `LIFE_HEALTH_CLAIMS_FIELD_SCHEMA` | Détails sinistre, codes diagnostic, traitements, preuves médicales |
+| Sinistres Auto | `AUTOMOTIVE_CLAIMS_FIELD_SCHEMA` + IMAGE + VIDEO | Véhicule, zones de dommages, réparations, responsabilité |
+| Hypothécaire | `MORTGAGE_FIELD_SCHEMA` | Propriété, revenus, emploi, actifs |
+
+**Résultat agrégé stocké dans `ApplicationMetadata`** :
+- `document_markdown` — Markdown concaténé de tous les fichiers
+- `extracted_fields` — Clé format `filename:FieldName` avec valeur + confiance
+- `cu_raw_results` — Résultats bruts CU pour débogage
+
+### Couche 2 — Templates de Prompts
+
+**Structure hiérarchique** (fichier `prompts.json`) :
+
+```
+prompts.json (par persona)
+├── application_summary (section)          ← Profil du client
+│   ├── customer_profile (subsection)      ← Prompt template
+│   └── existing_policies (subsection)     ← Prompt template
+├── medical_summary (section)              ← Analyse médicale
+│   ├── family_history
+│   ├── hypertension
+│   ├── high_cholesterol
+│   ├── other_medical_findings
+│   ├── body_system_review
+│   ├── abnormal_labs
+│   └── latest_vitals
+└── requirements (section)                 ← Recommandations
+    └── requirements_summary
+```
+
+**Variables injectées dans chaque prompt** :
+
+| Variable | Source | Quand |
+|----------|--------|-------|
+| `{underwriting_policies}` | `prompts/*-policies.json` | Remplacée à l'exécution dans `_run_single_prompt()` |
+| Document markdown | Extrait par CU | Ajouté comme `user_prompt` après le template |
+| `additional_context` | Résumés par lots (mode gros doc) | Documents > 100 Ko |
+| `{glossary}` | `prompts/glossary.json` | Prêt mais pas encore injecté dans le pipeline de base |
+
+**Exécution** (`run_underwriting_prompts()`) :
+1. Charger les prompts du persona (fichier custom ou défauts `personas.py`)
+2. Détecter le mode : `standard` (< 100 Ko) ou `large_document` (> 100 Ko)
+3. Charger polices + glossaire + contexte additionnel
+4. Exécuter les sections **séquentiellement**, subsections **en parallèle** (4 workers)
+5. Parser le JSON strict renvoyé par GPT-4.1 (avec réparation troncature si nécessaire)
+6. Stocker dans `llm_outputs[section][subsection]`
+
+### Couche 3 — Administration des Prompts (Admin UI)
+
+L'onglet **Agent Skills** de la page Admin permet de gérer tous les prompts :
+
+| Opération | Endpoint | Méthode | Effet |
+|-----------|----------|---------|-------|
+| Lister les prompts | `/api/prompts?persona=X` | GET | Charge tous les section/subsection |
+| Modifier un prompt | `/api/prompts/{s}/{ss}?persona=X` | PUT | Application immédiate au prochain traitement |
+| Créer un prompt | `/api/prompts/{s}/{ss}?persona=X` | POST | Nouvelle subsection dans la section |
+| Supprimer un prompt | `/api/prompts/{s}/{ss}?persona=X` | DELETE | Retour au prompt par défaut |
+
+**Points clés** :
+- Les modifications sont **immédiates** — pas de redémarrage nécessaire
+- Supprimer un prompt personnalisé → le prompt par défaut est restauré automatiquement
+- Chaque persona a ses propres prompts indépendants
+
+---
+
+## Vision : Migration vers Microsoft Agent Framework
+
+### Architecture Actuelle vs Architecture Agentique
+
+**Aujourd'hui** : Pipeline séquentiel rigide — CU lance toujours en premier, tous les prompts s'exécutent systématiquement, pas de raisonnement dynamique.
+
+**Demain (Agent Framework)** : Agents autonomes avec des outils — chaque agent décide quels outils appeler, peut réessayer avec une stratégie différente, et peut demander des informations complémentaires.
+
+```
+ACTUEL (pipeline séquentiel)                 FUTUR (workflow agentique)
+─────────────────────────                    ─────────────────────────
+CU → Prompts → LLM → Résultat               ┌──────────────┐
+(ordre fixe, tout s'exécute)                 │ DocumentAgent │──┐
+                                             │ • extract_doc │  │
+                                             │ • extract_img │  ├──▶ WorkflowGraph
+                                             └──────────────┘  │
+                                             ┌──────────────┐  │
+                                             │ AnalysisAgent │──┤
+                                             │ • search_policy│  │
+                                             │ • analyze_sect│  │
+                                             │ • deep_dive   │  │
+                                             └──────────────┘  │
+                                             ┌──────────────┐  │
+                                             │  RiskAgent   │──┘
+                                             │ • evaluate   │
+                                             │ • recommend  │
+                                             └──────────────┘
+```
+
+### Comparaison Détaillée
+
+| Aspect | Pipeline Actuel | Agent Framework |
+|--------|----------------|-----------------|
+| **Exécution des prompts** | Ordre fixe : app_summary → medical_summary → requirements | L'agent décide quoi analyser selon le contenu |
+| **Sélection des prompts** | Toutes les subsections s'exécutent (même si non pertinentes) | L'agent choisit les outils pertinents : "ce doc contient des résultats labo → appeler `analyze_labs`" |
+| **Gestion d'erreurs** | Réparation mécanique du JSON après échec LLM | L'agent réessaie avec une stratégie différente |
+| **Extraction CU** | Étape obligatoire avant toute analyse | L'agent décide comment traiter chaque fichier, peut réessayer avec un autre analyseur |
+| **Admin** | Éditer le texte brut des prompts | Éditer les instructions de l'agent + activer/désactiver les outils par persona |
+| **Contexte de polices** | Injection statique `{underwriting_policies}` | L'agent appelle `search_policies("hypertension")` pour obtenir le sous-ensemble pertinent |
+| **Chat (Ask IQ)** | Endpoint séparé avec RAG | Agent avec tous les outils — peut chercher des polices, analyser des documents, répondre |
+
+### Transformation des Prompts en Outils d'Agent
+
+```python
+# ACTUEL : Template statique injecté avec des variables
+prompt = prompts["medical_summary"]["hypertension"]
+context = f"{prompt}\n\n{underwriting_policies}\n\n{document_markdown}"
+result = chat_completion(context)  # Appel unique et rigide
+
+# FUTUR : Agent avec fonctions @tool
+from agent_framework import Agent
+from agent_framework.openai import OpenAIChatClient
+
+@tool
+def analyze_hypertension(blood_pressure_readings: str, patient_age: int) -> str:
+    """Analyser les relevés de tension artérielle selon les directives Groupama."""
+    policies = search_policies("hypertension directives tension artérielle")
+    return f"Analyse TA : {blood_pressure_readings} pour patient de {patient_age} ans"
+
+@tool
+def search_policies(query: str) -> str:
+    """Rechercher les polices Groupama pour les directives pertinentes."""
+    return rag_search(query, category="life_health")
+
+analysis_agent = Agent(
+    client=OpenAIChatClient(azure_endpoint=..., model="gpt-4-1"),
+    name="AnalysisAgent",
+    instructions=admin_editable_instructions,  # ← Même admin UI
+    tools=[analyze_hypertension, search_policies, analyze_family_history, ...]
+)
+```
+
+### Transformation du CU en Outil d'Agent
+
+```python
+@tool
+def extract_document(file_path: str, analyzer_id: str = "prebuilt-layout") -> dict:
+    """Extraire les champs structurés et markdown d'un document via Azure CU."""
+    return content_understanding_client.analyze_document(file_path, analyzer_id)
+
+@tool
+def extract_image(file_path: str, analyzer_id: str = "autoClaimsImageAnalyzer") -> dict:
+    """Extraire l'évaluation des dommages d'une photo via Azure CU multimodal."""
+    return content_understanding_client.analyze_image(file_path, analyzer_id)
+
+document_agent = Agent(
+    name="DocumentAgent",
+    instructions="""Agent de traitement documentaire pour Groupama.
+    Pour chaque fichier :
+    1. Déterminer le type (PDF, image, vidéo)
+    2. Choisir l'analyseur approprié
+    3. Si confiance faible sur un champ clé → réessayer avec un autre analyseur
+    4. Retourner les résultats d'extraction structurés""",
+    tools=[extract_document, extract_image, extract_video, get_field_schema]
+)
+```
+
+### Évolution de l'Admin UI
+
+| Fonctionnalité Admin | Actuel | Avec Agent Framework |
+|---------------------|--------|---------------------|
+| **Onglet Agent Skills** | Éditer le texte des prompts | Éditer les instructions de l'agent + activer/désactiver les outils par persona |
+| **Onglet Analyzers** | Créer/supprimer des analyseurs CU | + Configurer quels analyseurs chaque agent peut utiliser |
+| **Onglet Polices** | CRUD règles + indexation RAG | Exposé comme outil `search_policies` pour les agents |
+| **Onglet Glossaire** | Gérer la terminologie | Exposé comme outil `get_glossary` pour la cohérence |
+| **Traitement** | Upload → Extraire → Analyser (3 boutons) | Upload → "Traiter" (1 bouton, l'agent décide les étapes) |
+
+### Plan de Migration par Phases
+
+| Phase | Périmètre | Risque | Effort |
+|-------|-----------|--------|--------|
+| **Phase 0** ✅ | Corrections bugs, i18n, déploiement | Aucun | Fait |
+| **Phase 1** | Convertir le chat (Ask IQ) en Agent + outils | Faible — isolé, rétrocompatible | Moyen |
+| **Phase 2** | Convertir les prompts templates en outils d'Agent | Moyen — change la structure des résultats | Moyen-Élevé |
+| **Phase 3** | CU comme DocumentAgent avec logique de retry | Moyen — change le flux d'extraction | Moyen |
+| **Phase 4** | Orchestration complète en Workflow (document → analyse → risque) | Élevé — réécriture du pipeline | Élevé |
+
+**Recommandation** : Démarrer par la **Phase 1** (chat comme agent) — cela donne le comportement "agentique" le plus visible en démo (le LLM raisonne sur quels outils appeler, cite les polices, pose des questions de clarification) sans toucher au pipeline extract/analyze existant. L'onglet admin "Agent Skills" évolue naturellement pour afficher les instructions de l'agent à côté des configurations d'outils.
+
+### Considérations
+
+1. **Agent Framework SDK est encore en RC** (rc6, pas GA). Acceptable pour une démo. Pour la production, attendre la GA (prévue Q2 2026 selon les annonces Build).
+2. **Content Understanding n'a pas d'intégration native Agent Framework** — il faut écrire des wrappers `@tool` personnalisés (illustrés ci-dessus). Simple puisque le client Python CU existe déjà.
+3. **L'onglet "Agent Skills" doit évoluer** pour afficher : (a) Instructions de l'agent (éditables), (b) Outils disponibles (on/off par persona), (c) Résultats avec traces d'appels d'outils (quels outils l'agent a appelé et pourquoi).
