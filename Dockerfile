@@ -36,6 +36,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
 COPY api_server.py ./
 COPY app/ ./app/
 COPY prompts/ ./prompts/
+COPY assets/pdf/ ./assets/pdf/
 COPY scripts/startup.sh ./scripts/startup.sh
 
 # Make startup script executable

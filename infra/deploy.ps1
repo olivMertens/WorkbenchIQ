@@ -104,6 +104,9 @@ if (-not $SkipBackend) {
     Copy-Item "$RepoRoot\api_server.py"    $StageDir
     Copy-Item "$RepoRoot\app"              "$StageDir\app" -Recurse
     Copy-Item "$RepoRoot\prompts"          "$StageDir\prompts" -Recurse
+    # assets/pdf/ for policy PDF serving
+    New-Item "$StageDir\assets\pdf" -ItemType Directory -Force | Out-Null
+    Copy-Item "$RepoRoot\assets\pdf\*.pdf" "$StageDir\assets\pdf\" -ErrorAction SilentlyContinue
     # scripts/startup.sh for entrypoint
     New-Item "$StageDir\scripts" -ItemType Directory -Force | Out-Null
     Copy-Item "$RepoRoot\scripts\startup.sh" "$StageDir\scripts\" -ErrorAction SilentlyContinue

@@ -1461,6 +1461,68 @@ class GlossaryCategoryUpdateRequest(BaseModel):
     name: str
 
 
+# =============================================================================
+# Policy PDF Assets (Groupama CG documents)
+# =============================================================================
+
+POLICY_PDFS = {
+    "habitation": {
+        "filename": "groupama-conditions-generales-habitation.pdf",
+        "title": "CG Habitation Groupama",
+    },
+    "sante": {
+        "filename": "groupama-complementaire-sante.pdf",
+        "title": "CG Complémentaire Santé",
+    },
+    "auto": {
+        "filename": "groupama-conditions-generales-auto.pdf",
+        "title": "CG Auto Groupama",
+    },
+    "flotte": {
+        "filename": "groupama-conditions-generales-flotte-auto.pdf",
+        "title": "CG Flotte Auto Groupama",
+    },
+}
+
+
+@app.get("/api/policy-pdfs")
+async def list_policy_pdfs():
+    """List available Groupama policy PDF documents."""
+    result = []
+    for key, info in POLICY_PDFS.items():
+        pdf_path = Path("assets/pdf") / info["filename"]
+        result.append({
+            "id": key,
+            "title": info["title"],
+            "filename": info["filename"],
+            "url": f"/api/policy-pdfs/{key}",
+            "available": pdf_path.exists(),
+        })
+    return result
+
+
+@app.get("/api/policy-pdfs/{pdf_id}")
+async def get_policy_pdf(pdf_id: str):
+    """Serve a Groupama policy PDF document."""
+    if pdf_id not in POLICY_PDFS:
+        raise HTTPException(status_code=404, detail=f"Policy PDF '{pdf_id}' not found")
+
+    info = POLICY_PDFS[pdf_id]
+    pdf_path = Path("assets/pdf") / info["filename"]
+
+    if not pdf_path.exists():
+        raise HTTPException(status_code=404, detail=f"PDF file not found: {info['filename']}")
+
+    return FileResponse(
+        path=str(pdf_path),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"inline; filename=\"{info['filename']}\"",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
 @app.get("/api/glossary")
 async def list_all_glossaries():
     """List all available glossaries with summary info."""

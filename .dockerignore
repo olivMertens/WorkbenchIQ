@@ -52,10 +52,12 @@ frontend
 frontend/
 frontend/**
 
-# Assets — PDFs indexed into DB, not baked into image
+# Assets — most excluded, but keep policy PDFs for API serving
 assets
 assets/
 assets/**
+!assets/pdf/
+!assets/pdf/*.pdf
 
 # Infra (Bicep, deploy scripts)
 infra

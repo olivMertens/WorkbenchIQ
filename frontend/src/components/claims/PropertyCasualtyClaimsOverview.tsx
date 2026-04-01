@@ -355,9 +355,9 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
     return signals;
   }, [ef, llmOutputs]);
 
-  // Build evidence items from actual uploaded files
+  // Build evidence items from actual uploaded files + policy reference PDFs
   const evidenceItems = useMemo(() => {
-    return files.map(f => {
+    const items = files.map(f => {
       const classification = classifyDocument(f.filename);
       const fileType = getFileTypeInfo(f.filename);
       return {
@@ -367,8 +367,29 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
         supports: true,
         challenges: false,
         fileType,
+        isPolicyRef: false,
       };
     });
+    // Add Groupama policy PDFs as reference docs
+    items.push({
+      source: 'CG Habitation Groupama',
+      type: 'Police',
+      summary: 'Conditions Générales Multirisque Habitation — garanties, exclusions, franchises',
+      supports: true,
+      challenges: false,
+      fileType: { label: 'PDF', icon: 'pdf' as const },
+      isPolicyRef: true,
+    });
+    items.push({
+      source: 'CG Complémentaire Santé',
+      type: 'Police',
+      summary: 'Conditions Générales Complémentaire Santé — couvertures, plafonds, délais de carence',
+      supports: true,
+      challenges: false,
+      fileType: { label: 'PDF', icon: 'pdf' as const },
+      isPolicyRef: true,
+    });
+    return items;
   }, [files]);
 
   // Build timeline from files
@@ -398,15 +419,27 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
     return items.slice(0, 10);
   }, [ef]);
 
-  // Build gallery items for lightbox (all files with URLs)
+  // Build gallery items for lightbox (all files with URLs + policy PDFs)
   const galleryItems: GalleryItem[] = useMemo(() => {
     if (!application?.id) return [];
-    return evidenceItems.map(item => ({
-      url: getMediaUrl(`/api/applications/${application.id}/files/${encodeURIComponent(item.source)}`),
-      filename: item.source,
-      type: item.fileType.icon as GalleryItem['type'],
-      label: item.type,
-    }));
+    return evidenceItems.map(item => {
+      if (item.isPolicyRef) {
+        // Map policy reference names to API endpoints
+        const pdfId = item.source.includes('Habitation') ? 'habitation' : 'sante';
+        return {
+          url: getMediaUrl(`/api/policy-pdfs/${pdfId}`),
+          filename: item.source,
+          type: 'pdf' as const,
+          label: item.type,
+        };
+      }
+      return {
+        url: getMediaUrl(`/api/applications/${application.id}/files/${encodeURIComponent(item.source)}`),
+        filename: item.source,
+        type: item.fileType.icon as GalleryItem['type'],
+        label: item.type,
+      };
+    });
   }, [evidenceItems, application?.id]);
 
   const tasks = [
