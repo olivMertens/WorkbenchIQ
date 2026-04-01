@@ -250,6 +250,12 @@ function buildGenericTimeline(application: ApplicationMetadata): TimelineEntry[]
   const entries: TimelineEntry[] = [];
   const llm = application.llm_outputs || {};
   const fields = application.extracted_fields || {};
+  const persona = application.persona || '';
+
+  // For habitation/claims personas, build a coherent claims narrative
+  if (persona.includes('habitation') || persona.includes('property')) {
+    return buildHabitationTimeline(application);
+  }
 
   // 1. Extract events from LLM outputs (any persona)
   for (const [section, subsections] of Object.entries(llm)) {
@@ -295,13 +301,15 @@ function buildGenericTimeline(application: ApplicationMetadata): TimelineEntry[]
     }
   }
 
-  // 2. If no LLM entries, build from extracted fields
+  // 2. If no LLM entries, build from date-like extracted fields only
   if (entries.length === 0) {
     for (const [key, val] of Object.entries(fields)) {
       if (!val || val.value == null || val.value === '') continue;
       const name = val.field_name || key.split(':').pop() || key;
+      // Only include fields that contain actual dates
+      if (!name.toLowerCase().includes('date')) continue;
       const parsedDate = parseDate(String(val.value));
-      if (parsedDate || name.toLowerCase().includes('date') || name.toLowerCase().includes('sinistre')) {
+      if (parsedDate) {
         const displayDate = formatDateDisplay(parsedDate);
         entries.push({
           date: displayDate.date,
@@ -317,6 +325,168 @@ function buildGenericTimeline(application: ApplicationMetadata): TimelineEntry[]
   }
 
   entries.sort((a, b) => (b.sortDate || 0) - (a.sortDate || 0));
+  return entries;
+}
+
+
+/**
+ * Build a coherent claims timeline for habitation persona.
+ * Creates narrative events from extracted fields with proper dates.
+ */
+function buildHabitationTimeline(application: ApplicationMetadata): TimelineEntry[] {
+  const entries: TimelineEntry[] = [];
+  const fields = application.extracted_fields || {};
+  const llm = application.llm_outputs || {};
+
+  // Helper to get field value
+  const getVal = (names: string[]): string => {
+    for (const name of names) {
+      for (const [key, val] of Object.entries(fields)) {
+        const fieldName = val?.field_name || key.split(':').pop() || key;
+        if (fieldName === name && val?.value != null && val.value !== '') {
+          return String(val.value);
+        }
+      }
+    }
+    return '';
+  };
+
+  const dateSinistre = getVal(['DateSinistre']);
+  const natureSinistre = getVal(['NatureSinistre']);
+  const description = getVal(['DescriptionSinistre']);
+  const lieu = getVal(['LieuSinistre']);
+  const montant = getVal(['MontantEstime']);
+  const mesures = getVal(['MesuresConservatoires']);
+  const nomAssure = getVal(['NomAssure', 'AssuréNom']);
+  const contrat = getVal(['NumeroContrat']);
+  const franchise = getVal(['FranchiseApplicable']);
+  const tiers = getVal(['TiersImplique']);
+  const urgence = getVal(['NiveauUrgence']);
+
+  // Parse the incident date as base
+  const incidentDate = parseDate(dateSinistre);
+  const createdDate = application.created_at ? new Date(application.created_at) : new Date();
+
+  // Build one-day-after, two-days-after from incident
+  const dayAfter = incidentDate ? new Date(incidentDate.getTime() + 86400000) : null;
+  const twoDaysAfter = incidentDate ? new Date(incidentDate.getTime() + 2 * 86400000) : null;
+
+  // 1. Incident
+  if (incidentDate && natureSinistre) {
+    const d = formatDateDisplay(incidentDate);
+    entries.push({
+      date: d.date, year: d.year,
+      title: `Sinistre : ${natureSinistre}`,
+      description: `Sinistre ${natureSinistre} survenu${lieu ? ' — ' + lieu : ''}`,
+      color: 'red',
+      details: description || `Sinistre de type ${natureSinistre} survenu le ${dateSinistre}${lieu ? ' à ' + lieu : ''}`,
+      sortDate: incidentDate.getTime(),
+    });
+  }
+
+  // 2. Constatation des dégâts (day after incident)
+  if (dayAfter && description) {
+    const d = formatDateDisplay(dayAfter);
+    entries.push({
+      date: d.date, year: d.year,
+      title: 'Constatation des dégâts',
+      description: `${nomAssure || 'L\'assuré'} constate les dommages`,
+      color: 'orange',
+      details: description.substring(0, 300),
+      sortDate: dayAfter.getTime(),
+    });
+  }
+
+  // 3. Mesures conservatoires
+  if (mesures) {
+    const mesuresDate = dayAfter || incidentDate;
+    if (mesuresDate) {
+      const d = formatDateDisplay(mesuresDate);
+      entries.push({
+        date: d.date, year: d.year,
+        title: 'Mesures conservatoires prises',
+        description: 'Interventions d\'urgence réalisées',
+        color: 'yellow',
+        details: mesures,
+        sortDate: mesuresDate.getTime() + 1,
+      });
+    }
+  }
+
+  // 4. Déclaration de sinistre (2 days after or creation date) 
+  if (twoDaysAfter || createdDate) {
+    const declDate = twoDaysAfter || createdDate;
+    const d = formatDateDisplay(declDate);
+    entries.push({
+      date: d.date, year: d.year,
+      title: 'Déclaration de sinistre',
+      description: `Déclaration envoyée à Groupama${contrat ? ' — contrat ' + contrat : ''}`,
+      color: 'blue',
+      details: `Déclaration de sinistre habitation${contrat ? '\nContrat : ' + contrat : ''}${montant ? '\nMontant estimé : ' + montant + ' €' : ''}`,
+      sortDate: declDate.getTime(),
+    });
+  }
+
+  // 5. Estimation des dommages
+  if (montant) {
+    const estimDate = twoDaysAfter || createdDate;
+    const d = formatDateDisplay(estimDate);
+    entries.push({
+      date: d.date, year: d.year,
+      title: `Estimation des dommages : ${Number(montant).toLocaleString('fr-FR')} €`,
+      description: `Montant total estimé des dommages${franchise ? ' — franchise : ' + franchise : ''}`,
+      color: 'purple',
+      details: `Montant estimé : ${Number(montant).toLocaleString('fr-FR')} €${franchise ? '\nFranchise applicable : ' + franchise : ''}${tiers ? '\nTiers impliqué : ' + tiers : ''}`,
+      sortDate: (estimDate?.getTime() || 0) + 2,
+    });
+  }
+
+  // 6. Upload / Réception du dossier (application creation date)
+  {
+    const d = formatDateDisplay(createdDate);
+    entries.push({
+      date: d.date, year: d.year,
+      title: 'Réception du dossier',
+      description: `Dossier reçu et enregistré dans GroupaIQ — traitement IA lancé`,
+      color: 'green',
+      details: `Dossier créé le ${createdDate.toLocaleDateString('fr-FR')}\nFichiers : ${(application.files || []).map(f => f.filename).join(', ')}`,
+      sortDate: createdDate.getTime(),
+    });
+  }
+
+  // 7. Urgence flag
+  if (urgence && (urgence.toLowerCase() === 'eleve' || urgence.toLowerCase() === 'critique')) {
+    entries.push({
+      date: '', year: '',
+      title: `⚠ Niveau d'urgence : ${urgence}`,
+      description: 'Dossier prioritaire — traitement accéléré requis',
+      color: 'red',
+      details: `Niveau d'urgence classifié : ${urgence}`,
+      sortDate: (incidentDate?.getTime() || createdDate.getTime()) - 1,
+    });
+  }
+
+  // 8. Add LLM analysis results as events
+  for (const [section, subsections] of Object.entries(llm)) {
+    if (!subsections || typeof subsections !== 'object') continue;
+    for (const [, output] of Object.entries(subsections as Record<string, any>)) {
+      const parsed = output?.parsed;
+      if (!parsed?.summary) continue;
+      const sectionLabel = section.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const d = formatDateDisplay(createdDate);
+      entries.push({
+        date: d.date, year: d.year,
+        title: `Analyse IA : ${sectionLabel}`,
+        description: String(parsed.summary).substring(0, 80),
+        color: 'green',
+        details: String(parsed.summary),
+        sortDate: createdDate.getTime() + 10,
+      });
+    }
+  }
+
+  // Sort chronologically (oldest first)
+  entries.sort((a, b) => (a.sortDate || 0) - (b.sortDate || 0));
   return entries;
 }
 
