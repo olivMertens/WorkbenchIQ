@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Send, MessageSquare, Bot, User, Loader2, Trash2, Info, BookOpen, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { StructuredContentRenderer } from './chat/ChatCards';
 import ChatHistoryPanel from './chat/ChatHistoryPanel';
 import PolicyDetailModal from './chat/PolicyDetailModal';
@@ -37,15 +38,10 @@ interface ChatMessage {
 // Loading status phases
 type LoadingPhase = 'retrieving' | 'analyzing' | 'formulating' | null;
 
-const loadingMessages: Record<Exclude<LoadingPhase, null>, string> = {
-  retrieving: 'Agent Polices en cours de recherche...',
-  analyzing: "Agent d'Analyse en cours de revue...",
-  formulating: 'Agent de Réponse en cours de formulation...',
-};
-
 // RAG Stats Tooltip Component
 function RAGStatsTooltip({ rag }: { rag: RAGMetadata }) {
   const [isVisible, setIsVisible] = useState(false);
+  const t = useTranslations('chat');
   
   if (!rag?.enabled || rag.fallback) return null;
   
@@ -56,7 +52,7 @@ function RAGStatsTooltip({ rag }: { rag: RAGMetadata }) {
         onMouseLeave={() => setIsVisible(false)}
         onClick={() => setIsVisible(!isVisible)}
         className="text-slate-400 hover:text-indigo-500 transition-colors"
-        aria-label="View RAG statistics"
+        aria-label={t('viewRagStats')}
       >
         <Info className="w-3.5 h-3.5" />
       </button>
@@ -64,23 +60,23 @@ function RAGStatsTooltip({ rag }: { rag: RAGMetadata }) {
       {isVisible && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50">
           <div className="bg-slate-800 text-white text-xs rounded-lg shadow-lg p-3 min-w-[180px]">
-            <div className="font-semibold mb-2 text-indigo-300">RAG Statistics</div>
+            <div className="font-semibold mb-2 text-indigo-300">{t('ragStats')}</div>
             <div className="space-y-1">
               <div className="flex justify-between">
-                <span className="text-slate-300">Extraits récupérés :</span>
+                <span className="text-slate-300">{t('chunksRetrieved')}</span>
                 <span className="font-mono">{rag.chunks_retrieved || 0}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-300">Tokens used:</span>
+                <span className="text-slate-300">{t('tokensUsed')}</span>
                 <span className="font-mono">{rag.tokens_used || 0}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-300">Latency:</span>
+                <span className="text-slate-300">{t('latency')}</span>
                 <span className="font-mono">{rag.latency_ms || 0}ms</span>
               </div>
               {rag.inferred_categories && rag.inferred_categories.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-slate-600">
-                  <span className="text-slate-300">Categories:</span>
+                  <span className="text-slate-300">{t('categories')}</span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {rag.inferred_categories.map((cat, i) => (
                       <span key={i} className="px-1.5 py-0.5 bg-indigo-600/30 rounded text-indigo-200 text-[10px]">
@@ -110,6 +106,7 @@ function PolicyCitations({
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const t = useTranslations('chat');
   
   if (!citations || citations.length === 0) return null;
   
@@ -131,7 +128,7 @@ function PolicyCitations({
         className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 transition-colors"
       >
         <BookOpen className="w-3.5 h-3.5" />
-        <span>{uniquePolicies.length} polic{uniquePolicies.length === 1 ? 'y' : 'ies'} referenced</span>
+        <span>{t('policiesReferenced', { count: uniquePolicies.length })}</span>
         {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
       </button>
       
@@ -161,22 +158,22 @@ function PolicyCitations({
                   <div className="font-semibold text-sm text-slate-800">{citation.policy_name}</div>
                   <div className="mt-1 space-y-1 text-xs">
                     <div className="flex gap-2">
-                      <span className="text-slate-500">Policy ID:</span>
+                      <span className="text-slate-500">{t('policyId')}</span>
                       <span className="font-mono text-indigo-600">{citation.policy_id}</span>
                     </div>
                     <div className="flex gap-2">
-                      <span className="text-slate-500">Chunk type:</span>
+                      <span className="text-slate-500">{t('chunkType')}</span>
                       <span className="capitalize">{citation.chunk_type}</span>
                     </div>
                     {citation.criteria_id && (
                       <div className="flex gap-2">
-                        <span className="text-slate-500">Criteria:</span>
+                        <span className="text-slate-500">{t('criteriaId')}</span>
                         <span className="font-mono">{citation.criteria_id}</span>
                       </div>
                     )}
                   </div>
                   <div className="mt-2 pt-2 border-t border-slate-100 text-xs text-indigo-600">
-                    Click to view full policy details
+                    {t('clickToViewPolicy')}
                   </div>
                 </div>
               )}
@@ -255,6 +252,7 @@ export default function ChatDrawer({
   persona = 'underwriting',
 }: ChatDrawerProps) {
   const { addToast } = useToast();
+  const t = useTranslations('chat');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -581,7 +579,7 @@ export default function ChatDrawer({
                   <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
                   {loadingPhase && (
                     <span className="text-sm text-slate-600 animate-pulse">
-                      {loadingMessages[loadingPhase]}
+                      {loadingPhase === 'retrieving' ? t('retrievingPolicies') : loadingPhase === 'analyzing' ? t('analyzingData') : t('formulatingResponse')}
                     </span>
                   )}
                 </div>

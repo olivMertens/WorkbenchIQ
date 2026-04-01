@@ -54,7 +54,7 @@ export function useAnalyzerManager(currentPersona: string, isActive: boolean) {
     setAnalyzerSuccess(null);
     try {
       const result = await createAnalyzer(analyzerId, currentPersona, undefined, mediaType);
-      setAnalyzerSuccess(`Analyzer "${result.analyzer_id}" created successfully!`);
+      setAnalyzerSuccess(`Analyseur "${result.analyzer_id}" créé avec succès`);
       addToast('success', 'Analyseur créé avec succès');
       await loadAnalyzerData();
       setTimeout(() => setAnalyzerSuccess(null), 5000);
@@ -66,21 +66,24 @@ export function useAnalyzerManager(currentPersona: string, isActive: boolean) {
   }, [currentPersona, loadAnalyzerData]);
 
   const handleDeleteAnalyzer = useCallback(async (analyzerId: string) => {
-    if (!confirm(`Are you sure you want to delete the analyzer "${analyzerId}"?`)) return;
+    // Prevent deletion of prebuilt analyzers
+    const analyzer = analyzers.find(a => a.id === analyzerId);
+    if (analyzer?.type === 'prebuilt') return;
+    if (!confirm(`Supprimer l'analyseur "${analyzerId}" ?`)) return;
     setAnalyzerProcessing(true);
     setAnalyzerError(null);
     try {
       await deleteAnalyzer(analyzerId);
-      setAnalyzerSuccess('Analyzer deleted successfully');
+      setAnalyzerSuccess('Analyseur supprimé avec succès');
       addToast('info', 'Analyseur supprimé');
       await loadAnalyzerData();
       setTimeout(() => setAnalyzerSuccess(null), 3000);
     } catch (err) {
-      setAnalyzerError(err instanceof Error ? err.message : 'Failed to delete analyzer');
+      setAnalyzerError(err instanceof Error ? err.message : 'Échec de la suppression');
     } finally {
       setAnalyzerProcessing(false);
     }
-  }, [loadAnalyzerData]);
+  }, [loadAnalyzerData, analyzers]);
 
   return {
     analyzerStatus,

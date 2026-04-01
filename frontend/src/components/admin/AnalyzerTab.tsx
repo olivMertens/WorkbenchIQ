@@ -62,10 +62,10 @@ export default function AnalyzerTab({
                 className="flex-1 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
                 {analyzerProcessing ? t('processing') : analyzerStatus.exists ? t('updateAnalyzer') : t('createAnalyzer')}
               </button>
-              {analyzerStatus.exists && (
+              {analyzerStatus.exists && analyzerStatus.analyzer_id !== analyzerStatus.default_analyzer_id && (
                 <button onClick={() => onDeleteAnalyzer(analyzerStatus.analyzer_id)} disabled={analyzerProcessing}
                   className="px-4 py-2 text-rose-600 border border-rose-300 rounded-lg hover:bg-rose-50 disabled:opacity-50 transition-colors">
-                  Delete
+                  {t('delete')}
                 </button>
               )}
             </div>
