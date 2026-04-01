@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Scale,
   Activity,
@@ -134,6 +134,86 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
   const ef = application?.extracted_fields || {};
   const llmOutputs = (application?.llm_outputs || {}) as Record<string, unknown>;
   const files = application?.files || [];
+  const docMarkdown = String((application as unknown as Record<string, unknown>)?.document_markdown || '');
+
+  // Customer 360 cross-reference
+  const [customerData, setCustomerData] = useState<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    if (!application?.external_reference) return;
+    fetch(`/api/customers/${encodeURIComponent(application.external_reference)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setCustomerData(data); })
+      .catch(() => {});
+  }, [application?.external_reference]);
+
+  // Derive key info from document_markdown when extracted_fields is empty
+  const markdownDerivedFields = useMemo(() => {
+    if (Object.keys(ef).length > 0 || !docMarkdown) return [];
+    const fields: { name: string; value: string }[] = [];
+    // Parse common patterns from the markdown
+    const patterns: [RegExp, string][] = [
+      [/(?:numéro|n°)\s*(?:de\s*)?(?:sinistre|dossier)\s*[:：]\s*(.+)/i, 'N° Sinistre'],
+      [/(?:numéro|n°)\s*(?:de\s*)?(?:contrat|police)\s*[:：]\s*(.+)/i, 'N° Contrat'],
+      [/(?:nom|assuré|souscripteur)\s*[:：]\s*(.+)/i, 'Assuré'],
+      [/(?:adresse|lieu)\s*[:：]\s*(.+)/i, 'Adresse'],
+      [/(?:date)\s*(?:du\s*)?(?:sinistre|incident)\s*[:：]\s*(.+)/i, 'Date sinistre'],
+      [/(?:nature|cause|type)\s*(?:du\s*)?(?:sinistre|dommage)\s*[:：]\s*(.+)/i, 'Nature sinistre'],
+      [/(?:montant|total|estimation)\s*[:：]\s*(.+€?.+)/i, 'Montant estimé'],
+      [/(?:franchise)\s*[:：]\s*(.+)/i, 'Franchise'],
+    ];
+    for (const [regex, name] of patterns) {
+      const match = docMarkdown.match(regex);
+      if (match) fields.push({ name, value: match[1].trim().slice(0, 100) });
+    }
+    // Add document stats as fallback
+    if (fields.length === 0) {
+      fields.push({ name: 'Documents', value: `${files.length} fichier(s) uploadé(s)` });
+      fields.push({ name: 'Contenu extrait', value: `${docMarkdown.length.toLocaleString('fr-FR')} caractères` });
+      if (application?.status) fields.push({ name: 'Statut', value: application.status });
+    }
+    // Add customer 360 data if available
+    if (customerData) {
+      const profile = (customerData as Record<string, unknown>).profile as Record<string, unknown> | undefined;
+      if (profile?.name && !fields.find(f => f.name === 'Assuré')) {
+        fields.push({ name: 'Assuré (Client 360)', value: String(profile.name) });
+      }
+      if (profile?.email) fields.push({ name: 'Email', value: String(profile.email) });
+      if (profile?.phone) fields.push({ name: 'Téléphone', value: String(profile.phone) });
+    }
+    return fields;
+  }, [ef, docMarkdown, files, application?.status, customerData]);
+
+  // Derive damages from document_markdown or LLM outputs
+  const markdownDerivedDamages = useMemo(() => {
+    const items: { description: string; related: string }[] = [];
+    // First try LLM damage_assessment outputs
+    const damageSection = llmOutputs.damage_assessment as Record<string, unknown> | undefined;
+    if (damageSection) {
+      for (const [, val] of Object.entries(damageSection)) {
+        const sub = val as { parsed?: { damage_areas?: Array<{ location: string; severity: string; description: string }> } } | undefined;
+        if (sub?.parsed?.damage_areas) {
+          for (const area of sub.parsed.damage_areas) {
+            items.push({ description: `${area.location} — ${area.description} (${area.severity})`, related: 'Oui' });
+          }
+        }
+      }
+    }
+    // Fallback: extract from markdown
+    if (items.length === 0 && docMarkdown) {
+      const damagePatterns = [
+        /(?:dégâts?\s*(?:des\s*eaux?|constatés?))\s*[:：]\s*(.+)/gi,
+        /(?:dommages?\s*(?:constatés?|visibles?))\s*[:：]\s*(.+)/gi,
+        /(?:infiltration|fuite|inondation|fissure|moisissure)\s*[:：]?\s*(.+)/gi,
+      ];
+      for (const regex of damagePatterns) {
+        let m;
+        while ((m = regex.exec(docMarkdown)) !== null && items.length < 6) {
+          items.push({ description: m[1].trim().slice(0, 150), related: 'Oui' });
+        }
+      }
+    }
+    return items;
+  }, [llmOutputs, docMarkdown]);
 
   // Build AI summary from LLM outputs
   const aiSummary = useMemo(() => {
@@ -306,6 +386,15 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
                       );
                     })}
                   </div>
+                ) : markdownDerivedFields.length > 0 ? (
+                  <div className="space-y-1">
+                    {markdownDerivedFields.map((field, i) => (
+                      <div key={i} className="flex justify-between items-center">
+                        <span className="text-slate-600 truncate mr-2">{field.name}</span>
+                        <span className="font-medium text-slate-900 text-right flex-shrink-0 max-w-[60%] truncate">{field.value}</span>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <div className="text-center py-4 text-slate-400">
                     <p>Aucun champ extrait</p>
@@ -387,6 +476,18 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
                         <tr key={i}>
                           <td className="py-2 text-slate-900">{inj.diagnosis}</td>
                           <td className="py-2"><span className={clsx('px-1.5 py-0.5 rounded text-xs', inj.related === 'Oui' ? 'bg-emerald-100 text-emerald-700' : inj.related === 'Possible' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600')}>{inj.related}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : markdownDerivedDamages.length > 0 ? (
+                  <table className="w-full text-xs">
+                    <thead><tr className="text-slate-500 border-b"><th className="text-left py-1.5 font-normal">Dommage constaté</th><th className="text-left py-1.5 font-normal">Lié ?</th></tr></thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {markdownDerivedDamages.map((dmg, i) => (
+                        <tr key={i}>
+                          <td className="py-2 text-slate-900">{dmg.description}</td>
+                          <td className="py-2"><span className="px-1.5 py-0.5 rounded text-xs bg-emerald-100 text-emerald-700">{dmg.related}</span></td>
                         </tr>
                       ))}
                     </tbody>
