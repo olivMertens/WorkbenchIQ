@@ -1,12 +1,12 @@
 {
-  "version": "1.1",
+  "version": "1.2",
   "effective_date": "2025-01-29",
-  "description": "Large Document Processing Prompts for Life & Health Underwriting",
-  "last_updated": "2026-01-29",
+  "description": "Prompts de traitement de gros documents — Souscription Vie & Santé Groupama",
+  "last_updated": "2026-04-01",
   
   "standardization": {
-    "language": "All output must be in English regardless of the source document language. Translate any non-English content to English.",
-    "measurements": "Convert all measurements to US customary units: weight in pounds (lbs), height in feet/inches, temperature in Fahrenheit, blood glucose in mg/dL. Include original values in parentheses if helpful for verification."
+    "language": "Toute sortie doit être en français. Traduire le contenu non francophone en français.",
+    "measurements": "Utiliser le système métrique (SI) : poids en kilogrammes (kg), taille en centimètres (cm), température en Celsius (°C), glycémie en mmol/L. Inclure les valeurs originales entre parenthèses si utile pour vérification."
   },
   
   "system_messages": {

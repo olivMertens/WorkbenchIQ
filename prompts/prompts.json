@@ -1,16 +1,16 @@
 {
   "metadata": {
-    "version": "1.1",
-    "description": "Life insurance underwriting prompts for application analysis",
+    "version": "1.2",
+    "description": "Prompts d'analyse de souscription assurance vie — Groupama",
     "standardization": {
-      "language": "English",
-      "measurement_system": "US customary units",
+      "language": "French",
+      "measurement_system": "Metric (SI)",
       "conversions": {
-        "weight": "kg → lbs (multiply by 2.205)",
-        "height": "cm → feet and inches",
-        "temperature": "Celsius → Fahrenheit",
-        "blood_glucose": "mmol/L → mg/dL (multiply by 18)",
-        "cholesterol": "mmol/L → mg/dL (multiply by 38.67)"
+        "weight": "lbs → kg (diviser par 2.205)",
+        "height": "feet/inches → cm",
+        "temperature": "Fahrenheit → Celsius",
+        "blood_glucose": "mg/dL → mmol/L (diviser par 18)",
+        "cholesterol": "mg/dL → mmol/L (diviser par 38.67)"
       }
     }
   },

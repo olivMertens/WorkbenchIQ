@@ -1,10 +1,10 @@
 {
-  "version": "1.0",
+  "version": "2.0",
   "effective_date": "2026-01-01",
-  "description": "Canadian Residential Mortgage Underwriting Policies - OSFI B-20 Guidelines for mortgage underwriting including debt service ratios, stress testing, income qualification, and risk assessment",
-  "last_updated": "2026-01-23",
-  "jurisdiction": "Canada",
-  "regulatory_framework": "OSFI Guideline B-20",
+  "description": "Politiques de souscription hypothécaire résidentielle française — Recommandations HCSF et réglementation ACPR pour les ratios d'endettement, le test de solvabilité, la qualification des revenus et l'évaluation des risques",
+  "last_updated": "2026-04-01",
+  "jurisdiction": "France",
+  "regulatory_framework": "HCSF (Haut Conseil de Stabilité Financière) / ACPR",
   "policies": [
     {
       "id": "OSFI-B20-GDS-001",

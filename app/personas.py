@@ -3139,7 +3139,7 @@ MORTGAGE_FIELD_SCHEMA = {
         },
         "BorrowerSIN": {
             "type": "string",
-            "description": "Social Insurance Number of the primary borrower (Canadian SIN format: XXX-XXX-XXX). Redact if present for privacy.",
+            "description": "Numéro de sécurité sociale de l'emprunteur principal (format NIR français : X XX XX XX XXX XXX XX). Masquer si présent pour confidentialité.",
             "method": "extract",
             "estimateSourceAndConfidence": True
         },
@@ -3163,7 +3163,7 @@ MORTGAGE_FIELD_SCHEMA = {
         },
         "CreditScore": {
             "type": "number",
-            "description": "Borrower's credit score (Equifax or TransUnion). Canadian scores range 300-900.",
+            "description": "Score de crédit de l'emprunteur (Banque de France, scoring interne). Scores de 0 à 1000 selon les modèles.",
             "method": "extract",
             "estimateSourceAndConfidence": True
         },
@@ -3301,19 +3301,19 @@ MORTGAGE_FIELD_SCHEMA = {
         },
         "DownPaymentSource": {
             "type": "string",
-            "description": "Source of down payment: Savings, Gift, RRSP Withdrawal (HBP), Sale of Property, Other.",
+            "description": "Source de l'apport personnel : Épargne, Donation familiale, PEL/CEL, Vente d'un bien, Prêt à taux zéro (PTZ), Autre.",
             "method": "extract",
             "estimateSourceAndConfidence": True
         },
         "LoanType": {
             "type": "string",
-            "description": "Loan type: Conventional (>=20% down), High-Ratio (<20% down, requires CMHC insurance), Refinance.",
+            "description": "Type de prêt : Acquisition résidence principale, Investissement locatif, Résidence secondaire, Rachat de crédit.",
             "method": "extract",
             "estimateSourceAndConfidence": True
         },
         "AmortizationYears": {
             "type": "number",
-            "description": "Requested amortization period in years (max 30 for uninsured, 25 for insured per OSFI B-20).",
+            "description": "Durée demandée du prêt en années (max 25 ans selon recommandations HCSF, + 2 ans de différé possible).",
             "method": "extract",
             "estimateSourceAndConfidence": True
         },
@@ -3359,13 +3359,13 @@ MORTGAGE_FIELD_SCHEMA = {
         # ===== Calculated Ratios (Generated) =====
         "GrossDebtServiceRatio": {
             "type": "string",
-            "description": "GDS ratio: (PITH)/Gross Income. OSFI B-20 limit is 39%.",
+            "description": "Taux d'endettement : Charges totales / Revenus nets. Limite HCSF : 35%.",
             "method": "generate",
             "estimateSourceAndConfidence": True
         },
         "TotalDebtServiceRatio": {
             "type": "string",
-            "description": "TDS ratio: (PITH + Other Debts)/Gross Income. OSFI B-20 limit is 44%.",
+            "description": "Taux d'endettement global : (Charges immobilières + Autres dettes) / Revenus nets. Limite HCSF : 35%.",
             "method": "generate",
             "estimateSourceAndConfidence": True
         },
@@ -3377,7 +3377,7 @@ MORTGAGE_FIELD_SCHEMA = {
         },
         "QualifyingRate": {
             "type": "string",
-            "description": "OSFI Mortgage Qualifying Rate (MQR): greater of (contract rate + 2%) or floor rate (5.25%).",
+            "description": "Taux d'usure applicable publié par la Banque de France. Le TAEG du prêt ne doit pas dépasser ce seuil.",
             "method": "generate",
             "estimateSourceAndConfidence": True
         },
@@ -3398,85 +3398,87 @@ MORTGAGE_FIELD_SCHEMA = {
 
 MORTGAGE_DEFAULT_PROMPTS = {
     "application_summary": {
-        "system": """You are an expert Canadian mortgage underwriter with deep knowledge of OSFI B-20 guidelines 
-and residential mortgage underwriting best practices. You analyze mortgage applications for Canadian 
-residential properties with expertise in:
+        "system": """Vous êtes un expert en souscription hypothécaire française avec une connaissance approfondie 
+des recommandations du HCSF (Haut Conseil de Stabilité Financière) et des bonnes pratiques 
+de souscription de crédit immobilier résidentiel. Vous analysez les dossiers de prêt immobilier 
+pour des propriétés résidentielles en France avec une expertise en :
 
-- OSFI B-20 compliance (GDS ≤39%, TDS ≤44%, MQR stress test)
-- Income qualification and haircut rules
-- Debt service ratio calculations  
-- Risk assessment and fraud detection
-- Canadian real estate and mortgage regulations
+- Conformité HCSF (taux d'endettement ≤35%, durée max 25 ans + 2 ans de différé)
+- Qualification des revenus et règles de calcul
+- Calcul du taux d'endettement et du reste à vivre
+- Évaluation des risques et détection de fraude
+- Réglementation immobilière et bancaire française (Code de la consommation, loi Scrivener)
 
-Provide thorough, accurate analysis while maintaining a professional and helpful tone.""",
+Fournir une analyse rigoureuse et précise en maintenant un ton professionnel et utile.
+Toute sortie doit être en français.""",
         
-        "borrower_profile": """Analyze the mortgage application documents and extract a comprehensive borrower profile including:
+        "borrower_profile": """Analyser les documents du dossier de prêt immobilier et extraire un profil complet de l'emprunteur :
 
-- Personal information (name, DOB, SIN, credit score)
-- Employment details and income sources
-- Property information and purchase details
-- Loan characteristics and down payment
-- Existing debts and liabilities
+- Informations personnelles (nom, date de naissance, situation familiale)
+- Détails de l'emploi et sources de revenus (CDI, CDD, indépendant)
+- Informations sur le bien immobilier et le projet d'acquisition
+- Caractéristiques du prêt et apport personnel
+- Dettes et charges existantes (crédits en cours, pensions alimentaires)
 
-Return structured JSON with complete borrower details.""",
+Retourner un JSON structuré avec les détails complets de l'emprunteur.""",
         
-        "income_analysis": """Analyze all income documentation (paystubs, T4s, employment letters, NOAs) and provide:
+        "income_analysis": """Analyser tous les justificatifs de revenus (bulletins de salaire, avis d'imposition, attestation employeur) et fournir :
 
-- Verified base salary
-- Variable income (bonus, commission) with applicable haircuts
-- Self-employment income (2-year average if applicable)  
-- Rental or other income
-- Monthly qualifying income calculation
-- Income consistency check across documents
+- Salaire net mensuel vérifié (avant impôt)
+- Revenus variables (primes, commissions) avec décote applicable
+- Revenus d'activité indépendante (moyenne 3 dernières années si applicable)
+- Revenus locatifs ou autres revenus (pondérés à 70% selon les pratiques bancaires)
+- Calcul du revenu mensuel qualifiant
+- Vérification de la cohérence des revenus entre les documents
 
-Flag any discrepancies between stated and verified income.""",
+Signaler toute incohérence entre les revenus déclarés et vérifiés.""",
         
-        "ratio_calculation": """Calculate the following debt service ratios per OSFI B-20:
+        "ratio_calculation": """Calculer les ratios d'endettement conformément aux recommandations du HCSF :
 
-1. GDS (Gross Debt Service): PITH / Gross Income
-   - P&I: Principal & Interest payment
-   - Property Taxes (monthly)
-   - Heating costs
-   - 50% of condo fees (if applicable)
+1. Taux d'endettement : Charges / Revenus nets
+   - Mensualité du prêt (capital + intérêts + assurance emprunteur)
+   - Taxe foncière (mensualisation)
+   - Charges de copropriété (si applicable)
+   - Autres crédits en cours
 
-2. TDS (Total Debt Service): (PITH + Other Debts) / Gross Income
+2. Reste à vivre : Revenus nets - Charges totales
+   - Minimum recommandé selon la composition du foyer
 
-3. LTV (Loan-to-Value): Loan Amount / Property Value
+3. Ratio LTV (Loan-to-Value) : Montant du prêt / Valeur du bien
 
-4. MQR Stress Test: Use qualifying rate = MAX(contract_rate + 2%, 5.25%)
-   - Recalculate payment at MQR
-   - Compute stress-tested GDS and TDS
+4. Taux d'usure : Vérifier que le TAEG ne dépasse pas le taux d'usure en vigueur (publié par la Banque de France)
 
-Return all ratios as percentages with comparison to limits (GDS ≤39%, TDS ≤44%).""",
+Retourner tous les ratios en pourcentages avec comparaison aux limites HCSF (taux d'endettement ≤35%, durée ≤25 ans).""",
         
-        "risk_assessment": """Perform comprehensive risk assessment including:
+        "risk_assessment": """Effectuer une évaluation complète des risques incluant :
 
-- Income consistency verification
-- Fraud detection signals (round numbers, employment discrepancies)
-- AML considerations (large cash deposits, structured transactions)
-- Credit risk factors (score, derogatory items, utilization)
-- Property risk (rapid price appreciation, non-arms-length)
+- Vérification de la cohérence des revenus
+- Signaux de fraude (montants arrondis, incohérences emploi/revenus)
+- Conformité LCB-FT (lutte contre le blanchiment — dépôts en espèces importants, transactions structurées)
+- Facteurs de risque crédit (historique FICP/FCC, incidents bancaires, taux d'utilisation)
+- Risque immobilier (surévaluation du bien, transaction entre parties liées, zone géographique)
 
-Aggregate risk signals and provide overall risk level: Low, Medium, or High.""",
+Agréger les signaux de risque et fournir un niveau de risque global : Faible, Modéré ou Élevé.""",
         
-        "recommendation": """Based on the complete analysis, provide an underwriting recommendation:
+        "recommendation": """Sur la base de l'analyse complète, fournir une recommandation de souscription :
 
-DECISION: APPROVE | REFER | DECLINE
+DÉCISION : APPROUVER | RÉFÉRER | REFUSER
 
-RATIONALE:
-- GDS ratio: [value]% (limit 39%)
-- TDS ratio: [value]% (limit 44%)
-- LTV ratio: [value]%
-- Stress test qualification: PASS/FAIL at [MQR]%
-- Risk level: Low/Medium/High
+JUSTIFICATION :
+- Taux d'endettement : [valeur]% (limite HCSF 35%)
+- Reste à vivre : [montant]€ (minimum recommandé [seuil]€)
+- Ratio LTV : [valeur]%
+- Durée du prêt : [durée] ans (limite HCSF 25 ans + 2 ans différé)
+- TAEG vs taux d'usure : [TAEG]% vs [usure]%
+- Niveau de risque : Faible/Modéré/Élevé
 
-CONDITIONS (if applicable):
-- List any approval conditions
+CONDITIONS (si applicable) :
+- Lister les conditions d'approbation (caution, hypothèque, assurance emprunteur)
 
-NEXT STEPS:
-- Actions required from borrower/broker/underwriter
+PROCHAINES ÉTAPES :
+- Actions requises de l'emprunteur/courtier/analyste
 
-Be specific and reference OSFI B-20 guidelines where applicable."""
+Être précis et référencer les recommandations HCSF et la réglementation applicable."""
     }
 }
 
@@ -3547,19 +3549,19 @@ PERSONA_CONFIGS: Dict[PersonaType, PersonaConfig] = {
     ),
     PersonaType.MORTGAGE_UNDERWRITING: PersonaConfig(
         id="mortgage_underwriting",
-        name="Mortgage Underwriting",
-        description="Canadian residential mortgage underwriting with OSFI B-20 compliance",
+        name="Souscription Hypothécaire",
+        description="Souscription de crédit immobilier résidentiel français — conformité HCSF",
         icon="🏠",
         color="#059669",  # Emerald
         field_schema=MORTGAGE_FIELD_SCHEMA,
         default_prompts=MORTGAGE_DEFAULT_PROMPTS,
         custom_analyzer_id="mortgageDocAnalyzer",
-        enabled=True,  # Now enabled
+        enabled=True,
     ),
     PersonaType.MORTGAGE: PersonaConfig(
         id="mortgage_underwriting",  # Maps to MORTGAGE_UNDERWRITING
-        name="Mortgage Underwriting",
-        description="Canadian residential mortgage underwriting with OSFI B-20 compliance",
+        name="Souscription Hypothécaire",
+        description="Souscription de crédit immobilier résidentiel français — conformité HCSF",
         icon="🏠",
         color="#059669",  # Emerald
         field_schema=MORTGAGE_FIELD_SCHEMA,

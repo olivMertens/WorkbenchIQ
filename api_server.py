@@ -438,11 +438,11 @@ PERSONA_CHAT_CONFIG = {
         "example_policy_id": "HAB-DDE-001",
     },
     "mortgage_underwriting": {
-        "role": "expert Canadian mortgage underwriter specializing in OSFI B-20 compliance",
-        "context_type": "mortgage underwriting policies including OSFI B-20 guidelines",
-        "item_type": "mortgage application",
-        "decision_type": "mortgage underwriting decisions",
-        "example_policy_id": "OSFI-B20-GDS-001",
+        "role": "expert en souscription de crédit immobilier français, spécialiste des recommandations HCSF",
+        "context_type": "politiques de souscription hypothécaire incluant les recommandations HCSF et la réglementation ACPR",
+        "item_type": "dossier de prêt immobilier",
+        "decision_type": "décisions de souscription hypothécaire",
+        "example_policy_id": "HCSF-ENDETT-001",
     },
 }
 

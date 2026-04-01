@@ -237,119 +237,100 @@
       ]
     },
     "mortgage": {
-      "name": "Mortgage Underwriting",
-      "description": "Financial and regulatory terminology for Canadian mortgage underwriting",
+      "name": "Souscription Hypothécaire",
+      "description": "Terminologie financière et réglementaire pour la souscription de crédit immobilier en France",
       "categories": [
         {
           "id": "regulatory",
-          "name": "Regulatory",
+          "name": "Réglementation",
           "terms": [
-            {"abbreviation": "OSFI", "meaning": "Office of the Superintendent of Financial Institutions", "context": "Canadian federal financial regulator"},
-            {"abbreviation": "B-20", "meaning": "OSFI Guideline B-20", "context": "Residential Mortgage Underwriting Practices and Procedures"},
-            {"abbreviation": "CMHC", "meaning": "Canada Mortgage and Housing Corporation", "context": "Federal housing agency and mortgage insurer"},
-            {"abbreviation": "FINTRAC", "meaning": "Financial Transactions and Reports Analysis Centre", "context": "Anti-money laundering regulator"},
-            {"abbreviation": "AML", "meaning": "Anti-Money Laundering", "context": "Financial crime prevention"},
-            {"abbreviation": "KYC", "meaning": "Know Your Customer", "context": "Customer verification requirements"},
-            {"abbreviation": "FCAC", "meaning": "Financial Consumer Agency of Canada", "context": "Consumer protection regulator"},
-            {"abbreviation": "PIPEDA", "meaning": "Personal Information Protection and Electronic Documents Act", "context": "Privacy legislation"}
+            {"abbreviation": "HCSF", "meaning": "Haut Conseil de Stabilité Financière", "context": "Autorité réglementaire des conditions d'octroi de crédit immobilier"},
+            {"abbreviation": "ACPR", "meaning": "Autorité de Contrôle Prudentiel et de Résolution", "context": "Superviseur bancaire et d'assurance français"},
+            {"abbreviation": "BdF", "meaning": "Banque de France", "context": "Banque centrale, publie le taux d'usure"},
+            {"abbreviation": "TRACFIN", "meaning": "Traitement du Renseignement et Action contre les Circuits Financiers Clandestins", "context": "Service anti-blanchiment"},
+            {"abbreviation": "LCB-FT", "meaning": "Lutte Contre le Blanchiment et Financement du Terrorisme", "context": "Obligations de vigilance bancaire"},
+            {"abbreviation": "KYC", "meaning": "Know Your Customer", "context": "Vérification d'identité du client"},
+            {"abbreviation": "CNIL", "meaning": "Commission Nationale de l'Informatique et des Libertés", "context": "Protection des données personnelles (RGPD)"},
+            {"abbreviation": "FICP", "meaning": "Fichier des Incidents de remboursement des Crédits aux Particuliers", "context": "Fichier Banque de France des incidents crédit"},
+            {"abbreviation": "FCC", "meaning": "Fichier Central des Chèques", "context": "Fichier des chèques impayés et interdictions bancaires"}
           ]
         },
         {
           "id": "ratios",
-          "name": "Ratios & Calculations",
+          "name": "Ratios et Calculs",
           "terms": [
-            {"abbreviation": "GDS", "meaning": "Gross Debt Service (ratio)", "context": "Housing costs / gross income - max 39%"},
-            {"abbreviation": "TDS", "meaning": "Total Debt Service (ratio)", "context": "All debts / gross income - max 44%"},
-            {"abbreviation": "LTV", "meaning": "Loan-to-Value (ratio)", "context": "Mortgage amount / property value"},
-            {"abbreviation": "PITH", "meaning": "Principal, Interest, Taxes, Heating", "context": "Monthly housing costs"},
-            {"abbreviation": "MQR", "meaning": "Mortgage Qualifying Rate", "context": "Stress test rate - higher of contract+2% or floor"},
-            {"abbreviation": "DSR", "meaning": "Debt Service Ratio", "context": "General term for GDS/TDS"},
-            {"abbreviation": "PTI", "meaning": "Payment-to-Income", "context": "Alternative debt ratio measure"},
-            {"abbreviation": "DTI", "meaning": "Debt-to-Income", "context": "Total debt relative to income"}
+            {"abbreviation": "TE", "meaning": "Taux d'Endettement", "context": "Charges / Revenus nets — limite HCSF : 35%"},
+            {"abbreviation": "RAV", "meaning": "Reste À Vivre", "context": "Revenus nets - charges totales — indicateur de solvabilité"},
+            {"abbreviation": "RPV", "meaning": "Rapport Prêt-Valeur (LTV)", "context": "Montant du prêt / valeur du bien"},
+            {"abbreviation": "TAEG", "meaning": "Taux Annuel Effectif Global", "context": "Coût total du crédit incluant intérêts, assurance, frais"},
+            {"abbreviation": "TEG", "meaning": "Taux Effectif Global", "context": "Ancien terme pour TAEG (avant 2016)"},
+            {"abbreviation": "TU", "meaning": "Taux d'Usure", "context": "Taux maximum légal publié par la Banque de France"}
           ]
         },
         {
           "id": "income",
-          "name": "Income & Tax",
+          "name": "Revenus et Fiscalité",
           "terms": [
-            {"abbreviation": "NOA", "meaning": "Notice of Assessment", "context": "CRA tax assessment document"},
-            {"abbreviation": "T4", "meaning": "Statement of Remuneration Paid", "context": "Employment income slip"},
-            {"abbreviation": "T1", "meaning": "Individual Income Tax Return", "context": "Personal tax return"},
-            {"abbreviation": "T2", "meaning": "Corporate Income Tax Return", "context": "Business tax return"},
-            {"abbreviation": "T4A", "meaning": "Statement of Pension, Retirement, Annuity", "context": "Other income slip"},
-            {"abbreviation": "YTD", "meaning": "Year-to-Date", "context": "Cumulative from Jan 1"},
-            {"abbreviation": "LOE", "meaning": "Letter of Employment", "context": "Employment verification letter"},
-            {"abbreviation": "POI", "meaning": "Proof of Income", "context": "Income documentation"}
+            {"abbreviation": "AI", "meaning": "Avis d'Imposition", "context": "Document fiscal annuel — justificatif de revenus"},
+            {"abbreviation": "BS", "meaning": "Bulletin de Salaire", "context": "Fiche de paie mensuelle"},
+            {"abbreviation": "AE", "meaning": "Attestation Employeur", "context": "Certificat de travail ou attestation de revenus"},
+            {"abbreviation": "CDI", "meaning": "Contrat à Durée Indéterminée", "context": "Contrat de travail stable — critère majeur"},
+            {"abbreviation": "CDD", "meaning": "Contrat à Durée Déterminée", "context": "Contrat temporaire — revenus moins pérennes"},
+            {"abbreviation": "TNS", "meaning": "Travailleur Non Salarié", "context": "Indépendant, libéral, gérant — revenus sur 3 ans"},
+            {"abbreviation": "BIC", "meaning": "Bénéfices Industriels et Commerciaux", "context": "Revenus d'activité commerciale"},
+            {"abbreviation": "BNC", "meaning": "Bénéfices Non Commerciaux", "context": "Revenus d'activité libérale"}
           ]
         },
         {
           "id": "savings",
-          "name": "Savings & Investments",
+          "name": "Épargne et Apport",
           "terms": [
-            {"abbreviation": "GIC", "meaning": "Guaranteed Investment Certificate", "context": "Fixed-term deposit"},
-            {"abbreviation": "RRSP", "meaning": "Registered Retirement Savings Plan", "context": "Tax-deferred retirement account"},
-            {"abbreviation": "TFSA", "meaning": "Tax-Free Savings Account", "context": "Tax-free investment account"},
-            {"abbreviation": "FHSA", "meaning": "First Home Savings Account", "context": "First-time buyer savings account"},
-            {"abbreviation": "HBP", "meaning": "Home Buyers' Plan", "context": "RRSP withdrawal for home purchase"},
-            {"abbreviation": "POF", "meaning": "Proof of Funds", "context": "Documentation of available funds"},
-            {"abbreviation": "SOF", "meaning": "Source of Funds", "context": "Origin of down payment funds"}
+            {"abbreviation": "PEL", "meaning": "Plan d'Épargne Logement", "context": "Épargne réglementée pour l'immobilier — droit à prêt"},
+            {"abbreviation": "CEL", "meaning": "Compte Épargne Logement", "context": "Complément du PEL — épargne logement flexible"},
+            {"abbreviation": "PTZ", "meaning": "Prêt à Taux Zéro", "context": "Prêt aidé par l'État pour primo-accédants"},
+            {"abbreviation": "PAS", "meaning": "Prêt d'Accession Sociale", "context": "Prêt conventionné sous conditions de ressources"},
+            {"abbreviation": "PC", "meaning": "Prêt Conventionné", "context": "Prêt ouvrant droit à l'APL"},
+            {"abbreviation": "APL", "meaning": "Aide Personnalisée au Logement", "context": "Aide au logement de la CAF"},
+            {"abbreviation": "AV", "meaning": "Assurance Vie", "context": "Épargne pouvant servir d'apport"}
           ]
         },
         {
           "id": "property",
-          "name": "Property",
+          "name": "Bien Immobilier",
           "terms": [
-            {"abbreviation": "APS", "meaning": "Agreement of Purchase and Sale", "context": "Property purchase contract"},
-            {"abbreviation": "MLS", "meaning": "Multiple Listing Service", "context": "Real estate listing system"},
-            {"abbreviation": "GFA", "meaning": "Gross Floor Area", "context": "Total building area"},
-            {"abbreviation": "SFH", "meaning": "Single Family Home", "context": "Detached house"},
-            {"abbreviation": "SFD", "meaning": "Single Family Dwelling", "context": "Detached house"},
-            {"abbreviation": "PUD", "meaning": "Planned Unit Development", "context": "Mixed-use development"},
-            {"abbreviation": "ARV", "meaning": "After Repair Value", "context": "Value after renovations"},
-            {"abbreviation": "BPO", "meaning": "Broker Price Opinion", "context": "Real estate valuation"},
-            {"abbreviation": "CMA", "meaning": "Comparative Market Analysis", "context": "Property value estimate"},
-            {"abbreviation": "MPAC", "meaning": "Municipal Property Assessment Corporation", "context": "Ontario property assessment"}
+            {"abbreviation": "CPC", "meaning": "Compromis de Vente (ou Promesse)", "context": "Avant-contrat de vente immobilière"},
+            {"abbreviation": "DPE", "meaning": "Diagnostic de Performance Énergétique", "context": "Classement énergie A-G — obligatoire"},
+            {"abbreviation": "VEFA", "meaning": "Vente en l'État Futur d'Achèvement", "context": "Achat sur plan — construction neuve"},
+            {"abbreviation": "SCI", "meaning": "Société Civile Immobilière", "context": "Structure juridique de détention immobilière"},
+            {"abbreviation": "RP", "meaning": "Résidence Principale", "context": "Logement principal de l'emprunteur"},
+            {"abbreviation": "RS", "meaning": "Résidence Secondaire", "context": "Logement de villégiature"},
+            {"abbreviation": "IL", "meaning": "Investissement Locatif", "context": "Bien acquis pour la location"}
           ]
         },
         {
           "id": "loan",
-          "name": "Loan & Mortgage",
+          "name": "Prêt et Garanties",
           "terms": [
-            {"abbreviation": "ARM", "meaning": "Adjustable Rate Mortgage", "context": "Variable interest rate"},
-            {"abbreviation": "VRM", "meaning": "Variable Rate Mortgage", "context": "Rate fluctuates with prime"},
-            {"abbreviation": "FRM", "meaning": "Fixed Rate Mortgage", "context": "Rate locked for term"},
-            {"abbreviation": "LOC", "meaning": "Line of Credit", "context": "Revolving credit facility"},
-            {"abbreviation": "HELOC", "meaning": "Home Equity Line of Credit", "context": "LOC secured by home equity"},
-            {"abbreviation": "MTG", "meaning": "Mortgage", "context": "Home loan"},
-            {"abbreviation": "P&I", "meaning": "Principal and Interest", "context": "Loan payment components"},
-            {"abbreviation": "ITF", "meaning": "In Trust For", "context": "Funds held for another party"},
-            {"abbreviation": "COF", "meaning": "Closing of Funds", "context": "Disbursement at closing"}
-          ]
-        },
-        {
-          "id": "credit",
-          "name": "Credit",
-          "terms": [
-            {"abbreviation": "FICO", "meaning": "Fair Isaac Corporation score", "context": "Credit score model"},
-            {"abbreviation": "Beacon", "meaning": "Equifax credit score (Canada)", "context": "Canadian credit score"},
-            {"abbreviation": "TU", "meaning": "TransUnion", "context": "Credit bureau"},
-            {"abbreviation": "EFX", "meaning": "Equifax", "context": "Credit bureau"},
-            {"abbreviation": "UTL", "meaning": "Utilization", "context": "Credit usage percentage"},
-            {"abbreviation": "CCJ", "meaning": "County Court Judgment", "context": "Legal judgment against borrower"},
-            {"abbreviation": "R1-R9", "meaning": "Credit rating scale", "context": "R1=current to R9=bad debt"}
+            {"abbreviation": "ADE", "meaning": "Assurance Décès-Invalidité Emprunteur", "context": "Assurance obligatoire couvrant le remboursement"},
+            {"abbreviation": "IPT", "meaning": "Invalidité Permanente Totale", "context": "Garantie assurance emprunteur"},
+            {"abbreviation": "ITT", "meaning": "Incapacité Temporaire de Travail", "context": "Garantie perte de revenus temporaire"},
+            {"abbreviation": "PPD", "meaning": "Perte Partielle Définitive (PTIA)", "context": "Perte totale et irréversible d'autonomie"},
+            {"abbreviation": "IRA", "meaning": "Indemnités de Remboursement Anticipé", "context": "Pénalités en cas de remboursement avant terme"},
+            {"abbreviation": "TEG", "meaning": "Taux Effectif Global", "context": "Ancien terme pour TAEG"},
+            {"abbreviation": "SCPI", "meaning": "Société Civile de Placement Immobilier", "context": "Investissement immobilier collectif"},
+            {"abbreviation": "PPD-hyp", "meaning": "Privilège de Prêteur de Deniers", "context": "Garantie prioritaire du prêteur — moins coûteuse qu'une hypothèque"}
           ]
         },
         {
           "id": "status",
-          "name": "Decision Status",
+          "name": "Statut de Décision",
           "terms": [
-            {"abbreviation": "A/C", "meaning": "Approved with Conditions", "context": "Conditional approval"},
-            {"abbreviation": "DTC", "meaning": "Decline to Credit", "context": "Application rejected"},
-            {"abbreviation": "TBD", "meaning": "To Be Determined", "context": "Pending decision"},
-            {"abbreviation": "UW", "meaning": "Underwriter / Underwriting", "context": "Risk assessment"},
-            {"abbreviation": "COE", "meaning": "Close of Escrow", "context": "Transaction completion"},
-            {"abbreviation": "COI", "meaning": "Certificate of Insurance", "context": "Insurance proof"},
-            {"abbreviation": "CTC", "meaning": "Clear to Close", "context": "Final approval for closing"}
+            {"abbreviation": "AC", "meaning": "Accord sous Conditions", "context": "Approbation conditionnelle du prêt"},
+            {"abbreviation": "REF", "meaning": "Refus", "context": "Dossier refusé"},
+            {"abbreviation": "EC", "meaning": "En Cours d'étude", "context": "Dossier en instruction"},
+            {"abbreviation": "ODP", "meaning": "Offre De Prêt", "context": "Offre formelle émise par la banque — délai de réflexion 10 jours"},
+            {"abbreviation": "DI", "meaning": "Délai Indicatif", "context": "Délai prévisionnel de déblocage des fonds"},
+            {"abbreviation": "CS", "meaning": "Condition Suspensive", "context": "Condition à remplir avant la vente (ex. obtention du prêt)"}
           ]
         }
       ]

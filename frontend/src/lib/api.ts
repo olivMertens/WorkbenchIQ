@@ -92,7 +92,9 @@ async function apiFetch<T>(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new APIError(response.status, response.statusText, errorData);
+    const detail = (errorData as Record<string, unknown>)?.detail;
+    const message = typeof detail === 'string' ? detail : response.statusText;
+    throw new APIError(response.status, message, errorData);
   }
 
   return response.json();
@@ -194,7 +196,9 @@ export async function createApplication(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new APIError(response.status, response.statusText, errorData);
+    const detail = (errorData as Record<string, unknown>)?.detail;
+    const message = typeof detail === 'string' ? detail : response.statusText;
+    throw new APIError(response.status, message, errorData);
   }
 
   return response.json();
