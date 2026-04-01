@@ -256,13 +256,13 @@ export default function WorkbenchView({
                 className="flex items-center text-sm text-slate-500 hover:text-indigo-600 transition-colors"
             >
                 <ChevronLeft className="w-4 h-4 mr-1" />
-                Back to Dashboard
+                Retour au tableau de bord
             </button>
             <span className="mx-2 text-slate-300">/</span>
             <span className="text-sm font-medium text-slate-700 truncate max-w-md">
-                {selectedApp?.external_reference || selectedApp?.id || 'Application Details'}
+                {selectedApp?.external_reference || selectedApp?.id || 'Détails du dossier'}
             </span>
-             {loading && <span className="ml-3 text-xs text-slate-400 animate-pulse">Loading...</span>}
+             {loading && <span className="ml-3 text-xs text-slate-400 animate-pulse">Chargement...</span>}
         </div>
       </div>
 
@@ -297,8 +297,8 @@ export default function WorkbenchView({
                        selectedApp.processing_status === 'analyzing' ? 'text-violet-700' : 'text-sky-700'
                      }`}>
                        {selectedApp.processing_status === 'extracting'
-                         ? 'Data Agent extracting documents'
-                         : 'Risk Agent analyzing case'}
+                         ? "Agent d'extraction en cours"
+                         : "Agent d'analyse en cours"}
                      </span>
                      <span className="flex gap-1 ml-1">
                        <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-bounce" style={{ animationDelay: '0ms' }} />

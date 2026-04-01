@@ -112,7 +112,18 @@ export default function PriorityQueues({
                       <p className="font-medium text-slate-900">{getAppDisplayTitle(app)}</p>
                       <p className="text-xs text-slate-400 flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
-                        {app.processing_status || app.status}
+                        {(() => {
+                          const rawStatus = app.processing_status || app.status;
+                          const statusMap: Record<string, string> = {
+                            extracted: t('stepExtract'),
+                            extracting: t('stepExtract'),
+                            analyzing: t('stepAnalyze'),
+                            completed: t('stepDone'),
+                            pending: t('pending'),
+                            error: t('errorLabel'),
+                          };
+                          return statusMap[rawStatus] || rawStatus;
+                        })()}
                       </p>
                     </div>
                   </div>

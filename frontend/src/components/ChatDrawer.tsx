@@ -38,9 +38,9 @@ interface ChatMessage {
 type LoadingPhase = 'retrieving' | 'analyzing' | 'formulating' | null;
 
 const loadingMessages: Record<Exclude<LoadingPhase, null>, string> = {
-  retrieving: 'Policy Agent retrieving documents...',
-  analyzing: 'Analysis Agent reviewing application...',
-  formulating: 'Response Agent formulating answer...',
+  retrieving: 'Agent Polices en cours de recherche...',
+  analyzing: "Agent d'Analyse en cours de revue...",
+  formulating: 'Agent de Réponse en cours de formulation...',
 };
 
 // RAG Stats Tooltip Component
@@ -67,7 +67,7 @@ function RAGStatsTooltip({ rag }: { rag: RAGMetadata }) {
             <div className="font-semibold mb-2 text-indigo-300">RAG Statistics</div>
             <div className="space-y-1">
               <div className="flex justify-between">
-                <span className="text-slate-300">Chunks retrieved:</span>
+                <span className="text-slate-300">Extraits récupérés :</span>
                 <span className="font-mono">{rag.chunks_retrieved || 0}</span>
               </div>
               <div className="flex justify-between">
@@ -479,10 +479,10 @@ export default function ChatDrawer({
         className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-5 py-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 hover:shadow-xl transition-all duration-300 group whitespace-nowrap ${
           isOpen ? 'opacity-0 pointer-events-none translate-x-4' : 'opacity-100 translate-x-0'
         }`}
-        title="Ask IQ Agent"
+        title="Demander à IQ"
       >
         <MessageSquare className="w-5 h-5 flex-shrink-0" />
-        <span className="font-medium text-sm">Ask IQ</span>
+        <span className="font-medium text-sm">Demander à IQ</span>
       </button>
 
       {/* Backdrop */}
@@ -523,7 +523,7 @@ export default function ChatDrawer({
                   {conversationTitle}
                 </h2>
                 <p className="text-xs text-slate-500">
-                  {conversationId ? `${messages.length} messages` : 'Start a new conversation'}
+                  {conversationId ? `${messages.length} messages` : 'Démarrer une nouvelle conversation'}
                 </p>
               </div>
             </div>
@@ -545,15 +545,15 @@ export default function ChatDrawer({
               <div className="text-center py-8">
                 <Bot className="w-12 h-12 mx-auto mb-3 text-slate-300" />
                 <p className="text-sm text-slate-500">
-                  Ask me anything about this application or underwriting policies.
+                  Posez-moi une question sur ce dossier ou les polices d'assurance.
                 </p>
                 <div className="mt-4 space-y-2">
-                  <p className="text-xs text-slate-400">Try asking:</p>
+                  <p className="text-xs text-slate-400">Essayez par exemple :</p>
                   <div className="flex flex-wrap gap-2 justify-center">
                     {[
-                      'What are the key risk factors?',
-                      'Which policies apply here?',
-                      'Should I approve this application?',
+                      'Quels sont les facteurs de risque ?',
+                      'Quelles polices s\'appliquent ici ?',
+                      'Ce sinistre est-il couvert ?',
                     ].map((suggestion, idx) => (
                       <button
                         key={idx}
@@ -599,7 +599,7 @@ export default function ChatDrawer({
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Type your question..."
+                placeholder="Posez votre question..."
                 className="flex-1 resize-none rounded-lg border border-slate-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 rows={2}
                 disabled={isLoading}
@@ -613,7 +613,7 @@ export default function ChatDrawer({
               </button>
             </div>
             <p className="text-xs text-slate-400 mt-2">
-              Press Enter to send, Shift+Enter for new line
+              Entrée pour envoyer, Maj+Entrée pour un saut de ligne
             </p>
           </div>
         </div>
