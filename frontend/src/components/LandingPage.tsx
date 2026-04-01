@@ -206,11 +206,11 @@ export default function LandingPage({
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <div>
               <h1 className="text-2xl font-bold text-slate-900">
-                {getGreeting()}, {username ? username.charAt(0).toUpperCase() + username.slice(1).toLowerCase() : 'there'}!
+                {getGreeting()}, {username ? username.charAt(0).toUpperCase() + username.slice(1).toLowerCase() : ''}!
               </h1>
               <p className="text-slate-500 mt-1 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: personaConfig.primaryColor }} />
-                {personaConfig.name} Dashboard
+                {t('title')} — {personaConfig.name}
               </p>
             </div>
 
@@ -219,7 +219,7 @@ export default function LandingPage({
                 <button type="button" onClick={() => setLargeDocumentMode(!largeDocumentMode)}
                   className={clsx("flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all border",
                     largeDocumentMode ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"
-                  )} title="Enable for large documents (50+ pages)">
+                  )} title={t('condenseHelp')}>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
@@ -300,7 +300,7 @@ export default function LandingPage({
                 <button type="button" onClick={(e) => { e.stopPropagation(); setLargeDocumentMode(!largeDocumentMode); }}
                   className={clsx("flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
                     largeDocumentMode ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-slate-200 text-slate-400 hover:border-slate-300"
-                  )} title="Enable for large documents (50+ pages)">
+                  )} title={t('condenseHelp')}>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>

@@ -58,7 +58,7 @@
     "noApplications": "No cases found",
     "noApplicationsHint": "Upload documents above to create your first case.",
     "queue": "Queue",
-    "uploadDocuments": "+ New Application",
+    "uploadDocuments": "New Application",
     "dropFilesHere": "Drag and drop documents here to start a new case",
     "dropFilesActive": "Drop files to create a new case",
     "supportedFormats": "PDF, images, videos accepted",
@@ -79,7 +79,7 @@
     "stepExtract": "Extraction",
     "stepAnalyze": "Analysis",
     "stepDone": "Done",
-    "condense": "Condense"
+    "condense": "Large Document"
   },
   "documents": {
     "title": "Documents",
