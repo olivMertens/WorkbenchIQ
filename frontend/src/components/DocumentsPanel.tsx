@@ -1,9 +1,12 @@
 'use client';
 
-import { FileText, Download, ExternalLink, Image, Film } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { FileText, Download, ExternalLink, Image, Film, ZoomIn } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { getMediaUrl } from '@/lib/api';
 import type { StoredFile } from '@/lib/types';
+import GalleryLightbox from './GalleryLightbox';
+import type { GalleryItem } from './GalleryLightbox';
 
 interface DocumentsPanelProps {
   files: StoredFile[];
@@ -46,6 +49,20 @@ function getProxyUrl(file: StoredFile, applicationId?: string): string {
 
 export default function DocumentsPanel({ files, applicationId }: DocumentsPanelProps) {
   const t = useTranslations('documents');
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  const galleryItems: GalleryItem[] = useMemo(() => {
+    if (!applicationId) return [];
+    return files.map(file => {
+      const fileType = getFileType(file.filename);
+      return {
+        url: getProxyUrl(file, applicationId),
+        filename: file.filename,
+        type: fileType.icon as GalleryItem['type'],
+        label: fileType.label,
+      };
+    });
+  }, [files, applicationId]);
 
   if (!files || files.length === 0) {
     return (
@@ -74,7 +91,8 @@ export default function DocumentsPanel({ files, applicationId }: DocumentsPanelP
           return (
             <div
               key={index}
-              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+              onClick={() => setLightboxIndex(index)}
             >
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
@@ -93,12 +111,20 @@ export default function DocumentsPanel({ files, applicationId }: DocumentsPanelP
               <div className="flex items-center gap-2">
                 {proxyUrl && (
                   <>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setLightboxIndex(index); }}
+                      className="p-2 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
+                      title="Visualiser"
+                    >
+                      <ZoomIn className="w-5 h-5" />
+                    </button>
                     <a
                       href={proxyUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                       title={t('openNewTab')}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <ExternalLink className="w-5 h-5" />
                     </a>
@@ -107,6 +133,7 @@ export default function DocumentsPanel({ files, applicationId }: DocumentsPanelP
                       download={file.filename}
                       className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                       title={t('download')}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <Download className="w-5 h-5" />
                     </a>
@@ -123,6 +150,16 @@ export default function DocumentsPanel({ files, applicationId }: DocumentsPanelP
           <strong>{t('tip')}:</strong> {t('tipText')}
         </p>
       </div>
+
+      {/* Gallery Lightbox */}
+      {lightboxIndex !== null && galleryItems.length > 0 && (
+        <GalleryLightbox
+          items={galleryItems}
+          currentIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={setLightboxIndex}
+        />
+      )}
     </div>
   );
 }

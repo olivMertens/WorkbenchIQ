@@ -14,7 +14,21 @@ interface SourceReviewViewProps {
 }
 
 export default function SourceReviewView({ application, initialPage }: SourceReviewViewProps) {
-  const pages = application.markdown_pages || [];
+  // Use markdown_pages if available, otherwise synthesize from document_markdown
+  const pages = useMemo(() => {
+    if (application.markdown_pages && application.markdown_pages.length > 0) {
+      return application.markdown_pages;
+    }
+    // Fallback: create a single page from document_markdown
+    if (application.document_markdown) {
+      return [{
+        page_number: 1,
+        file: application.files?.[0]?.filename || 'document',
+        markdown: application.document_markdown,
+      }];
+    }
+    return [];
+  }, [application.markdown_pages, application.document_markdown, application.files]);
   const batchSummaries = application.batch_summaries || [];
 
   // Selected page number (1-indexed)
@@ -120,9 +134,9 @@ export default function SourceReviewView({ application, initialPage }: SourceRev
       <div className="flex-1 flex items-center justify-center bg-white rounded-xl border border-gray-200 m-6">
         <div className="text-center py-12 text-gray-500">
           <FileStack className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-          <p className="font-medium">No extracted content available.</p>
+          <p className="font-medium">Aucun contenu extrait disponible.</p>
           <p className="text-sm mt-2">
-            Run document extraction from the Admin page to extract text content.
+            {"Lancez l'extraction depuis le panneau d'administration pour extraire le texte des documents."}
           </p>
         </div>
       </div>
