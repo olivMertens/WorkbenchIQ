@@ -22,22 +22,22 @@ interface CustomerTimelineProps {
 }
 
 const PERSONA_CONFIG: Record<string, { icon: typeof ClipboardList; color: string; bg: string; border: string; label: string }> = {
-  underwriting: { icon: ClipboardList, color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200', label: 'Life & Health Underwriting' },
-  life_health_claims: { icon: Stethoscope, color: 'text-cyan-700', bg: 'bg-cyan-50', border: 'border-cyan-200', label: 'Life & Health Claims' },
-  automotive_claims: { icon: Car, color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200', label: 'Automotive Claims' },
-  mortgage_underwriting: { icon: Home, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', label: 'Mortgage Underwriting' },
+  underwriting: { icon: ClipboardList, color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200', label: 'Souscription Vie & Santé' },
+  life_health_claims: { icon: Stethoscope, color: 'text-cyan-700', bg: 'bg-cyan-50', border: 'border-cyan-200', label: 'Sinistres Santé' },
+  automotive_claims: { icon: Car, color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200', label: 'Sinistres Auto' },
+  mortgage_underwriting: { icon: Home, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', label: 'Souscription Hypothécaire' },
 };
 
 const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; label: string }> = {
-  approved: { icon: CheckCircle2, color: 'text-emerald-500', label: 'Approved' },
-  completed: { icon: CheckCircle2, color: 'text-emerald-500', label: 'Completed' },
-  closed: { icon: CheckCircle2, color: 'text-slate-500', label: 'Closed' },
-  conditional: { icon: AlertTriangle, color: 'text-amber-500', label: 'Conditional' },
-  referred: { icon: Clock, color: 'text-amber-500', label: 'Referred' },
-  pending: { icon: Clock, color: 'text-blue-500', label: 'Pending' },
-  in_progress: { icon: Clock, color: 'text-blue-500', label: 'In Progress' },
-  investigating: { icon: SearchIcon, color: 'text-orange-500', label: 'Investigating' },
-  declined: { icon: XCircle, color: 'text-rose-500', label: 'Declined' },
+  approved: { icon: CheckCircle2, color: 'text-emerald-500', label: 'Approuvé' },
+  completed: { icon: CheckCircle2, color: 'text-emerald-500', label: 'Terminé' },
+  closed: { icon: CheckCircle2, color: 'text-slate-500', label: 'Clôturé' },
+  conditional: { icon: AlertTriangle, color: 'text-amber-500', label: 'Sous conditions' },
+  referred: { icon: Clock, color: 'text-amber-500', label: 'Référé' },
+  pending: { icon: Clock, color: 'text-blue-500', label: 'En attente' },
+  in_progress: { icon: Clock, color: 'text-blue-500', label: 'En cours' },
+  investigating: { icon: SearchIcon, color: 'text-orange-500', label: 'Enquête' },
+  declined: { icon: XCircle, color: 'text-rose-500', label: 'Refusé' },
 };
 
 const EVENT_TYPE_ICONS: Record<string, typeof FileText> = {
@@ -54,7 +54,7 @@ export default function CustomerTimeline({ events }: CustomerTimelineProps) {
     return (
       <div className="text-center py-12 text-slate-400">
         <Clock className="w-10 h-10 mx-auto mb-2 opacity-40" />
-        <p>No journey events yet.</p>
+        <p>Aucun événement de parcours pour le moment.</p>
       </div>
     );
   }
@@ -72,7 +72,7 @@ export default function CustomerTimeline({ events }: CustomerTimelineProps) {
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
       <h2 className="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
         <Clock className="w-5 h-5 text-indigo-500" />
-        Customer Journey
+        Parcours client
       </h2>
 
       <div className="space-y-8">
@@ -162,7 +162,7 @@ function mapPersonaToFrontendId(persona: string): string {
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-CA', {
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

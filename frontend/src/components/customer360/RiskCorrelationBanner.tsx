@@ -51,10 +51,10 @@ const PERSONA_ICONS: Record<string, typeof ClipboardList> = {
 };
 
 const PERSONA_LABELS: Record<string, string> = {
-  underwriting: 'Underwriting',
-  life_health_claims: 'Health Claims',
-  automotive_claims: 'Auto Claims',
-  mortgage_underwriting: 'Mortgage',
+  underwriting: 'Souscription',
+  life_health_claims: 'Sinistres Santé',
+  automotive_claims: 'Sinistres Auto',
+  mortgage_underwriting: 'Hypothécaire',
 };
 
 export default function RiskCorrelationBanner({ correlations }: RiskCorrelationBannerProps) {
@@ -70,7 +70,7 @@ export default function RiskCorrelationBanner({ correlations }: RiskCorrelationB
     <div className="space-y-3">
       <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
         <AlertTriangle className="w-5 h-5 text-amber-500" />
-        Cross-Persona Risk Insights
+        Alertes risques multi-persona
       </h2>
 
       {sorted.map((correlation, idx) => {
@@ -103,7 +103,7 @@ export default function RiskCorrelationBanner({ correlations }: RiskCorrelationB
                 </p>
                 {/* Persona tags */}
                 <div className="flex items-center gap-2 mt-3">
-                  <span className="text-xs text-slate-400">Involves:</span>
+                  <span className="text-xs text-slate-400">Concerne :</span>
                   {correlation.personas_involved.map(persona => {
                     const Icon = PERSONA_ICONS[persona] || ClipboardList;
                     return (

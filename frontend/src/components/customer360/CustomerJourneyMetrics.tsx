@@ -23,9 +23,9 @@ export default function CustomerJourneyMetrics({ data }: CustomerJourneyMetricsP
   const warningCorrelations = risk_correlations.filter(c => c.severity === 'warning').length;
 
   const riskConfig = {
-    low: { icon: ShieldCheck, color: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Low' },
-    medium: { icon: Shield, color: 'text-amber-600', bg: 'bg-amber-50', label: 'Medium' },
-    high: { icon: ShieldAlert, color: 'text-rose-600', bg: 'bg-rose-50', label: 'High' },
+    low: { icon: ShieldCheck, color: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Faible' },
+    medium: { icon: Shield, color: 'text-amber-600', bg: 'bg-amber-50', label: 'Modéré' },
+    high: { icon: ShieldAlert, color: 'text-rose-600', bg: 'bg-rose-50', label: 'Élevé' },
   }[profile.risk_tier] || { icon: Shield, color: 'text-slate-600', bg: 'bg-slate-50', label: profile.risk_tier };
 
   const RiskIcon = riskConfig.icon;
@@ -33,39 +33,39 @@ export default function CustomerJourneyMetrics({ data }: CustomerJourneyMetricsP
   const metrics = [
     {
       icon: Package,
-      label: 'Total Products',
+      label: 'Produits',
       value: String(total_products),
       color: 'text-indigo-600',
       bg: 'bg-indigo-50',
     },
     {
       icon: AlertTriangle,
-      label: 'Active Claims',
+      label: 'Sinistres actifs',
       value: String(active_claims),
       color: active_claims > 0 ? 'text-amber-600' : 'text-slate-600',
       bg: active_claims > 0 ? 'bg-amber-50' : 'bg-slate-50',
     },
     {
       icon: RiskIcon,
-      label: 'Risk Score',
+      label: 'Niveau de risque',
       value: riskConfig.label,
       color: riskConfig.color,
       bg: riskConfig.bg,
     },
     {
       icon: TrendingUp,
-      label: 'Journey Events',
+      label: 'Événements parcours',
       value: String(journey_events.length),
       color: 'text-violet-600',
       bg: 'bg-violet-50',
     },
     {
       icon: AlertTriangle,
-      label: 'Risk Insights',
+      label: 'Alertes risques',
       value: `${criticalCorrelations + warningCorrelations}`,
       color: criticalCorrelations > 0 ? 'text-rose-600' : warningCorrelations > 0 ? 'text-amber-600' : 'text-slate-600',
       bg: criticalCorrelations > 0 ? 'bg-rose-50' : warningCorrelations > 0 ? 'bg-amber-50' : 'bg-slate-50',
-      sublabel: criticalCorrelations > 0 ? `${criticalCorrelations} critical` : undefined,
+      sublabel: criticalCorrelations > 0 ? `${criticalCorrelations} critique(s)` : undefined,
     },
   ];
 

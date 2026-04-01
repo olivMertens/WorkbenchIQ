@@ -20,9 +20,9 @@ interface CustomerProfileHeaderProps {
 }
 
 const RISK_TIER_CONFIG = {
-  low: { label: 'Low Risk', icon: ShieldCheck, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', gradient: 'from-emerald-500 to-emerald-600' },
-  medium: { label: 'Medium Risk', icon: Shield, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', gradient: 'from-amber-500 to-amber-600' },
-  high: { label: 'High Risk', icon: ShieldAlert, color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', gradient: 'from-rose-500 to-rose-600' },
+  low: { label: 'Risque faible', icon: ShieldCheck, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', gradient: 'from-emerald-500 to-emerald-600' },
+  medium: { label: 'Risque modéré', icon: Shield, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', gradient: 'from-amber-500 to-amber-600' },
+  high: { label: 'Risque élevé', icon: ShieldAlert, color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', gradient: 'from-rose-500 to-rose-600' },
 };
 
 export default function CustomerProfileHeader({ data }: CustomerProfileHeaderProps) {
@@ -50,7 +50,7 @@ export default function CustomerProfileHeader({ data }: CustomerProfileHeaderPro
               <div className="flex items-center gap-4 mt-1 text-sm text-slate-500">
                 <span>{profile.id}</span>
                 <span>•</span>
-                <span>Age {age}</span>
+                <span>{age} ans</span>
                 <span>•</span>
                 <span>DOB {formatDate(profile.date_of_birth)}</span>
               </div>
@@ -69,20 +69,20 @@ export default function CustomerProfileHeader({ data }: CustomerProfileHeaderPro
             <RiskIcon className={clsx('w-5 h-5', riskConfig.color)} />
             <div>
               <div className={clsx('text-sm font-semibold', riskConfig.color)}>{riskConfig.label}</div>
-              <div className="text-xs text-slate-500">Overall Assessment</div>
+              <div className="text-xs text-slate-500">Évaluation globale</div>
             </div>
           </div>
         </div>
 
         {/* Stats strip */}
         <div className="flex items-center gap-6 mt-6 pt-5 border-t border-slate-100">
-          <Stat icon={Calendar} label="Customer Since" value={formatDate(profile.customer_since)} sublabel={tenure} />
+          <Stat icon={Calendar} label="Client depuis" value={formatDate(profile.customer_since)} sublabel={tenure} />
           <div className="w-px h-10 bg-slate-200" />
-          <Stat icon={Package} label="Products" value={String(total_products)} />
+          <Stat icon={Package} label="Produits" value={String(total_products)} />
           <div className="w-px h-10 bg-slate-200" />
           <Stat
             icon={AlertTriangle}
-            label="Active Claims"
+            label="Sinistres actifs"
             value={String(active_claims)}
             valueColor={active_claims > 0 ? 'text-amber-600' : 'text-slate-900'}
           />
@@ -162,7 +162,7 @@ function getCustomerTenure(since: string): string {
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-CA', {
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

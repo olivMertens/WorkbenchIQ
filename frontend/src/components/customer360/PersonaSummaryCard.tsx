@@ -72,12 +72,12 @@ export default function PersonaSummaryCard({ summary }: PersonaSummaryCardProps)
             <div>
               <h3 className="text-sm font-semibold text-slate-900">{summary.persona_label}</h3>
               <div className="flex items-center gap-2 text-xs text-slate-500">
-                <span>{summary.application_count} application{summary.application_count !== 1 ? 's' : ''}</span>
+                <span>{summary.application_count} dossier{summary.application_count !== 1 ? 's' : ''}</span>
                 {summary.risk_level && (
                   <>
                     <span>•</span>
                     <span className={clsx('font-medium', RISK_COLORS[summary.risk_level] || 'text-slate-600')}>
-                      {summary.risk_level.charAt(0).toUpperCase() + summary.risk_level.slice(1)} Risk
+                      Risque {summary.risk_level === 'low' ? 'faible' : summary.risk_level === 'medium' ? 'modéré' : 'élevé'}
                     </span>
                   </>
                 )}
@@ -110,13 +110,13 @@ export default function PersonaSummaryCard({ summary }: PersonaSummaryCardProps)
               className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 transition-colors"
             >
               {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              {expanded ? 'Hide' : 'Show'} details
+              {expanded ? 'Masquer' : 'Afficher'} les détails
             </button>
             <Link
               href={`/?app=${summary.applications[0].application_id}&persona=${mapPersonaToFrontendId(summary.persona)}`}
               className="flex items-center gap-1 text-xs text-slate-500 hover:text-indigo-600 transition-colors"
             >
-              Open in Workbench →
+              Ouvrir dans le poste de travail →
             </Link>
           </div>
         )}
@@ -155,20 +155,20 @@ function getHighlightMetrics(summary: PersonaSummary): MetricHighlight[] {
   const km = summary.key_metrics;
 
   if (summary.persona === 'underwriting') {
-    if (km.decision) metrics.push({ label: 'Decision', value: km.decision, color: getDecisionColor(km.decision) });
-    if (km.risk_class) metrics.push({ label: 'Risk Class', value: km.risk_class });
-    if (km.coverage_amount) metrics.push({ label: 'Coverage', value: km.coverage_amount });
-    if (km.monthly_premium) metrics.push({ label: 'Premium', value: km.monthly_premium });
+    if (km.decision) metrics.push({ label: 'Décision', value: km.decision, color: getDecisionColor(km.decision) });
+    if (km.risk_class) metrics.push({ label: 'Classe de risque', value: km.risk_class });
+    if (km.coverage_amount) metrics.push({ label: 'Couverture', value: km.coverage_amount });
+    if (km.monthly_premium) metrics.push({ label: 'Prime', value: km.monthly_premium });
   } else if (summary.persona === 'mortgage_underwriting') {
-    if (km.decision) metrics.push({ label: 'Decision', value: km.decision, color: getDecisionColor(km.decision) });
-    if (km.gds_ratio) metrics.push({ label: 'GDS Ratio', value: km.gds_ratio, color: parseFloat(km.gds_ratio) > 39 ? 'text-rose-600' : undefined });
-    if (km.tds_ratio) metrics.push({ label: 'TDS Ratio', value: km.tds_ratio, color: parseFloat(km.tds_ratio) > 44 ? 'text-rose-600' : undefined });
-    if (km.ltv) metrics.push({ label: 'LTV', value: km.ltv });
+    if (km.decision) metrics.push({ label: 'Décision', value: km.decision, color: getDecisionColor(km.decision) });
+    if (km.gds_ratio) metrics.push({ label: 'Taux endettement', value: km.gds_ratio, color: parseFloat(km.gds_ratio) > 35 ? 'text-rose-600' : undefined });
+    if (km.tds_ratio) metrics.push({ label: 'Endettement global', value: km.tds_ratio, color: parseFloat(km.tds_ratio) > 35 ? 'text-rose-600' : undefined });
+    if (km.ltv) metrics.push({ label: 'RPV', value: km.ltv });
   } else if (summary.persona === 'automotive_claims' || summary.persona === 'life_health_claims') {
-    if (km.decision) metrics.push({ label: 'Decision', value: km.decision, color: getDecisionColor(km.decision) });
-    if (km.payout) metrics.push({ label: 'Payout', value: km.payout });
-    if (km.fraud_risk) metrics.push({ label: 'Fraud Risk', value: km.fraud_risk, color: km.fraud_risk === 'High' ? 'text-rose-600' : undefined });
-    if (km.repair_estimate) metrics.push({ label: 'Repair Est.', value: km.repair_estimate });
+    if (km.decision) metrics.push({ label: 'Décision', value: km.decision, color: getDecisionColor(km.decision) });
+    if (km.payout) metrics.push({ label: 'Indemnisation', value: km.payout });
+    if (km.fraud_risk) metrics.push({ label: 'Risque fraude', value: km.fraud_risk, color: km.fraud_risk === 'High' ? 'text-rose-600' : undefined });
+    if (km.repair_estimate) metrics.push({ label: 'Devis réparation', value: km.repair_estimate });
   }
 
   return metrics.slice(0, 4);

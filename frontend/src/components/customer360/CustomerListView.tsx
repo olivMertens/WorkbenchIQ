@@ -23,9 +23,9 @@ interface CustomerListViewProps {
 }
 
 const RISK_TIER_CONFIG = {
-  low: { label: 'Low Risk', icon: ShieldCheck, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', dot: 'bg-emerald-500' },
-  medium: { label: 'Medium Risk', icon: Shield, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', dot: 'bg-amber-500' },
-  high: { label: 'High Risk', icon: ShieldAlert, color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', dot: 'bg-rose-500' },
+  low: { label: 'Risque faible', icon: ShieldCheck, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', dot: 'bg-emerald-500' },
+  medium: { label: 'Risque modéré', icon: Shield, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', dot: 'bg-amber-500' },
+  high: { label: 'Risque élevé', icon: ShieldAlert, color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', dot: 'bg-rose-500' },
 };
 
 export default function CustomerListView({
@@ -72,7 +72,7 @@ export default function CustomerListView({
     return (
       <div className="flex items-center justify-center py-24">
         <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-        <span className="ml-3 text-slate-500">Loading customers…</span>
+        <span className="ml-3 text-slate-500">Chargement des clients…</span>
       </div>
     );
   }
@@ -85,7 +85,7 @@ export default function CustomerListView({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search customers by name, ID, or tag…"
+            placeholder="Rechercher par nom, ID ou étiquette…"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -93,7 +93,7 @@ export default function CustomerListView({
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-500">
           <Users className="w-4 h-4" />
-          <span>{filteredCustomers.length} customer{filteredCustomers.length !== 1 ? 's' : ''}</span>
+          <span>{filteredCustomers.length} client{filteredCustomers.length !== 1 ? 's' : ''}</span>
         </div>
       </div>
 
@@ -101,8 +101,8 @@ export default function CustomerListView({
       {filteredCustomers.length === 0 ? (
         <div className="text-center py-16 text-slate-400">
           <Users className="w-12 h-12 mx-auto mb-3 opacity-40" />
-          <p className="text-lg font-medium">No customers found</p>
-          <p className="text-sm mt-1">Try adjusting your search or seed sample data.</p>
+          <p className="text-lg font-medium">Aucun client trouvé</p>
+          <p className="text-sm mt-1">Ajustez votre recherche ou chargez les données d’exemple.</p>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
@@ -116,15 +116,15 @@ export default function CustomerListView({
                 </th>
                 <th className="text-left px-5 py-3">
                   <button onClick={() => toggleSort('risk_tier')} className="flex items-center gap-1 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-700">
-                    Risk Tier <ArrowUpDown className="w-3 h-3" />
+                    Niveau de risque <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
                 <th className="text-left px-5 py-3">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Products</span>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Produits</span>
                 </th>
                 <th className="text-left px-5 py-3">
                   <button onClick={() => toggleSort('customer_since')} className="flex items-center gap-1 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-700">
-                    Customer Since <ArrowUpDown className="w-3 h-3" />
+                    Client depuis <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
                 <th className="px-5 py-3" />
@@ -195,9 +195,9 @@ function getCustomerTenure(since: string): string {
   const years = now.getFullYear() - start.getFullYear();
   const months = now.getMonth() - start.getMonth();
   const totalMonths = years * 12 + months;
-  if (totalMonths < 1) return 'New';
-  if (totalMonths < 12) return `${totalMonths}mo`;
+  if (totalMonths < 1) return 'Nouveau';
+  if (totalMonths < 12) return `${totalMonths} mois`;
   const y = Math.floor(totalMonths / 12);
   const m = totalMonths % 12;
-  return m > 0 ? `${y}y ${m}mo` : `${y}y`;
+  return m > 0 ? `${y} an${y > 1 ? 's' : ''} ${m} mois` : `${y} an${y > 1 ? 's' : ''}`;
 }

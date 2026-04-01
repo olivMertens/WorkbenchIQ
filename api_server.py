@@ -4111,7 +4111,7 @@ async def seed_customer_360_data():
     """Seed sample customer 360 data (development/demo only)."""
     settings = load_settings()
     try:
-        from scripts.seed_data.groupama_customers import create_groupama_customers
+        from app.seed_data_customers import create_groupama_customers
         count = create_groupama_customers(settings.app.storage_root)
         return {"status": "ok", "message": f"Seeded {count} Groupama customer profiles"}
     except Exception as e:

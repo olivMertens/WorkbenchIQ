@@ -94,7 +94,7 @@ export default function CustomersPage() {
             {/* Active tab indicator */}
             <div className="flex items-center gap-1 px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-lg">
               <Users className="w-4 h-4 text-indigo-600" />
-              <span className="text-sm font-medium text-indigo-700">Customer 360</span>
+              <span className="text-sm font-medium text-indigo-700">Client 360</span>
             </div>
           </div>
 
@@ -104,7 +104,7 @@ export default function CustomersPage() {
               className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             >
               <Settings className="w-4 h-4" />
-              <span>Admin</span>
+              <span>Administration</span>
             </Link>
 
             <LanguageSwitcher />
@@ -120,7 +120,7 @@ export default function CustomersPage() {
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Sign out"
+                  title="Déconnexion"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -139,10 +139,10 @@ export default function CustomersPage() {
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center">
                 <Users className="w-5 h-5 text-white" />
               </div>
-              Customer 360
+              Client 360
             </h1>
             <p className="text-sm text-slate-500 mt-1">
-              Unified cross-persona view of customer journeys across underwriting, claims, and mortgage.
+              Vue unifiée multi-persona des parcours clients — souscription, sinistres et hypothécaire.
             </p>
           </div>
 
@@ -158,7 +158,7 @@ export default function CustomersPage() {
               ) : (
                 <Database className="w-4 h-4" />
               )}
-              {seeding ? 'Seeding…' : 'Load Sample Data'}
+              {seeding ? 'Chargement…' : 'Charger les données d\'exemple'}
             </button>
           )}
         </div>
