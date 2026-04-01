@@ -20,8 +20,10 @@ interface FamilyHistoryData {
 function parseFamilyHistory(application: ApplicationMetadata): FamilyHistoryData {
   const fields = application.extracted_fields || {};
   
-  // Get confidence from underlying extracted fields
-  const summaryField = Object.values(fields).find(f => f.field_name === 'FamilyHistorySummary');
+  // Get confidence from underlying extracted fields (supports both English and French field names)
+  const summaryField = Object.values(fields).find(f => 
+    f.field_name === 'FamilyHistorySummary' || f.field_name === 'AntecedentsFamiliaux'
+  );
   const arrayField = Object.values(fields).find(f => f.field_name === 'FamilyHistory');
   const extractedConfidence = summaryField?.confidence ?? arrayField?.confidence;
   const citationField = summaryField || arrayField;
@@ -113,12 +115,12 @@ export default function FamilyHistoryPanel({ application }: FamilyHistoryPanelPr
           <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0">
             <Users className="w-5 h-5 text-teal-600" />
           </div>
-          <h2 className="text-base font-semibold text-slate-900">Family History</h2>
+          <h2 className="text-base font-semibold text-slate-900">Antécédents familiaux</h2>
         </div>
         <div className="flex items-center gap-2">
           {/* Confidence & Citation indicators */}
           {confidence !== undefined && (
-            <ConfidenceIndicator confidence={confidence} fieldName="Family History" />
+            <ConfidenceIndicator confidence={confidence} fieldName="Antécédents familiaux" />
           )}
           {citationData && (
             <CitationTooltip citation={citationData} appId={application.id}>
@@ -134,7 +136,7 @@ export default function FamilyHistoryPanel({ application }: FamilyHistoryPanelPr
                 ? 'bg-amber-100 text-amber-700'
                 : 'bg-emerald-100 text-emerald-700'
             }`} title={`${riskAssessment} Risk`}>
-              {riskAssessment.length > 10 ? riskAssessment.split('-')[0] : riskAssessment} Risk
+              {riskAssessment.length > 10 ? riskAssessment.split('-')[0] : riskAssessment}
             </span>
           )}
         </div>
@@ -156,7 +158,7 @@ export default function FamilyHistoryPanel({ application }: FamilyHistoryPanelPr
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-slate-500 italic">No family history data available</p>
+        <p className="text-sm text-slate-500 italic">Aucun antécédent familial disponible</p>
       )}
     </div>
   );

@@ -87,8 +87,8 @@ function parseForeignTravel(value: unknown): string | null {
   const strVal = safeStringify(value);
   if (!strVal) return null;
   // Handle French "Non" or "Oui"
-  if (strVal.toLowerCase() === 'non') return 'None planned';
-  if (strVal.toLowerCase() === 'oui') return 'Yes - see details';
+  if (strVal.toLowerCase() === 'non') return 'Aucun prévu';
+  if (strVal.toLowerCase() === 'oui') return 'Oui — voir détails';
   return strVal;
 }
 
@@ -105,8 +105,10 @@ function parseOccupationData(application: ApplicationMetadata): OccupationData {
     }
   }
   
-  // Fall back to extracted fields
-  const occupationField = Object.values(fields).find(f => f.field_name === 'Occupation');
+  // Fall back to extracted fields (supports both English and French field names)
+  const occupationField = Object.values(fields).find(f => 
+    f.field_name === 'Occupation' || f.field_name === 'Profession'
+  );
   if (!occupationValue && occupationField?.value) {
     occupationValue = safeStringify(occupationField.value);
   }
@@ -151,7 +153,7 @@ export default function OccupationPanel({ application }: OccupationPanelProps) {
         <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
           <Briefcase className="w-5 h-5 text-indigo-600" />
         </div>
-        <h2 className="text-base font-semibold text-slate-900">Occupation & Risk Factors</h2>
+        <h2 className="text-base font-semibold text-slate-900">Profession et facteurs de risque</h2>
       </div>
 
       {/* Content */}
@@ -160,7 +162,7 @@ export default function OccupationPanel({ application }: OccupationPanelProps) {
           {data.occupation.value && (
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <h4 className="text-xs font-medium text-slate-500 uppercase">Occupation</h4>
+                <h4 className="text-xs font-medium text-slate-500 uppercase">Profession</h4>
                 {data.occupation.confidence !== undefined && (
                   <ConfidenceIndicator confidence={data.occupation.confidence} fieldName="Occupation" />
                 )}
@@ -178,7 +180,7 @@ export default function OccupationPanel({ application }: OccupationPanelProps) {
               <div className="flex items-center gap-2 mb-1">
                 <h4 className="text-xs font-medium text-slate-500 uppercase flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3 text-amber-500" />
-                  Hazardous Activities
+                  Activités à risque
                 </h4>
                 {data.hazardousActivities.confidence !== undefined && (
                   <ConfidenceIndicator confidence={data.hazardousActivities.confidence} fieldName="Hazardous Activities" />
@@ -195,7 +197,7 @@ export default function OccupationPanel({ application }: OccupationPanelProps) {
           {data.foreignTravel.value && (
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <h4 className="text-xs font-medium text-slate-500 uppercase">Foreign Travel</h4>
+                <h4 className="text-xs font-medium text-slate-500 uppercase">Déplacements à l'étranger</h4>
                 {data.foreignTravel.confidence !== undefined && (
                   <ConfidenceIndicator confidence={data.foreignTravel.confidence} fieldName="Foreign Travel" />
                 )}
@@ -210,7 +212,7 @@ export default function OccupationPanel({ application }: OccupationPanelProps) {
           )}
         </div>
       ) : (
-        <p className="text-sm text-slate-500 italic">No occupation data extracted</p>
+        <p className="text-sm text-slate-500 italic">Aucune donnée professionnelle extraite</p>
       )}
     </div>
   );

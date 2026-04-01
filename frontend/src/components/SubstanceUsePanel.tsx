@@ -18,9 +18,9 @@ interface SubstanceData {
 }
 
 function parseSubstanceUse(application: ApplicationMetadata): SubstanceData {
-  // Get confidence from underlying extracted fields
+  // Get confidence from underlying extracted fields (supports both English and French field names)
   const fields = application.extracted_fields || {};
-  const smokingField = Object.values(fields).find(f => f.field_name === 'SmokingStatus');
+  const smokingField = Object.values(fields).find(f => f.field_name === 'SmokingStatus' || f.field_name === 'StatutTabac');
   const alcoholField = Object.values(fields).find(f => f.field_name === 'AlcoholUse');
   const drugField = Object.values(fields).find(f => f.field_name === 'DrugUse');
   
@@ -107,10 +107,10 @@ export default function SubstanceUsePanel({ application }: SubstanceUsePanelProp
   const substanceData = parseSubstanceUse(application);
 
   const tabs = [
-    { id: 'tobacco' as const, label: 'Tobacco', icon: Cigarette, data: substanceData.tobacco },
-    { id: 'alcohol' as const, label: 'Alcohol', icon: Wine, data: substanceData.alcohol },
-    { id: 'marijuana' as const, label: 'Marijuana', icon: Cannabis, data: substanceData.marijuana },
-    { id: 'drugs' as const, label: 'Drug Use', icon: AlertCircle, data: substanceData.drugs },
+    { id: 'tobacco' as const, label: 'Tabac', icon: Cigarette, data: substanceData.tobacco },
+    { id: 'alcohol' as const, label: 'Alcool', icon: Wine, data: substanceData.alcohol },
+    { id: 'marijuana' as const, label: 'Cannabis', icon: Cannabis, data: substanceData.marijuana },
+    { id: 'drugs' as const, label: 'Stupéfiants', icon: AlertCircle, data: substanceData.drugs },
   ];
 
   const activeData = tabs.find(t => t.id === activeTab)?.data;
@@ -133,7 +133,7 @@ export default function SubstanceUsePanel({ application }: SubstanceUsePanelProp
             <tab.icon className="w-4 h-4 mb-1" />
             <span>{tab.label}</span>
             <span className="text-[10px] text-slate-400">
-              {tab.data.found ? 'Found' : 'Not found'}
+              {tab.data.found ? 'Détecté' : 'Non détecté'}
             </span>
           </button>
         ))}
@@ -144,7 +144,7 @@ export default function SubstanceUsePanel({ application }: SubstanceUsePanelProp
         {activeData?.details ? (
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <h4 className="text-sm font-medium text-slate-700">Extracted Information</h4>
+              <h4 className="text-sm font-medium text-slate-700">Informations extraites</h4>
               {activeData.confidence !== undefined && (
                 <ConfidenceIndicator 
                   confidence={activeData.confidence} 
@@ -158,7 +158,7 @@ export default function SubstanceUsePanel({ application }: SubstanceUsePanelProp
           </div>
         ) : (
           <p className="text-sm text-slate-500 italic">
-            No {activeTab} usage information extracted from documents
+            Aucune information sur la consommation extraite des documents
           </p>
         )}
       </div>

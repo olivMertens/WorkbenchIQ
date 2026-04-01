@@ -208,7 +208,7 @@ export default function LabResultsPanel({ application }: LabResultsPanelProps) {
           <Activity className="w-5 h-5 text-violet-600" />
         </div>
         <h2 className="text-lg font-semibold text-slate-900">
-          Lab Results and Measurements
+          Résultats biologiques et mesures
         </h2>
       </div>
 
@@ -265,7 +265,7 @@ export default function LabResultsPanel({ application }: LabResultsPanelProps) {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-slate-500 italic">No lab results extracted</p>
+        <p className="text-sm text-slate-500 italic">Aucun résultat biologique extrait</p>
       )}
     </div>
   );

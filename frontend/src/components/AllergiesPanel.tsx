@@ -16,7 +16,17 @@ interface AllergiesData {
 function parseAllergies(application: ApplicationMetadata): AllergiesData {
   const fields = application.extracted_fields || {};
   
-  // Check medical conditions for allergies
+  // Check for French field name from health underwriting analyzer
+  const allergyField = Object.values(fields).find(f => 
+    f.field_name === 'AllergiesConnues' || f.field_name === 'Allergies'
+  );
+  if (allergyField?.value) {
+    const value = String(allergyField.value);
+    const allergies = value.split(/[;,\n]/).map(s => s.trim()).filter(Boolean);
+    return { allergies, confidence: allergyField.confidence };
+  }
+  
+  // Check medical conditions for allergies (English underwriting)
   const medicalField = Object.values(fields).find(f => f.field_name === 'MedicalConditionsSummary');
   if (!medicalField?.value) {
     return { allergies: [] };
@@ -54,7 +64,7 @@ export default function AllergiesPanel({ application }: AllergiesPanelProps) {
         <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
           <AlertTriangle className="w-5 h-5 text-amber-600" />
         </div>
-        <h2 className="text-base font-semibold text-slate-900">Allergies</h2>
+        <h2 className="text-base font-semibold text-slate-900">Allergies connues</h2>
         {confidence !== undefined && (
           <ConfidenceIndicator confidence={confidence} fieldName="Allergies" />
         )}
@@ -72,7 +82,7 @@ export default function AllergiesPanel({ application }: AllergiesPanelProps) {
         </ul>
       ) : (
         <div className="flex flex-col items-center justify-center py-4 text-center">
-          <p className="text-sm text-slate-500 italic">No allergies extracted</p>
+          <p className="text-sm text-slate-500 italic">Aucune allergie extraite</p>
         </div>
       )}
     </div>
