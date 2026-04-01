@@ -13,13 +13,15 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from ..config import AutomotiveClaimsSettings, ContentUnderstandingSettings
+from ..config import AutomotiveClaimsSettings, ContentUnderstandingSettings, MistralSettings
 from ..content_understanding_client import (
     analyze_document,
     analyze_image,
     analyze_video,
     ContentUnderstandingError,
+    extract_markdown_from_result,
 )
+from ..mistral_ocr_client import extract_with_mistral, MistralOCRError
 from ..utils import setup_logging
 from . import MEDIA_TYPE_DOCUMENT, MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
 from .router import AnalyzerRouter, FileSizeError, UnsupportedMediaTypeError
@@ -125,6 +127,7 @@ class MultimodalProcessor:
         self._max_retries = max_retries
         self._retry_backoff = retry_backoff
         self._router = AnalyzerRouter(auto_settings)
+        self._mistral_settings: Optional[MistralSettings] = None
     
     @property
     def auto_settings(self) -> AutomotiveClaimsSettings:
@@ -141,6 +144,15 @@ class MultimodalProcessor:
             settings = load_settings()
             self._cu_settings = settings.content_understanding
         return self._cu_settings
+    
+    @property
+    def mistral_settings(self) -> Optional[MistralSettings]:
+        """Get Mistral OCR settings for fallback extraction."""
+        if self._mistral_settings is None:
+            from ..config import load_settings
+            settings = load_settings()
+            self._mistral_settings = settings.mistral
+        return self._mistral_settings
     
     def process_file(
         self,
@@ -329,9 +341,15 @@ class MultimodalProcessor:
         media_type: str,
         analyzer_id: str,
     ) -> Dict[str, Any]:
-        """Analyze a file with retry logic."""
+        """Analyze a file with retry logic and Mistral fallback.
+        
+        Phase 1: Try CU extraction (3 retries)
+        Phase 2: If CU fails, try Mistral fallback (2 retries) for documents
+        """
         last_error: Optional[Exception] = None
         
+        # Phase 1: Try Content Understanding (primary)
+        logger.info("Phase 1: Attempting CU extraction for %s", file_info.filename)
         for attempt in range(1, self._max_retries + 1):
             try:
                 if media_type == MEDIA_TYPE_DOCUMENT:
@@ -359,7 +377,7 @@ class MultimodalProcessor:
             except ContentUnderstandingError as e:
                 last_error = e
                 logger.warning(
-                    "Attempt %d/%d failed for %s: %s",
+                    "Phase 1: CU attempt %d/%d failed for %s: %s",
                     attempt, self._max_retries, file_info.filename, e
                 )
                 
@@ -367,7 +385,59 @@ class MultimodalProcessor:
                     sleep_time = self._retry_backoff ** attempt
                     time.sleep(sleep_time)
         
-        raise last_error or ContentUnderstandingError("Analysis failed after retries")
+        # Phase 2: Mistral fallback for documents only
+        if media_type == MEDIA_TYPE_DOCUMENT and self.mistral_settings and self.mistral_settings.enabled:
+            logger.info("Phase 2: CU failed, attempting Mistral fallback for %s", file_info.filename)
+            
+            try:
+                import asyncio
+                # Run async Mistral extraction
+                mistral_result = asyncio.run(
+                    extract_with_mistral(
+                        file_bytes=file_info.file_bytes,
+                        filename=file_info.filename,
+                        settings=self.mistral_settings,
+                        media_type="document",
+                        max_retries=2,
+                        retry_backoff=1.5,
+                    )
+                )
+                
+                # Convert Mistral result to CU-compatible format
+                normalized = extract_markdown_from_result({
+                    "result": {
+                        "contents": [{
+                            "kind": "document",
+                            "markdown": mistral_result.get("markdown", ""),
+                            "pages": [
+                                {
+                                    "pageNumber": p.get("page_number", i+1),
+                                    "markdown": p.get("markdown", ""),
+                                }
+                                for i, p in enumerate(mistral_result.get("pages", []))
+                            ],
+                        }]
+                    }
+                })
+                
+                logger.info("Phase 2: Mistral extraction succeeded for %s", file_info.filename)
+                
+                # Return in CU format for downstream compatibility
+                return {
+                    "result": {
+                        "contents": [normalized],
+                    },
+                    "analyzer_id_used": "mistral-document-ai-2512",
+                }
+                
+            except (MistralOCRError, Exception) as e:
+                logger.error("Phase 2: Mistral fallback failed for %s: %s", file_info.filename, e)
+                # Fall through to error handling below
+        
+        # Both phases failed
+        raise last_error or ContentUnderstandingError(
+            f"Analysis failed: CU exhausted retries and Mistral fallback unavailable or disabled"
+        )
     
     def _extract_data(
         self,

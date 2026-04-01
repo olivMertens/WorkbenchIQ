@@ -85,6 +85,36 @@ class MortgageUnderwritingSettings:
         )
 
 
+@dataclass
+class MistralSettings:
+    """Settings for Mistral Document AI v25.12 OCR fallback."""
+    endpoint: str = ""
+    api_key: str = ""
+    deployment: str = "mistral-document-ai-2512"
+    api_version: str = "2024-05-01-preview"
+    enabled: bool = False
+
+    @classmethod
+    def from_env(cls) -> "MistralSettings":
+        """Load Mistral settings from environment variables."""
+        return cls(
+            endpoint=(os.getenv("MISTRAL_ENDPOINT", "") or "").rstrip("/"),
+            api_key=os.getenv("MISTRAL_API_KEY", ""),
+            deployment=os.getenv("MISTRAL_DEPLOYMENT_2512", "mistral-document-ai-2512"),
+            api_version=os.getenv("MISTRAL_API_VERSION", "2024-05-01-preview"),
+            enabled=os.getenv("MISTRAL_ENABLED", "false").lower() == "true",
+        )
+
+    def validate(self) -> list:
+        """Validate Mistral configuration. Returns list of errors (empty if valid)."""
+        errors = []
+        if not self.endpoint:
+            errors.append("MISTRAL_ENDPOINT not set")
+        if not self.api_key:
+            errors.append("MISTRAL_API_KEY not set")
+        if not self.deployment:
+            errors.append("MISTRAL_DEPLOYMENT_2512 not set")
+        return errors
 
 
 import os
@@ -174,6 +204,7 @@ class Settings:
     rag: RAGSettings
     automotive_claims: AutomotiveClaimsSettings
     mortgage_underwriting: MortgageUnderwritingSettings
+    mistral: MistralSettings
 
 
 def load_settings() -> Settings:
@@ -241,6 +272,7 @@ def load_settings() -> Settings:
 
     auto_claims = AutomotiveClaimsSettings.from_env()
     mortgage = MortgageUnderwritingSettings.from_env()
+    mistral = MistralSettings.from_env()
 
     processing = ProcessingSettings(
         large_doc_threshold_kb=int(os.getenv("LARGE_DOC_THRESHOLD_KB", "1500")),
@@ -258,7 +290,8 @@ def load_settings() -> Settings:
         database=db,
         rag=rag,
         automotive_claims=auto_claims,
-        mortgage_underwriting=mortgage
+        mortgage_underwriting=mortgage,
+        mistral=mistral
     )
 
 
