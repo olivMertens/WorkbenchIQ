@@ -560,7 +560,8 @@
     "hoursAgo": "{count}h ago",
     "daysAgo": "{count}d ago",
     "msgs": "msgs",
-    "delete": "Delete"
+    "delete": "Delete",
+    "loadError": "Failed to load history"
   },
   "deepDive": {
     "title": "Body System Deep Dive",

@@ -556,7 +556,8 @@
     "hoursAgo": "{count} h",
     "daysAgo": "{count} j",
     "msgs": "msgs",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "loadError": "Échec du chargement de l'historique"
   },
   "deepDive": {
     "title": "Analyse approfondie par système corporel",

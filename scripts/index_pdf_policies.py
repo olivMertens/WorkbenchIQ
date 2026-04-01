@@ -420,12 +420,27 @@ async def _store_chunks_to_table(
 
     import json as _json
 
+    def _vec_str(embedding) -> str:
+        """Format embedding list as pgvector string '[0.1,0.2,...]'."""
+        if isinstance(embedding, str):
+            return embedding
+        # Handle nested list [[float, ...]]
+        if isinstance(embedding, (list, tuple)) and len(embedding) == 1 and isinstance(embedding[0], (list, tuple)):
+            embedding = embedding[0]
+        # Handle list of single-char strings (bug: list(str(list)))
+        if isinstance(embedding, (list, tuple)) and len(embedding) > 10 and isinstance(embedding[0], str) and len(embedding[0]) == 1:
+            return "".join(embedding)
+        return "[" + ",".join(str(f) for f in embedding) + "]"
+
     stored = 0
     async with pool.acquire() as conn:
         for chunk in chunks:
             if chunk.embedding is None:
                 continue
             meta_json = _json.dumps(chunk.metadata) if chunk.metadata else "{}"
+            emb = chunk.embedding
+            print(f"EMB_DEBUG type={type(emb).__name__}, len={len(emb) if hasattr(emb, '__len__') else '?'}, first={emb[0] if hasattr(emb, '__getitem__') and len(emb) > 0 else '?'}, type_first={type(emb[0]).__name__ if hasattr(emb, '__getitem__') and len(emb) > 0 else '?'}")
+            vec = _vec_str(emb)
             if is_claims_table:
                 await conn.execute(
                     insert_query,
@@ -444,7 +459,7 @@ async def _store_chunks_to_table(
                     chunk.content,
                     chunk.content_hash,
                     chunk.token_count,
-                    str(chunk.embedding),
+                    vec,
                     "text-embedding-3-small",
                     meta_json,
                 )
@@ -464,7 +479,7 @@ async def _store_chunks_to_table(
                     chunk.content,
                     chunk.content_hash,
                     chunk.token_count,
-                    str(chunk.embedding),
+                    vec,
                     "text-embedding-3-small",
                     meta_json,
                 )
@@ -479,37 +494,50 @@ async def _ensure_tables(schema: str) -> None:
         await conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
         await conn.execute(f"CREATE SCHEMA IF NOT EXISTS {schema}")
 
+        # Check which tables already exist
+        existing = await conn.fetch(
+            "SELECT table_name FROM information_schema.tables "
+            "WHERE table_schema = $1", schema
+        )
+        existing_names = {r["table_name"] for r in existing}
+
         # Standard policy_chunks table (underwriting + habitation)
-        await conn.execute(f"""
-            CREATE TABLE IF NOT EXISTS {schema}.policy_chunks (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                policy_id VARCHAR(50) NOT NULL,
-                policy_version VARCHAR(20),
-                policy_name VARCHAR(255) NOT NULL,
-                chunk_type VARCHAR(50) NOT NULL,
-                chunk_sequence INT NOT NULL DEFAULT 0,
-                category VARCHAR(100) NOT NULL,
-                subcategory VARCHAR(100),
-                criteria_id VARCHAR(50),
-                risk_level VARCHAR(50),
-                action_recommendation TEXT,
-                content TEXT NOT NULL,
-                content_hash VARCHAR(64) NOT NULL,
-                token_count INT NOT NULL DEFAULT 0,
-                embedding vector(1536),
-                embedding_model VARCHAR(100),
-                metadata JSONB DEFAULT '{{}}'::jsonb,
-                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-                CONSTRAINT policy_chunks_unique
-                    UNIQUE (policy_id, chunk_type, COALESCE(criteria_id, ''), content_hash)
-            )
-        """)
+        if "policy_chunks" not in existing_names:
+            await conn.execute(f"""
+                CREATE TABLE {schema}.policy_chunks (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    policy_id VARCHAR(50) NOT NULL,
+                    policy_version VARCHAR(20),
+                    policy_name VARCHAR(255) NOT NULL,
+                    chunk_type VARCHAR(50) NOT NULL,
+                    chunk_sequence INT NOT NULL DEFAULT 0,
+                    category VARCHAR(100) NOT NULL,
+                    subcategory VARCHAR(100),
+                    criteria_id VARCHAR(50),
+                    risk_level VARCHAR(50),
+                    action_recommendation TEXT,
+                    content TEXT NOT NULL,
+                    content_hash VARCHAR(64) NOT NULL,
+                    token_count INT NOT NULL DEFAULT 0,
+                    embedding vector(1536),
+                    embedding_model VARCHAR(100),
+                    metadata JSONB DEFAULT '{{}}'::jsonb,
+                    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            await conn.execute(f"""
+                CREATE UNIQUE INDEX policy_chunks_unique
+                ON {schema}.policy_chunks
+                (policy_id, chunk_type, COALESCE(criteria_id, ''), content_hash)
+            """)
 
         # Claims tables (auto + health) — have extra severity + liability columns
         for tbl in ['claim_policy_chunks', 'health_claims_policy_chunks']:
+            if tbl in existing_names:
+                continue
             await conn.execute(f"""
-                CREATE TABLE IF NOT EXISTS {schema}.{tbl} (
+                CREATE TABLE {schema}.{tbl} (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                     policy_id VARCHAR(50) NOT NULL,
                     policy_version VARCHAR(20),
@@ -530,10 +558,13 @@ async def _ensure_tables(schema: str) -> None:
                     embedding_model VARCHAR(100),
                     metadata JSONB DEFAULT '{{}}'::jsonb,
                     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-                    CONSTRAINT {tbl}_unique
-                        UNIQUE (policy_id, chunk_type, COALESCE(criteria_id, ''), content_hash)
+                    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 )
+            """)
+            await conn.execute(f"""
+                CREATE UNIQUE INDEX {tbl}_unique
+                ON {schema}.{tbl}
+                (policy_id, chunk_type, COALESCE(criteria_id, ''), content_hash)
             """)
 
         logger.info(f"   Tables verified in schema {schema}")

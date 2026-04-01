@@ -69,7 +69,7 @@ export default function ChatHistoryPanel({
         setAppConversations(data.conversations || []);
       } catch (e) {
         console.error('Failed to load conversations:', e);
-        setError('Failed to load history');
+        setError(t('loadError'));
       } finally {
         setIsLoading(false);
       }
@@ -93,7 +93,7 @@ export default function ChatHistoryPanel({
         setAllConversations(data.conversations || []);
       } catch (e) {
         console.error('Failed to load all conversations:', e);
-        setError('Failed to load history');
+        setError(t('loadError'));
       } finally {
         setIsLoading(false);
       }

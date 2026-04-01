@@ -20,7 +20,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.config import get_settings
+from app.config import load_settings
 from app.claims.indexer import ClaimsPolicyIndexer
 from app.claims.policies import ClaimsPolicyLoader
 from app.utils import setup_logging
@@ -76,48 +76,23 @@ async def main():
     logger.info("-" * 60)
 
     # Load settings
-    settings = get_settings()
+    settings = load_settings()
 
     # Initialize indexer
     indexer = ClaimsPolicyIndexer(
         settings=settings,
         policies_path=str(policies_path),
-        schema=args.schema,
     )
 
     try:
-        # Initialize database table
-        logger.info("Initializing database table...")
-        await indexer.initialize()
-
-        # Handle force reindex
-        if args.force_reindex:
-            logger.info("Force reindex: deleting all existing chunks...")
-            deleted = await indexer.repository.delete_all_chunks()
-            logger.info(f"Deleted {deleted} existing chunks")
-
-        # Load policies
-        logger.info("Loading claims policies...")
-        loader = ClaimsPolicyLoader(str(policies_path))
-        all_policies = loader.load_policies()
-
-        # Filter by policy IDs if specified
-        if args.policy_ids:
-            policies = [p for p in all_policies if p.id in args.policy_ids]
-            if len(policies) != len(args.policy_ids):
-                found = {p.id for p in policies}
-                missing = set(args.policy_ids) - found
-                logger.warning(f"Policy IDs not found: {missing}")
-        else:
-            policies = all_policies
-
-        logger.info(f"Found {len(policies)} policies to index")
-
-        # Index policies
-        total_chunks = await indexer.index_policies(policies)
+        # Index policies (handles infrastructure, chunking, embedding internally)
+        metrics = await indexer.index_policies(
+            policy_ids=args.policy_ids,
+            force_reindex=args.force_reindex,
+        )
 
         logger.info("-" * 60)
-        logger.info(f"Indexing complete: {total_chunks} chunks created")
+        logger.info(f"Indexing complete: {metrics}")
 
         # Verify chunk count
         chunk_count = await indexer.repository.get_chunk_count()

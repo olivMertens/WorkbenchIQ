@@ -98,7 +98,53 @@ class ClaimsPolicyChunkRepository:
         """Create the claims policy chunks table if it doesn't exist."""
         pool = await get_pool()
         async with pool.acquire() as conn:
-            await conn.execute(self.CREATE_TABLE_SQL.format(schema=self.schema))
+            # Check if table exists first (avoids parsing invalid CONSTRAINT syntax)
+            exists = await conn.fetchval(
+                "SELECT EXISTS(SELECT 1 FROM information_schema.tables "
+                "WHERE table_schema=$1 AND table_name='claim_policy_chunks')",
+                self.schema,
+            )
+            if exists:
+                logger.info(f"Table {self.table} already exists")
+                return
+            # Create table without the problematic CONSTRAINT
+            await conn.execute(f"""
+                CREATE TABLE {self.schema}.claim_policy_chunks (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    policy_id VARCHAR(50) NOT NULL,
+                    policy_version VARCHAR(20) NOT NULL,
+                    policy_name VARCHAR(255) NOT NULL,
+                    chunk_type VARCHAR(50) NOT NULL,
+                    chunk_sequence INT NOT NULL,
+                    category VARCHAR(100) NOT NULL,
+                    subcategory VARCHAR(100),
+                    criteria_id VARCHAR(50),
+                    severity VARCHAR(50),
+                    risk_level VARCHAR(50),
+                    liability_determination TEXT,
+                    action_recommendation TEXT,
+                    content TEXT NOT NULL,
+                    content_hash VARCHAR(64) NOT NULL,
+                    token_count INT NOT NULL,
+                    embedding vector(1536),
+                    embedding_model VARCHAR(100),
+                    metadata JSONB DEFAULT '{{}}'::jsonb,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            # Create unique index with COALESCE expression
+            await conn.execute(f"""
+                CREATE UNIQUE INDEX IF NOT EXISTS claim_policy_chunks_unique
+                ON {self.schema}.claim_policy_chunks
+                (policy_id, chunk_type, COALESCE(criteria_id, ''), content_hash)
+            """)
+            # Standard indexes
+            for col in ['policy_id', 'category', 'chunk_type', 'severity', 'risk_level']:
+                await conn.execute(
+                    f"CREATE INDEX IF NOT EXISTS idx_claim_policy_chunks_{col} "
+                    f"ON {self.schema}.claim_policy_chunks({col})"
+                )
             logger.info(f"Initialized {self.table} table")
 
     async def insert_chunks(
