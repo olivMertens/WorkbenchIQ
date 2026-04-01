@@ -105,7 +105,7 @@ export default function WorkbenchView({
       case 'timeline':
         return (
           <div className="flex-1 overflow-auto p-6">
-            <ChronologicalOverview application={selectedApp} fullWidth />
+            <ChronologicalOverview application={selectedApp} fullWidth persona={currentPersona} />
           </div>
         );
       case 'documents':
@@ -186,7 +186,7 @@ export default function WorkbenchView({
               </div>
             </div>
             <div className="absolute top-0 right-0 bottom-0 w-80">
-              <ChronologicalOverview application={selectedApp} />
+              <ChronologicalOverview application={selectedApp} persona={currentPersona} />
             </div>
           </div>
 

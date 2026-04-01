@@ -374,4 +374,4 @@ content-understanding-samples/
 # ============================================================================
 
 # Include frontend lib folder (not Python's lib/)
-!frontend/src/lib/
+!frontend/src/lib/.next/

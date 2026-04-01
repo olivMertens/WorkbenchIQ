@@ -9,6 +9,7 @@ import clsx from 'clsx';
 interface ChronologicalOverviewProps {
   application: ApplicationMetadata;
   fullWidth?: boolean;
+  persona?: string;
 }
 
 interface TimelineEntry {
@@ -49,7 +50,7 @@ function formatDateDisplay(date: Date | null): { date: string; year: string } {
     return { date: 'N/A', year: '' };
   }
   
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = ['Janv', 'Fév', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
   const month = months[date.getMonth()];
   const day = date.getDate().toString().padStart(2, '0');
   const year = date.getFullYear().toString();
@@ -237,15 +238,139 @@ function buildTimelineFromData(application: ApplicationMetadata): TimelineEntry[
 function buildDocumentsFromData(application: ApplicationMetadata): { name: string; pages: number }[] {
   return (application.files || []).map(f => ({
     name: f.filename,
-    pages: 1, // We don't have page count in metadata
+    pages: 1,
   }));
 }
 
-export default function ChronologicalOverview({ application, fullWidth }: ChronologicalOverviewProps) {
-  const [activeTab, setActiveTab] = useState<'medical' | 'documents'>('medical');
+/**
+ * Build timeline entries from LLM outputs generically — works for any persona.
+ * Falls back to extracted fields timeline events if no LLM outputs.
+ */
+function buildGenericTimeline(application: ApplicationMetadata): TimelineEntry[] {
+  const entries: TimelineEntry[] = [];
+  const llm = application.llm_outputs || {};
+  const fields = application.extracted_fields || {};
+
+  // 1. Extract events from LLM outputs (any persona)
+  for (const [section, subsections] of Object.entries(llm)) {
+    if (!subsections || typeof subsections !== 'object') continue;
+    for (const [subsection, output] of Object.entries(subsections as Record<string, any>)) {
+      const parsed = output?.parsed;
+      if (!parsed) continue;
+
+      // Look for timeline_events arrays (clinical_timeline, treatment_timeline, etc.)
+      const events = parsed.timeline_events || parsed.events || parsed.claim_lines;
+      if (Array.isArray(events)) {
+        events.forEach((evt: any, idx: number) => {
+          const date = evt.date || evt.event_date || '';
+          const title = evt.event || evt.description || evt.title || `${section} — ${subsection}`;
+          const details = evt.description || evt.details || evt.rationale || '';
+          const parsedDate = parseDate(date);
+          const displayDate = formatDateDisplay(parsedDate);
+          entries.push({
+            date: displayDate.date,
+            year: displayDate.year,
+            title: String(title).substring(0, 80),
+            description: String(title),
+            color: ['blue', 'green', 'orange', 'purple', 'yellow'][idx % 5] as TimelineEntry['color'],
+            details: String(details),
+            sortDate: parsedDate?.getTime() || 0,
+          });
+        });
+      }
+
+      // Extract summary as a single event if no timeline_events
+      if (!Array.isArray(events) && parsed.summary) {
+        const sectionLabel = section.replace(/_/g, ' ');
+        entries.push({
+          date: '',
+          year: '',
+          title: `${sectionLabel} — ${String(parsed.summary).substring(0, 60)}`,
+          description: String(parsed.summary),
+          color: 'blue',
+          details: String(parsed.summary),
+          sortDate: 0,
+        });
+      }
+    }
+  }
+
+  // 2. If no LLM entries, build from extracted fields
+  if (entries.length === 0) {
+    for (const [key, val] of Object.entries(fields)) {
+      if (!val || val.value == null || val.value === '') continue;
+      const name = val.field_name || key.split(':').pop() || key;
+      const parsedDate = parseDate(String(val.value));
+      if (parsedDate || name.toLowerCase().includes('date') || name.toLowerCase().includes('sinistre')) {
+        const displayDate = formatDateDisplay(parsedDate);
+        entries.push({
+          date: displayDate.date,
+          year: displayDate.year,
+          title: `${name}: ${String(val.value).substring(0, 60)}`,
+          color: 'blue',
+          details: `${name}: ${val.value}`,
+          sortDate: parsedDate?.getTime() || 0,
+          confidence: val.confidence,
+        });
+      }
+    }
+  }
+
+  entries.sort((a, b) => (b.sortDate || 0) - (a.sortDate || 0));
+  return entries;
+}
+
+/** Labels for persona context */
+function getPersonaLabels(persona?: string) {
+  const isHabitation = persona?.includes('habitation') || persona?.includes('property');
+  const isClaims = persona?.includes('claims') || persona?.includes('sinistre');
+  const isMortgage = persona?.includes('mortgage') || persona?.includes('hypothe');
+
+  if (isHabitation) return {
+    title: 'Chronologie du sinistre',
+    subtitle: 'Événements et documents extraits du dossier habitation',
+    itemsTab: 'Événements',
+    docsTab: 'Documents',
+    emptyItems: 'Aucun événement chronologique extrait',
+    emptyDocs: 'Aucun document téléchargé',
+  };
+  if (isClaims) return {
+    title: 'Chronologie du sinistre',
+    subtitle: 'Événements et documents extraits du dossier sinistre',
+    itemsTab: 'Événements',
+    docsTab: 'Documents',
+    emptyItems: 'Aucun événement chronologique extrait',
+    emptyDocs: 'Aucun document téléchargé',
+  };
+  if (isMortgage) return {
+    title: 'Chronologie du dossier',
+    subtitle: 'Étapes et documents du dossier hypothécaire',
+    itemsTab: 'Étapes',
+    docsTab: 'Documents',
+    emptyItems: 'Aucune étape chronologique extraite',
+    emptyDocs: 'Aucun document téléchargé',
+  };
+  // Default: underwriting / medical
+  return {
+    title: 'Aperçu chronologique',
+    subtitle: 'Événements médicaux et documents extraits du dossier',
+    itemsTab: 'Événements médicaux',
+    docsTab: 'Documents',
+    emptyItems: 'Aucune donnée chronologique extraite',
+    emptyDocs: 'Aucun document téléchargé',
+  };
+}
+
+export default function ChronologicalOverview({ application, fullWidth, persona }: ChronologicalOverviewProps) {
+  const [activeTab, setActiveTab] = useState<'items' | 'documents'>('items');
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
 
-  const timelineItems = buildTimelineFromData(application);
+  const labels = getPersonaLabels(persona || application.persona);
+  const isMedicalPersona = !persona?.includes('habitation') && !persona?.includes('property') && !persona?.includes('mortgage') &&
+    !application.persona?.includes('habitation') && !application.persona?.includes('property') && !application.persona?.includes('mortgage');
+
+  // Use medical-specific builder for underwriting, generic for everything else
+  const timelineItems = isMedicalPersona ? buildTimelineFromData(application) : buildGenericTimeline(application);
   const documents = buildDocumentsFromData(application);
 
   const colorClasses: Record<string, string> = {
@@ -274,23 +399,23 @@ export default function ChronologicalOverview({ application, fullWidth }: Chrono
     )}>
       {/* Header */}
       <div className="p-4 border-b border-slate-200">
-        <h2 className="text-lg font-semibold text-slate-900">Chronological Overview</h2>
+        <h2 className="text-lg font-semibold text-slate-900">{labels.title}</h2>
         <p className="text-xs text-slate-500 mt-1">
-          Medical events and documents extracted from application
+          {labels.subtitle}
         </p>
 
         {/* Tabs */}
         <div className="flex mt-3 border-b border-slate-200">
           <button
-            onClick={() => setActiveTab('medical')}
+            onClick={() => setActiveTab('items')}
             className={clsx(
               'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
-              activeTab === 'medical'
+              activeTab === 'items'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             )}
           >
-            Medical Items ({timelineItems.length})
+            {labels.itemsTab} ({timelineItems.length})
           </button>
           <button
             onClick={() => setActiveTab('documents')}
@@ -301,14 +426,14 @@ export default function ChronologicalOverview({ application, fullWidth }: Chrono
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             )}
           >
-            Documents ({documents.length})
+            {labels.docsTab} ({documents.length})
           </button>
         </div>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-4">
-        {activeTab === 'medical' ? (
+        {activeTab === 'items' ? (
           timelineItems.length > 0 ? (
             <div className="relative">
               {/* Timeline line */}
@@ -371,7 +496,7 @@ export default function ChronologicalOverview({ application, fullWidth }: Chrono
             </div>
           ) : (
             <p className="text-sm text-slate-500 italic text-center py-8">
-              No medical timeline data extracted
+              {labels.emptyItems}
             </p>
           )
         ) : (
@@ -394,7 +519,7 @@ export default function ChronologicalOverview({ application, fullWidth }: Chrono
             </div>
           ) : (
             <p className="text-sm text-slate-500 italic text-center py-8">
-              No documents uploaded
+              {labels.emptyDocs}
             </p>
           )
         )}
