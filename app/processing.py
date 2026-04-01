@@ -252,11 +252,22 @@ def run_content_understanding_for_files(
                                     "media_type": "image",
                                 }
                 
-                # Add image summary to markdown
-                damage_areas = payload.get("result", {}).get("contents", [{}])[0].get("fields", {}).get("DamageAreas", {})
-                severity = payload.get("result", {}).get("contents", [{}])[0].get("fields", {}).get("OverallDamageSeverity", {})
+                # Extract markdown content from image analysis result
+                extracted = extract_markdown_from_result(payload)
+                image_md = extracted.get("document_markdown", "")
+                
+                # Build image summary — use CU markdown if available
                 summary = f"# Image Analysis: {stored.filename}\n\n"
-                summary += f"**Overall Damage Severity:** {severity.get('valueString', 'Unknown')}\n\n"
+                if image_md:
+                    summary += image_md + "\n\n"
+                
+                # Also extract automotive-specific damage fields if present
+                first_content = payload.get("result", {}).get("contents", [{}])[0]
+                fields = first_content.get("fields", {})
+                severity = fields.get("OverallDamageSeverity", {})
+                damage_areas = fields.get("DamageAreas", {})
+                if severity.get("valueString"):
+                    summary += f"**Overall Damage Severity:** {severity['valueString']}\n\n"
                 if damage_areas.get("valueArray"):
                     summary += "**Detected Damage Areas:**\n"
                     for area in damage_areas["valueArray"]:
@@ -265,6 +276,7 @@ def run_content_understanding_for_files(
                         damage_type = props.get("damageType", {}).get("valueString", "Unknown")
                         sev = props.get("severity", {}).get("valueString", "Unknown")
                         summary += f"- {location}: {damage_type} ({sev})\n"
+                
                 all_markdown_parts.append(summary)
                 cu_payloads.append((stored.path, payload))
                 
@@ -279,7 +291,8 @@ def run_content_understanding_for_files(
                         file_bytes=file_content,
                     )
                     analyzer_used = settings.content_understanding.analyzer_id
-                    md_text = extract_markdown_from_result(payload)
+                    extracted_fb = extract_markdown_from_result(payload)
+                    md_text = extracted_fb.get("document_markdown", "")
                     if md_text:
                         all_markdown_parts.append(f"# Image: {stored.filename}\n\n{md_text}")
                     cu_payloads.append((stored.path, payload))
@@ -333,6 +346,7 @@ def run_content_understanding_for_files(
                     settings.content_understanding,
                     file_path=stored.path,
                     file_bytes=file_content,
+                    analyzer_id=doc_analyzer_id,
                 )
                 analyzer_used = doc_analyzer_id
 

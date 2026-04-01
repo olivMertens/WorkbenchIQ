@@ -3622,7 +3622,8 @@ Retourner un JSON avec le statut de couverture, les articles applicables et la f
 Retourner un JSON avec le montant recommandé, la franchise et les conditions.""",
             },
         },
-        custom_analyzer_id="prebuilt-documentSearch",
+        custom_analyzer_id="habitationClaimsAnalyzer",
+        image_analyzer_id="prebuilt-image",
         enabled=True,
     ),
 }

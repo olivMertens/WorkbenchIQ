@@ -182,6 +182,7 @@ def analyze_document(
     output_markdown: bool = True,
     max_retries: int = 3,
     retry_backoff: float = 1.5,
+    analyzer_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Call Azure AI Content Understanding REST API for a single document.
 
@@ -226,7 +227,7 @@ def analyze_document(
         )
 
     endpoint = settings.endpoint.rstrip("/")
-    analyzer_id = settings.analyzer_id
+    analyzer_id = analyzer_id or settings.analyzer_id
 
     # Get authentication token or key
     token = None
