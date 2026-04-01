@@ -46,6 +46,63 @@ function getFieldValue(extractedFields: Record<string, unknown>, keys: string[],
   return defaultValue;
 }
 
+// French label mapping for CamelCase field names from Azure Content Understanding
+const FIELD_LABELS: Record<string, string> = {
+  NomAssure: 'Nom de l\'assuré',
+  AssuréNom: 'Nom de l\'assuré',
+  AssuréPrenom: 'Prénom de l\'assuré',
+  AdresseAssure: 'Adresse de l\'assuré',
+  EmailAssure: 'Email de l\'assuré',
+  TelephoneAssure: 'Téléphone de l\'assuré',
+  NumeroContrat: 'N° de contrat',
+  NumeroPolice: 'N° de police',
+  NumeroSocietaire: 'N° de sociétaire',
+  FormuleContrat: 'Formule du contrat',
+  DateSinistre: 'Date du sinistre',
+  NatureSinistre: 'Nature du sinistre',
+  LieuSinistre: 'Lieu du sinistre',
+  DescriptionSinistre: 'Description du sinistre',
+  MontantEstime: 'Montant estimé',
+  DateConstat: 'Date du constat',
+  ExpertNom: 'Nom de l\'expert',
+  ExpertContact: 'Contact de l\'expert',
+  MesuresConservatoires: 'Mesures conservatoires',
+  NombreItemsEndommages: 'Nb biens endommagés',
+  FranchiseApplicable: 'Franchise applicable',
+  TiersImplique: 'Tiers impliqué',
+  NiveauUrgence: 'Niveau d\'urgence',
+  NomSouscripteur: 'Nom du souscripteur',
+  DateNaissance: 'Date de naissance',
+  Profession: 'Profession',
+  NumeroSecuriteSociale: 'N° de sécurité sociale',
+  FormuleDemandee: 'Formule demandée',
+  CotisationMensuelle: 'Cotisation mensuelle',
+  StatutTabac: 'Statut tabagique',
+  NiveauRisque: 'Niveau de risque',
+};
+
+// Fields belonging to dossier info (personal/policy)
+const DOSSIER_FIELDS = new Set([
+  'NomAssure', 'AssuréNom', 'AssuréPrenom', 'AdresseAssure',
+  'EmailAssure', 'TelephoneAssure', 'NumeroContrat', 'NumeroPolice',
+  'NumeroSocietaire', 'FormuleContrat', 'NomSouscripteur',
+  'DateNaissance', 'Profession', 'NumeroSecuriteSociale',
+  'FormuleDemandee', 'CotisationMensuelle',
+]);
+
+// Fields belonging to damage info
+const DOMMAGES_FIELDS = new Set([
+  'DateSinistre', 'NatureSinistre', 'LieuSinistre', 'DescriptionSinistre',
+  'MontantEstime', 'DateConstat', 'ExpertNom', 'ExpertContact',
+  'MesuresConservatoires', 'NombreItemsEndommages', 'FranchiseApplicable',
+  'TiersImplique', 'NiveauUrgence', 'StatutTabac', 'NiveauRisque',
+]);
+
+// Get French label for a field name
+function getFieldLabel(fieldName: string): string {
+  return FIELD_LABELS[fieldName] || fieldName;
+}
+
 // Detect file type from filename
 function getFileTypeInfo(filename: string): { label: string; icon: 'pdf' | 'image' | 'video' | 'document' } {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
@@ -257,18 +314,19 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
     });
   }, [files, application]);
 
-  // Build damage items from extracted fields
+  // Build damage items from extracted fields — only damage-related fields with French labels
   const injuries = useMemo(() => {
     const items: { diagnosis: string; related: string }[] = [];
     for (const [key, val] of Object.entries(ef)) {
       const fieldVal = val as { field_name?: string; value?: unknown } | undefined;
       if (!fieldVal || fieldVal.value == null || fieldVal.value === '') continue;
-      const name = fieldVal.field_name || key.split(':').pop() || key;
-      if (!name.toLowerCase().includes('nom') && !name.toLowerCase().includes('date') && !name.toLowerCase().includes('adresse')) {
-        items.push({ diagnosis: `${name}: ${fieldVal.value}`, related: 'Oui' });
-      }
+      const rawName = fieldVal.field_name || key.split(':').pop() || key;
+      // Only include damage-related fields
+      if (!DOMMAGES_FIELDS.has(rawName)) continue;
+      const label = getFieldLabel(rawName);
+      items.push({ diagnosis: `${label}: ${fieldVal.value}`, related: 'Oui' });
     }
-    return items.slice(0, 8);
+    return items.slice(0, 10);
   }, [ef]);
 
   // Build gallery items for lightbox (all files with URLs)
@@ -369,18 +427,22 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
             <div className="col-span-4 bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col overflow-hidden">
               <div className="px-3 py-2 border-b border-slate-100 flex items-center gap-2 bg-slate-50 flex-shrink-0">
                 <TrendingUp className="w-4 h-4 text-indigo-600" />
-                <span className="font-semibold text-slate-900 text-sm">Données extraites</span>
+                <span className="font-semibold text-slate-900 text-sm">Information du dossier</span>
               </div>
               <div className="flex-1 overflow-auto p-3 text-xs">
                 {Object.keys(ef).length > 0 ? (
                   <div className="space-y-1">
-                    {Object.entries(ef).slice(0, 10).map(([key, val]) => {
+                    {Object.entries(ef).filter(([key]) => {
+                      const rawName = key.split(':').pop() || key;
+                      return DOSSIER_FIELDS.has(rawName);
+                    }).slice(0, 10).map(([key, val]) => {
                       const fieldVal = val as { field_name?: string; value?: unknown; confidence?: number } | undefined;
                       if (!fieldVal || fieldVal.value == null || fieldVal.value === '') return null;
-                      const name = fieldVal.field_name || key.split(':').pop() || key;
+                      const rawName = fieldVal.field_name || key.split(':').pop() || key;
+                      const label = getFieldLabel(rawName);
                       return (
                         <div key={key} className="flex justify-between items-center">
-                          <span className="text-slate-600 truncate mr-2">{name}</span>
+                          <span className="text-slate-600 truncate mr-2">{label}</span>
                           <span className="font-medium text-slate-900 text-right flex-shrink-0">{String(fieldVal.value)}</span>
                         </div>
                       );
