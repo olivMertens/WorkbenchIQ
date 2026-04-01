@@ -255,12 +255,40 @@
     "weight": "Weight",
     "dob": "Date of birth",
     "age": "years old",
+    "height": "Height",
+    "gender": "Gender",
+    "bmi": "BMI",
+    "searchPlaceholder": "Search in document...",
+    "informationNotExtracted": "Patient information not extracted. Check the Source Pages for raw document content.",
     "summary": "Patient Summary",
     "aiAnalysis": "AI Analysis",
     "deepDive": "Deep Dive",
+    "noSummary": "No summary available. Run analysis to generate patient summary.",
     "risk": "Risk",
     "riskAssessment": "Risk Assessment",
     "policyAnalysis": "Policy Analysis"
+  },
+  "policy": {
+    "riskAnalysis": "Policy Risk Analysis",
+    "runRiskAssessment": "Run policy-based risk assessment",
+    "riskAnalysisNotRun": "Risk Analysis Not Run",
+    "runComprehensiveAnalysis": "Run a comprehensive policy-based risk analysis to evaluate this application against underwriting guidelines.",
+    "runAnalysisButton": "Run Risk Analysis",
+    "runningAnalysis": "Running Analysis...",
+    "standardAnalysisMustComplete": "Standard analysis must be completed first",
+    "premiumRecommendation": "Premium Recommendation",
+    "decision": "Decision:",
+    "loading": "Loading:",
+    "keyFindings": "Key Policy Findings",
+    "noFindings": "No specific policy findings identified.",
+    "viewFullReport": "View Full Report",
+    "policyFindings": "Policy Findings",
+    "riskLevels": {
+      "high": "High Risk",
+      "moderate": "Moderate Risk",
+      "low": "Low Risk",
+      "notAssessed": "Not Assessed"
+    }
   },
   "body": {
     "systemMap": "Body System Map",
@@ -275,6 +303,13 @@
     "high": "High",
     "moderate": "Moderate",
     "low": "Low"
+  },
+  "workbench": {
+    "evidenceFromDocuments": "Evidence from Documents",
+    "returnToList": "Return to list",
+    "live": "live",
+    "extractionInProgress": "Data Agent extracting",
+    "analysisInProgress": "Risk Agent analyzing"
   },
   "actions": {
     "cancel": "Cancel",

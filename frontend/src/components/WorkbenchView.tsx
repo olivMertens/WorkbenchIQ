@@ -26,6 +26,7 @@ import AutomotiveClaimsOverview from '@/components/claims/AutomotiveClaimsOvervi
 import { MortgageWorkbench } from '@/components/mortgage';
 import { usePersona } from '@/lib/PersonaContext';
 import { useToast } from '@/lib/ToastProvider';
+import { useTranslations } from 'next-intl';
 import { getApplication } from '@/lib/api';
 import type { ApplicationMetadata, ApplicationListItem } from '@/lib/types';
 
@@ -53,6 +54,7 @@ export default function WorkbenchView({
   const [isDeepDiveOpen, setIsDeepDiveOpen] = useState(false);
   const [sourcePageNumber, setSourcePageNumber] = useState<number | undefined>(undefined);
   const { currentPersona, personaConfig } = usePersona();
+  const tw = useTranslations('workbench');
   const { addToast } = useToast();
 
   // Load application details
@@ -194,7 +196,7 @@ export default function WorkbenchView({
             <div className="flex-1 border-t border-slate-200" />
             <div className="flex items-center gap-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
               <FileText className="w-4 h-4" />
-              <span>Evidence from Documents</span>
+              <span>{tw('evidenceFromDocuments')}</span>
             </div>
             <div className="flex-1 border-t border-slate-200" />
           </div>
@@ -275,7 +277,7 @@ export default function WorkbenchView({
             <div className="flex-1 flex items-center justify-center">
                  <div className="text-center text-rose-600 bg-white p-6 rounded-xl shadow-sm border border-rose-100">
                     <p>{error}</p>
-                    <button onClick={onBack} className="mt-4 text-sm text-slate-500 hover:text-indigo-600 underline">Return to list</button>
+                    <button onClick={onBack} className="mt-4 text-sm text-slate-500 hover:text-indigo-600 underline">{tw('returnToList')}</button>
                  </div>
             </div>
           ) : selectedApp ? (
@@ -306,7 +308,7 @@ export default function WorkbenchView({
                        <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-bounce" style={{ animationDelay: '300ms' }} />
                      </span>
                    </div>
-                   <span className="text-xs bg-sky-100 text-sky-600 px-2 py-0.5 rounded-full font-medium flex-shrink-0">live</span>
+                   <span className="text-xs bg-sky-100 text-sky-600 px-2 py-0.5 rounded-full font-medium flex-shrink-0">{tw('live')}</span>
                  </div>
                )}
                {currentPersona === 'underwriting' && <PatientHeader application={selectedApp} />}

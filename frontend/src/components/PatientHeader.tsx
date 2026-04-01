@@ -1,6 +1,7 @@
 'use client';
 
 import { Search } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { ApplicationMetadata } from '@/lib/types';
 import { extractPatientInfo, calculateBMI, getCitations } from '@/lib/api';
 import ConfidenceIndicator from './ConfidenceIndicator';
@@ -11,6 +12,7 @@ interface PatientHeaderProps {
 }
 
 export default function PatientHeader({ application }: PatientHeaderProps) {
+  const t = useTranslations('patient');
   const patient = extractPatientInfo(application);
   
   // Get citations for patient fields
@@ -83,7 +85,7 @@ export default function PatientHeader({ application }: PatientHeaderProps) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search in document..."
+            placeholder={t('searchPlaceholder')}
             className="pl-9 pr-4 py-2 w-64 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
         </div>
@@ -93,7 +95,7 @@ export default function PatientHeader({ application }: PatientHeaderProps) {
       <div className="flex flex-wrap items-center gap-x-8 gap-y-2 mt-4 text-sm">
         {hasValue(patient.name) && (
           <div className="flex items-center gap-2">
-            <span className="text-slate-500">Patient name</span>
+            <span className="text-slate-500">{t('name')}</span>
             <span className="font-medium text-slate-900">{patient.name}</span>
             {citations.ApplicantName?.confidence !== undefined && (
               <ConfidenceIndicator confidence={citations.ApplicantName.confidence} fieldName="Name" />
@@ -107,7 +109,7 @@ export default function PatientHeader({ application }: PatientHeaderProps) {
         )}
         {hasValue(patient.occupation) && (
           <div className="flex items-center gap-2">
-            <span className="text-slate-500">Occupation</span>
+            <span className="text-slate-500">{t('occupation')}</span>
             <span className="font-medium text-slate-900">{patient.occupation}</span>
             {citations.Occupation?.confidence !== undefined && (
               <ConfidenceIndicator confidence={citations.Occupation.confidence} fieldName="Occupation" />
@@ -121,7 +123,7 @@ export default function PatientHeader({ application }: PatientHeaderProps) {
         )}
         {hasValue(patient.weight) && (
           <div className="flex items-center gap-2">
-            <span className="text-slate-500">Weight</span>
+            <span className="text-slate-500">{t('weight')}</span>
             <span className="font-medium text-slate-900">{patient.weight}</span>
             {citations.Weight?.confidence !== undefined && (
               <ConfidenceIndicator confidence={citations.Weight.confidence} fieldName="Weight" />
@@ -135,10 +137,10 @@ export default function PatientHeader({ application }: PatientHeaderProps) {
         )}
         {hasValue(patient.dateOfBirth) && (
           <div className="flex items-center gap-2">
-            <span className="text-slate-500">DOB</span>
+            <span className="text-slate-500">{t('dob')}</span>
             <span className="font-medium text-slate-900">{patient.dateOfBirth}</span>
             {hasValue(patient.age) && (
-              <span className="text-xs text-slate-400">({patient.age} Years Old)</span>
+              <span className="text-xs text-slate-400">({patient.age} {t('age')})</span>
             )}
             {citations.DateOfBirth?.confidence !== undefined && (
               <ConfidenceIndicator confidence={citations.DateOfBirth.confidence} fieldName="Date of Birth" />
@@ -152,7 +154,7 @@ export default function PatientHeader({ application }: PatientHeaderProps) {
         )}
         {hasValue(patient.gender) && (
           <div className="flex items-center gap-2">
-            <span className="text-slate-500">Gender</span>
+            <span className="text-slate-500">{t('gender')}</span>
             <span className="font-medium text-slate-900">{patient.gender}</span>
             {citations.Gender?.confidence !== undefined && (
               <ConfidenceIndicator confidence={citations.Gender.confidence} fieldName="Gender" />
@@ -166,13 +168,13 @@ export default function PatientHeader({ application }: PatientHeaderProps) {
         )}
         {hasValue(String(bmi)) && (
           <div className="flex items-center gap-2">
-            <span className="text-slate-500">BMI</span>
+            <span className="text-slate-500">{t('bmi')}</span>
             <span className="font-medium text-slate-900">{bmi}</span>
           </div>
         )}
         {hasValue(patient.height) && (
           <div className="flex items-center gap-2">
-            <span className="text-slate-500">Height</span>
+            <span className="text-slate-500">{t('height')}</span>
             <span className="font-medium text-slate-900">{patient.height}</span>
             {citations.Height?.confidence !== undefined && (
               <ConfidenceIndicator confidence={citations.Height.confidence} fieldName="Height" />
@@ -189,7 +191,7 @@ export default function PatientHeader({ application }: PatientHeaderProps) {
       {/* Show message if no patient data */}
       {!hasValue(patient.name) && !hasValue(patient.dateOfBirth) && (
         <p className="mt-4 text-sm text-slate-500 italic">
-          Patient information not extracted. Check the Source Pages for raw document content.
+          {t('informationNotExtracted')}
         </p>
       )}
     </header>

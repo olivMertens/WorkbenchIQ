@@ -22,6 +22,7 @@ interface Scenario {
   color: string;
   summary: string;
   summaryEn: string;
+  demoPdf: string;
   steps: Step[];
 }
 
@@ -34,6 +35,7 @@ const SCENARIOS: Scenario[] = [
     color: '#2563eb',
     summary: 'Olivier MERTENS LAFFITE (mlo@wine.com) — Tempête Gérard 27/03/2026 — Cave inondée, collection de vins détruite — 10 825 €',
     summaryEn: 'Olivier MERTENS LAFFITE (mlo@wine.com) — Storm Gérard 03/27/2026 — Flooded cellar, wine collection destroyed — €10,825',
+    demoPdf: 'assets/demo/declaration-sinistre-habitation.pdf',
     steps: [
       {
         icon: CloudRain,
@@ -93,6 +95,7 @@ const SCENARIOS: Scenario[] = [
     color: '#006838',
     summary: 'Antoine LEFEVRE, 48 ans, chef cuisinier — Complémentaire Santé Équilibre Plus — HTA contrôlée, ancien fumeur, père diabétique — 127 €/mois',
     summaryEn: 'Antoine LEFEVRE, 48 yo, chef — Complementary Health Equilibre Plus — Controlled hypertension, ex-smoker, father diabetic — €127/mo',
+    demoPdf: 'assets/demo/souscription-sante-lefevre.pdf',
     steps: [
       {
         icon: ClipboardList,
@@ -277,8 +280,8 @@ export default function DemoGuideModal() {
         <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 rounded-b-2xl flex items-center justify-between">
           <p className="text-xs text-slate-500">
             {lang === 'fr'
-              ? 'PDF de démo : assets/demo/declaration-sinistre-habitation.pdf'
-              : 'Demo PDF: assets/demo/declaration-sinistre-habitation.pdf'}
+              ? `PDF de démo : ${scenario.demoPdf}`
+              : `Demo PDF: ${scenario.demoPdf}`}
           </p>
           <button
             onClick={() => setIsOpen(false)}

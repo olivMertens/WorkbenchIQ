@@ -251,12 +251,40 @@
     "weight": "Poids",
     "dob": "Date de naissance",
     "age": "ans",
+    "height": "Taille",
+    "gender": "Sexe",
+    "bmi": "IMC",
+    "searchPlaceholder": "Rechercher dans le document...",
+    "informationNotExtracted": "Informations du patient non extraites. Consultez les Pages sources pour le contenu brut du document.",
     "summary": "Résumé patient",
     "aiAnalysis": "Analyse IA",
     "deepDive": "Analyse approfondie",
+    "noSummary": "Aucun résumé disponible. Lancez l'analyse pour générer le résumé patient.",
     "risk": "Risque",
     "riskAssessment": "Évaluation des risques",
     "policyAnalysis": "Analyse des polices"
+  },
+  "policy": {
+    "riskAnalysis": "Analyse des risques polices",
+    "runRiskAssessment": "Lancer l'évaluation des risques selon les polices",
+    "riskAnalysisNotRun": "Analyse des risques non effectuée",
+    "runComprehensiveAnalysis": "Lancez une analyse complète des risques pour évaluer ce dossier selon les directives de souscription.",
+    "runAnalysisButton": "Lancer l'analyse des risques",
+    "runningAnalysis": "Analyse en cours...",
+    "standardAnalysisMustComplete": "L'analyse standard doit être complétée d'abord",
+    "premiumRecommendation": "Recommandation de prime",
+    "decision": "Décision :",
+    "loading": "Chargement :",
+    "keyFindings": "Résultats clés des polices",
+    "noFindings": "Aucun résultat spécifique identifié.",
+    "viewFullReport": "Voir le rapport complet",
+    "policyFindings": "Résultats polices",
+    "riskLevels": {
+      "high": "Risque élevé",
+      "moderate": "Risque modéré",
+      "low": "Risque faible",
+      "notAssessed": "Non évalué"
+    }
   },
   "body": {
     "systemMap": "Carte des systèmes corporels",
@@ -271,6 +299,13 @@
     "high": "Élevé",
     "moderate": "Modéré",
     "low": "Faible"
+  },
+  "workbench": {
+    "evidenceFromDocuments": "Éléments issus des documents",
+    "returnToList": "Retour à la liste",
+    "live": "en direct",
+    "extractionInProgress": "Agent d'extraction en cours",
+    "analysisInProgress": "Agent d'analyse en cours"
   },
   "actions": {
     "cancel": "Annuler",

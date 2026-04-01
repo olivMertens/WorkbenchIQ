@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Shield, FileText, AlertTriangle, CheckCircle, Clock, Play, Loader2, Sparkles } from 'lucide-react';
 import type { ApplicationMetadata, RiskFinding } from '@/lib/types';
 
@@ -10,7 +11,7 @@ interface PolicySummaryPanelProps {
   onRiskAnalysisComplete?: () => void;
 }
 
-function getRiskLevelInfo(rating: string): { icon: React.ReactNode; bgColor: string; textColor: string; borderColor: string; label: string } {
+function getRiskLevelInfo(rating: string, t: (key: string) => string): { icon: React.ReactNode; bgColor: string; textColor: string; borderColor: string; label: string } {
   const lowerRating = (rating || '').toLowerCase();
   if (lowerRating.includes('high')) {
     return {
@@ -18,7 +19,7 @@ function getRiskLevelInfo(rating: string): { icon: React.ReactNode; bgColor: str
       bgColor: 'bg-rose-50',
       textColor: 'text-rose-700',
       borderColor: 'border-rose-200',
-      label: 'High Risk',
+      label: t('riskLevels.high'),
     };
   }
   if (lowerRating.includes('moderate')) {
@@ -27,7 +28,7 @@ function getRiskLevelInfo(rating: string): { icon: React.ReactNode; bgColor: str
       bgColor: 'bg-amber-50',
       textColor: 'text-amber-700',
       borderColor: 'border-amber-200',
-      label: 'Moderate Risk',
+      label: t('riskLevels.moderate'),
     };
   }
   if (lowerRating.includes('low')) {
@@ -36,7 +37,7 @@ function getRiskLevelInfo(rating: string): { icon: React.ReactNode; bgColor: str
       bgColor: 'bg-emerald-50',
       textColor: 'text-emerald-700',
       borderColor: 'border-emerald-200',
-      label: 'Low Risk',
+      label: t('riskLevels.low'),
     };
   }
   return {
@@ -44,7 +45,7 @@ function getRiskLevelInfo(rating: string): { icon: React.ReactNode; bgColor: str
     bgColor: 'bg-slate-50',
     textColor: 'text-slate-600',
     borderColor: 'border-slate-200',
-    label: 'Not Assessed',
+    label: t('riskLevels.notAssessed'),
   };
 }
 
@@ -55,6 +56,7 @@ export default function PolicySummaryPanel({
 }: PolicySummaryPanelProps) {
   const [isRunningAnalysis, setIsRunningAnalysis] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations('policy');
 
   const riskAnalysis = application.risk_analysis?.parsed;
   const hasRiskAnalysis = !!riskAnalysis;
@@ -96,10 +98,10 @@ export default function PolicySummaryPanel({
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900">
-                Policy Risk Analysis
+                {t('riskAnalysis')}
               </h2>
               <p className="text-sm text-slate-500">
-                Run policy-based risk assessment
+                {t('runRiskAssessment')}
               </p>
             </div>
           </div>
@@ -111,10 +113,10 @@ export default function PolicySummaryPanel({
               <FileText className="w-8 h-8 text-indigo-600" />
             </div>
             <h3 className="text-lg font-medium text-slate-900 mb-2">
-              Risk Analysis Not Run
+              {t('riskAnalysisNotRun')}
             </h3>
             <p className="text-sm text-slate-600 mb-6 max-w-sm mx-auto">
-              Run a comprehensive policy-based risk analysis to evaluate this application against underwriting guidelines.
+              {t('runComprehensiveAnalysis')}
             </p>
             
             {error && (
@@ -131,19 +133,19 @@ export default function PolicySummaryPanel({
               {isRunningAnalysis ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Running Analysis...
+                  {t('runningAnalysis')}
                 </>
               ) : (
                 <>
                   <Play className="w-4 h-4" />
-                  Run Risk Analysis
+                  {t('runAnalysisButton')}
                 </>
               )}
             </button>
 
             {application.status !== 'completed' && (
               <p className="text-xs text-slate-500 mt-3">
-                Standard analysis must be completed first
+                {t('standardAnalysisMustComplete')}
               </p>
             )}
           </div>
@@ -153,7 +155,7 @@ export default function PolicySummaryPanel({
   }
 
   // Risk analysis is available - show results
-  const riskInfo = getRiskLevelInfo(riskAnalysis.overall_risk_level);
+  const riskInfo = getRiskLevelInfo(riskAnalysis.overall_risk_level, t);
   const topFindings = (riskAnalysis.findings || []).slice(0, 3);
   const premium = riskAnalysis.premium_recommendation;
 
@@ -169,7 +171,7 @@ export default function PolicySummaryPanel({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Policy Risk Analysis
+                  {t('riskAnalysis')}
                 </h2>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-100">
                   <Sparkles className="w-3 h-3" />
@@ -186,7 +188,7 @@ export default function PolicySummaryPanel({
             <div className="text-2xl font-bold text-slate-900">
               {(riskAnalysis.findings || []).length}
             </div>
-            <div className="text-xs text-slate-500">Policy Findings</div>
+            <div className="text-xs text-slate-500">{t('policyFindings')}</div>
           </div>
         </div>
       </div>
@@ -209,11 +211,11 @@ export default function PolicySummaryPanel({
       {premium && (
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
           <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-            Premium Recommendation
+            {t('premiumRecommendation')}
           </h3>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-600">Decision:</span>
+              <span className="text-sm text-slate-600">{t('decision')}</span>
               <span className={`font-medium ${
                 premium.base_decision === 'Standard' ? 'text-emerald-600' :
                 premium.base_decision === 'Rated' ? 'text-amber-600' :
@@ -225,7 +227,7 @@ export default function PolicySummaryPanel({
             </div>
             {premium.loading_percentage && premium.loading_percentage !== '0%' && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-600">Loading:</span>
+                <span className="text-sm text-slate-600">{t('loading')}</span>
                 <span className="font-medium text-amber-600">{premium.loading_percentage}</span>
               </div>
             )}
@@ -236,12 +238,12 @@ export default function PolicySummaryPanel({
       {/* Top Findings */}
       <div className="px-6 py-4">
         <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
-          Key Policy Findings
+          {t('keyFindings')}
         </h3>
         
         {topFindings.length === 0 ? (
           <p className="text-sm text-slate-500 italic">
-            No specific policy findings identified.
+            {t('noFindings')}
           </p>
         ) : (
           <div className="space-y-3">
@@ -286,7 +288,7 @@ export default function PolicySummaryPanel({
           className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
         >
           <FileText className="w-4 h-4" />
-          View Full Report
+          {t('viewFullReport')}
         </button>
         <button
           onClick={handleRunRiskAnalysis}
