@@ -46,15 +46,44 @@ export default function DocumentsTab({
 
   const isAutomotiveClaimsPersona = currentPersona === 'automotive_claims';
   const isUnderwritingPersona = currentPersona === 'underwriting';
+  const isHabitationClaimsPersona = currentPersona === 'habitation_claims';
+  const isMultimodalPersona = isAutomotiveClaimsPersona || isHabitationClaimsPersona;
+
+  // Per-persona reanalysis sections
+  const getReanalyzeSections = (): string[] => {
+    switch (currentPersona) {
+      case 'underwriting':
+        return ['application_summary', 'medical_summary'];
+      case 'habitation_claims':
+        return ['damage_assessment', 'liability_assessment', 'payout_recommendation'];
+      case 'automotive_claims':
+        return ['damage_assessment', 'liability_assessment'];
+      case 'life_health_claims':
+        return ['clinical_case_notes', 'clinical_timeline', 'benefits_policy'];
+      case 'mortgage_underwriting':
+        return ['application_summary', 'risk_assessment'];
+      default:
+        return ['application_summary', 'medical_summary'];
+    }
+  };
+
+  // Section key → i18n key mapping
+  const sectionI18nKey = (section: string): string => {
+    return section.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
+  };
 
   const getAcceptedFileTypes = () => {
     if (isAutomotiveClaimsPersona) return '.pdf,.png,.jpg,.jpeg,.gif,.webp,.mp4,.mov,.avi,.webm';
+    if (isHabitationClaimsPersona) return '.pdf,.png,.jpg,.jpeg,.gif,.webp';
     return '.pdf';
   };
 
   const getAcceptedMimeTypes = () => {
     if (isAutomotiveClaimsPersona) {
       return ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
+    }
+    if (isHabitationClaimsPersona) {
+      return ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp'];
     }
     return ['application/pdf'];
   };
@@ -182,13 +211,13 @@ export default function DocumentsTab({
             </svg>
             <div className="text-slate-600">
               <label className="cursor-pointer text-indigo-600 hover:text-indigo-500">
-                <span>{isAutomotiveClaimsPersona ? t('evidenceFiles') : t('uploadFiles')}</span>
+                <span>{isMultimodalPersona ? t('evidenceFiles') : t('uploadFiles')}</span>
                 <input type="file" className="sr-only" accept={getAcceptedFileTypes()} multiple onChange={handleFileInput} disabled={isProcessing} />
               </label>
               <span> {t('orDragAndDrop')}</span>
             </div>
             <p className="text-xs text-slate-500">
-              {isAutomotiveClaimsPersona ? t('evidenceFilesDesc') : t('pdfOnly')}
+              {isMultimodalPersona ? t('evidenceFilesDesc') : t('pdfOnly')}
             </p>
           </div>
         </div>
@@ -321,10 +350,10 @@ export default function DocumentsTab({
                             </button>
                             <div className="border-t border-slate-100 my-1"></div>
                             <div className="text-xs font-semibold text-slate-500 uppercase px-2 py-1">{t('specificSections')}</div>
-                            {['application_summary', 'medical_summary', 'risk_assessment'].map((section) => (
+                            {getReanalyzeSections().map((section) => (
                               <button key={section} onClick={() => { setReanalyzeMenuOpen(null); onReprocess(app.id, 'prompts-only', [section]); }}
                                 className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md">
-                                {t(section.replace(/_([a-z])/g, (_, c) => c.toUpperCase()).replace(/^([a-z])/, (_, c) => c) as 'applicationSummary' | 'medicalSummary' | 'riskAssessment')}
+                                {t(sectionI18nKey(section))}
                               </button>
                             ))}
                           </div>

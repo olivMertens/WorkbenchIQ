@@ -595,6 +595,7 @@ async def get_persona(persona_id: str):
             "icon": config.icon,
             "color": config.color,
             "enabled": config.enabled,
+            "prompt_sections": list(config.default_prompts.keys()) if config.default_prompts else [],
         }
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -3960,8 +3961,8 @@ When answering questions:
         
         response = await asyncio.to_thread(
             chat_completion,
+            settings.openai,
             messages,
-            settings,
         )
         
         return {
