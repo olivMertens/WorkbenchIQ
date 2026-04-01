@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   Scale,
   Activity,
@@ -16,12 +16,14 @@ import {
   Image,
   Film,
   ZoomIn,
+  FileDown,
 } from 'lucide-react';
 import type { ApplicationMetadata } from '@/lib/types';
 import { getMediaUrl } from '@/lib/api';
 import clsx from 'clsx';
 import GalleryLightbox from '../GalleryLightbox';
 import type { GalleryItem } from '../GalleryLightbox';
+import { generateNoteDeReglement } from './generateNoteDeReglement';
 
 interface PropertyCasualtyClaimsOverviewProps {
   application: ApplicationMetadata | null;
@@ -206,6 +208,30 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
     { task: 'Appliquer franchise DDE (250€)', due: 'Avr 01' },
   ];
 
+  const allTasksDone = checkedTasks.length === tasks.length;
+
+  const handleGenerateNote = useCallback(() => {
+    if (!allTasksDone || !application) return;
+    generateNoteDeReglement({
+      applicationId: application.id,
+      insuredName: getFieldValue(ef, ['InsuredName', 'NomAssure', 'NomSouscripteur'], ''),
+      policyNumber: getFieldValue(ef, ['PolicyNumber', 'NumeroPolice', 'NumeroContrat'], ''),
+      claimNumber: getFieldValue(ef, ['ClaimNumber', 'NumeroSinistre'], application.id),
+      claimDate: getFieldValue(ef, ['ClaimDate', 'DateSinistre', 'DateEvenement'], ''),
+      causeOfLoss: getFieldValue(ef, ['CauseOfLoss', 'NatureSinistre', 'CauseDuSinistre'], 'Dégâts des eaux / Tempête'),
+      propertyAddress: getFieldValue(ef, ['PropertyAddress', 'AdresseRisque', 'AdresseBien'], ''),
+      lineOfBusiness: getFieldValue(ef, ['LineOfBusiness', 'NatureContrat', 'BrancheAssurance'], 'Habitation MRH'),
+      totalEstimated: getFieldValue(ef, ['TotalIncurred', 'MontantEstime', 'MontantTotal', 'MontantDevis', 'MontantReparation'], '—'),
+      deductible: '250 €',
+      settlementAmount: getFieldValue(ef, ['SettlementAmount', 'MontantIndemnisation', 'IndemniteRecommandee'], ''),
+      aiSummary: aiSummary,
+      extractedFields: ef as Record<string, { field_name?: string; value?: unknown; confidence?: number }>,
+      llmOutputs: llmOutputs,
+      files: files.map(f => ({ filename: f.filename })),
+      tasks: tasks.map((t, i) => ({ task: t.task, done: checkedTasks.includes(i) })),
+    });
+  }, [allTasksDone, application, ef, aiSummary, llmOutputs, files, tasks, checkedTasks]);
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-slate-100">
       <HeaderStrip application={application} />
@@ -306,7 +332,18 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
                     </label>
                   ))}
                 </div>
-                <button className="mt-3 w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
+                <button
+                  onClick={handleGenerateNote}
+                  disabled={!allTasksDone}
+                  className={clsx(
+                    'mt-3 w-full py-2 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2',
+                    allTasksDone
+                      ? 'bg-indigo-600 hover:bg-indigo-700 cursor-pointer'
+                      : 'bg-slate-300 cursor-not-allowed'
+                  )}
+                  title={allTasksDone ? 'Générer le PDF de note de règlement' : 'Cochez toutes les tâches pour activer'}
+                >
+                  <FileDown className="w-4 h-4" />
                   Générer note de règlement
                 </button>
               </div>
