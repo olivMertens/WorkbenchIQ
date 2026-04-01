@@ -3569,6 +3569,62 @@ PERSONA_CONFIGS: Dict[PersonaType, PersonaConfig] = {
         custom_analyzer_id="mortgageDocAnalyzer",
         enabled=True,  # Now enabled
     ),
+    PersonaType.HABITATION_CLAIMS: PersonaConfig(
+        id="habitation_claims",
+        name="Sinistres Habitation",
+        description="Traitement des sinistres habitation — dégâts des eaux, tempêtes, catastrophes naturelles",
+        icon="🏠",
+        color="#2563eb",  # Blue
+        field_schema=UNDERWRITING_FIELD_SCHEMA,  # Reuse underwriting schema for field extraction
+        default_prompts={
+            "damage_assessment": {
+                "system": """Vous êtes un expert en sinistres habitation pour Groupama, spécialisé dans l'évaluation
+des dommages aux biens immobiliers résidentiels. Vous analysez les déclarations de sinistres,
+photos de dégâts, devis de réparation et rapports d'experts avec une expertise en :
+
+- Dégâts des eaux (fuites, infiltrations, ruptures de canalisations)
+- Dommages tempête et catastrophes naturelles (Cat-Nat)
+- Incendie et dommages électriques
+- Convention IRSI (Indemnisation et Recours des Sinistres Immeuble)
+- Conditions Générales Habitation Groupama (garanties, exclusions, franchises)
+
+Fournir une analyse structurée en français avec citations des articles applicables.""",
+                "visual_damage_analysis": """Analyser les documents et photos du sinistre habitation et fournir :
+
+- Description des dommages constatés (localisation, étendue, gravité)
+- Classification du type de sinistre (dégâts des eaux, tempête, incendie, vol, etc.)
+- Estimation de la sévérité des dommages (mineur, modéré, important, majeur)
+- Vérification de la cohérence entre la déclaration et les preuves visuelles
+- Identification des dommages préexistants éventuels
+
+Retourner un JSON structuré avec les zones de dommages, les estimations et les incohérences.""",
+            },
+            "liability_assessment": {
+                "coverage_verification": """Vérifier la couverture du sinistre selon les Conditions Générales Habitation Groupama :
+
+- Le sinistre est-il couvert par la garantie ? (DDE, tempête, incendie, RC, vol)
+- Y a-t-il des exclusions applicables ?
+- Quelle franchise s'applique ? (franchise contractuelle, franchise DDE 250€)
+- La convention IRSI s'applique-t-elle ? (dégâts des eaux inter-immeubles)
+- Le sinistre relève-t-il du régime Cat-Nat ?
+
+Retourner un JSON avec le statut de couverture, les articles applicables et la franchise.""",
+            },
+            "payout_recommendation": {
+                "settlement_analysis": """Sur la base de l'analyse des dommages et de la vérification de couverture, recommander un règlement :
+
+- Montant estimé des réparations (basé sur les devis et l'évaluation)
+- Franchise applicable à déduire
+- Montant d'indemnisation recommandé
+- Nécessité d'une expertise complémentaire (si montant > 5 000€)
+- Recours possible contre un tiers (convention IRSI, responsabilité tiers)
+
+Retourner un JSON avec le montant recommandé, la franchise et les conditions.""",
+            },
+        },
+        custom_analyzer_id="prebuilt-documentSearch",
+        enabled=True,
+    ),
 }
 
 

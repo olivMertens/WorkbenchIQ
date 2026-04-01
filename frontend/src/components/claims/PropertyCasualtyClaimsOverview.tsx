@@ -350,7 +350,7 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
           </div>
           
           {/* ROW 3: Evidence from actual files */}
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col overflow-hidden" style={{ flex: '1 1 35%' }}>
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col overflow-hidden pb-16" style={{ flex: '1 1 35%' }}>
             <div className="px-4 py-2.5 border-b border-slate-100 flex items-center gap-2 bg-slate-50 flex-shrink-0">
               <FileText className="w-4 h-4 text-indigo-600" />
               <span className="font-semibold text-slate-900 text-sm">Pièces & Documents</span>
