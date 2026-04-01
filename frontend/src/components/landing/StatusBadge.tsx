@@ -22,6 +22,8 @@ export function getStatusConfig(status: string, processingStatus?: string | null
 
   const configs: Record<string, { label: string; bg: string; text: string; border: string; icon: typeof Clock; animate?: boolean }> = {
     pending: { label: label('pending'), bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', icon: Clock },
+    uploaded: { label: label('pending'), bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', icon: Clock },
+    extracted: { label: label('dataAgentRunning'), bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-200', icon: Loader2, animate: true },
     extracting: { label: label('dataAgentRunning'), bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-200', icon: Loader2, animate: true },
     analyzing: { label: label('riskAgentWorking'), bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200', icon: Activity, animate: true },
     completed: { label: label('readyForReview'), bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', icon: CheckCircle2 },

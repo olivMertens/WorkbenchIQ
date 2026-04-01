@@ -308,6 +308,7 @@ async def run_extraction_background(app_id: str):
             # Update status to extracting
             app_md.processing_status = "extracting"
             app_md.processing_error = None
+            app_md.status = "extracting"
             save_application_metadata(settings.app.storage_root, app_md)
 
             # Run extraction in thread pool
@@ -319,6 +320,7 @@ async def run_extraction_background(app_id: str):
             # Update status and save
             app_md.processing_status = None
             app_md.processing_error = None
+            app_md.status = "extracted"
             save_application_metadata(settings.app.storage_root, app_md)
             
             logger.info("Background extraction completed for application %s", app_id)
@@ -331,6 +333,7 @@ async def run_extraction_background(app_id: str):
                 if app_md:
                     app_md.processing_status = "error"
                     app_md.processing_error = str(e)
+                    app_md.status = "error"
                     save_application_metadata(settings.app.storage_root, app_md)
             except Exception:
                 pass
@@ -350,6 +353,7 @@ async def run_analysis_background(app_id: str, sections: Optional[List[str]] = N
             # Update status to analyzing
             app_md.processing_status = "analyzing"
             app_md.processing_error = None
+            app_md.status = "analyzing"
             save_application_metadata(settings.app.storage_root, app_md)
 
             # Run analysis in thread pool
@@ -366,6 +370,7 @@ async def run_analysis_background(app_id: str, sections: Optional[List[str]] = N
             # Update status and save
             app_md.processing_status = None
             app_md.processing_error = None
+            app_md.status = "completed"
             save_application_metadata(settings.app.storage_root, app_md)
             
             logger.info("Background analysis completed for application %s (mode: %s)", app_id, app_md.processing_mode)
@@ -378,6 +383,7 @@ async def run_analysis_background(app_id: str, sections: Optional[List[str]] = N
                 if app_md:
                     app_md.processing_status = "error"
                     app_md.processing_error = str(e)
+                    app_md.status = "error"
                     save_application_metadata(settings.app.storage_root, app_md)
             except Exception:
                 pass
@@ -4113,8 +4119,18 @@ async def seed_customer_360_data():
     settings = load_settings()
     try:
         from app.seed_data_customers import create_groupama_customers
-        count = create_groupama_customers(settings.app.storage_root)
-        return {"status": "ok", "message": f"Seeded {count} Groupama customer profiles"}
+        from scripts.seed_customer360 import seed_applications
+        
+        # Seed customer profiles and journeys
+        customer_count = create_groupama_customers(settings.app.storage_root)
+        
+        # Seed application data (underwriting, claims, mortgage)
+        app_count = seed_applications(settings.app.storage_root)
+        
+        return {
+            "status": "ok",
+            "message": f"Seeded {customer_count} customer profiles and {app_count} applications"
+        }
     except Exception as e:
         logger.error("Failed to seed customer 360 data: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))

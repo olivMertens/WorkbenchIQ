@@ -84,11 +84,17 @@ export default function WorkbenchView({
 
   // Poll for status updates if application is processing
   useEffect(() => {
-    if (!selectedApp || selectedApp.status === 'completed' || selectedApp.status === 'error') return;
+    if (!selectedApp) return;
+    // Stop polling when processing is done (processing_status is null/undefined and we have content)
+    const isProcessing = selectedApp.processing_status === 'extracting' || selectedApp.processing_status === 'analyzing';
+    if (!isProcessing) return;
     
+    const appId = selectedApp.id;
     const interval = setInterval(async () => {
       try {
-        const updatedApp = await getApplication(selectedApp.id);
+        const updatedApp = await getApplication(appId);
+        // Verify we're still looking at the same app (prevent cross-persona pollution)
+        if (updatedApp.id !== appId) return;
         if (updatedApp.status !== selectedApp.status || updatedApp.processing_status !== selectedApp.processing_status) {
             setSelectedApp(updatedApp);
         }
