@@ -251,7 +251,7 @@ export default function DocumentsTab({
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-slate-900">{t('applications')}</h2>
-          <button onClick={onRefresh} className="text-sm text-indigo-600 hover:text-indigo-700" disabled={loading}>Refresh</button>
+          <button onClick={onRefresh} className="text-sm text-indigo-600 hover:text-indigo-700 disabled:opacity-50" disabled={loading}>{t('refresh')}</button>
         </div>
 
         {loading ? (

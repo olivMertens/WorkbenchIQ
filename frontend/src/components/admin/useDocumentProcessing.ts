@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   createApplication,
   deleteApplication,
@@ -21,6 +21,7 @@ export function useDocumentProcessing(currentPersona: string) {
 
   const loadApplications = useCallback(async () => {
     try {
+      setLoading(true);
       const apps = await listApplications(currentPersona);
       setApplications(apps);
       setError(null);
@@ -30,6 +31,11 @@ export function useDocumentProcessing(currentPersona: string) {
       setLoading(false);
     }
   }, [currentPersona]);
+
+  // Load applications on mount and when persona changes
+  useEffect(() => {
+    loadApplications();
+  }, [loadApplications]);
 
   const pollForProcessingCompletion = useCallback((appId: string) => {
     if (pollingAppIdRef.current === appId) return;
