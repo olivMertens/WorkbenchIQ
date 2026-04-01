@@ -12,6 +12,7 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   CheckCircle,
   Image,
   Film,
@@ -127,7 +128,7 @@ function HeaderStrip({ application }: { application: ApplicationMetadata | null 
 export default function PropertyCasualtyClaimsOverview({ application }: PropertyCasualtyClaimsOverviewProps) {
   const [checkedTasks, setCheckedTasks] = useState<number[]>([]);
   const [expandedSection, setExpandedSection] = useState<string>('liability');
-  const [lightboxFile, setLightboxFile] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const ef = application?.extracted_fields || {};
   const llmOutputs = (application?.llm_outputs || {}) as Record<string, unknown>;
@@ -188,6 +189,17 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
     }
     return items.slice(0, 8);
   }, [ef]);
+
+  // Build gallery items for lightbox (all files with URLs)
+  const galleryItems = useMemo(() => {
+    if (!application?.id) return [];
+    return evidenceItems.map(item => ({
+      url: getMediaUrl(`/api/applications/${application.id}/files/${encodeURIComponent(item.source)}`),
+      filename: item.source,
+      type: item.fileType.icon as 'pdf' | 'image' | 'video' | 'document',
+      label: item.type,
+    }));
+  }, [evidenceItems, application?.id]);
 
   const tasks = [
     { task: 'Vérifier couverture CG Habitation', due: 'Mar 29' },
@@ -375,16 +387,7 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {evidenceItems.map((item, i) => (
-                      <tr key={i} className="hover:bg-slate-50 cursor-pointer" onClick={() => {
-                          if (application?.id) {
-                            const url = getMediaUrl(`/api/applications/${application.id}/files/${encodeURIComponent(item.source)}`);
-                            if (item.fileType.icon === 'image') {
-                              setLightboxFile(url);
-                            } else {
-                              window.open(url, '_blank', 'noopener,noreferrer');
-                            }
-                          }
-                        }}>
+                      <tr key={i} className="hover:bg-slate-50 cursor-pointer" onClick={() => setLightboxIndex(i)}>
                         <td className="px-4 py-2.5 text-slate-900">
                           <div className="flex items-center gap-2">
                             {item.fileType.icon === 'image' ? <Image className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" /> :
@@ -400,19 +403,11 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
                         <td className="px-4 py-2.5 text-center">
                           {application?.id && (
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const url = getMediaUrl(`/api/applications/${application.id}/files/${encodeURIComponent(item.source)}`);
-                                if (item.fileType.icon === 'image') {
-                                  setLightboxFile(url);
-                                } else {
-                                  window.open(url, '_blank', 'noopener,noreferrer');
-                                }
-                              }}
+                              onClick={(e) => { e.stopPropagation(); setLightboxIndex(i); }}
                               className="text-indigo-600 hover:text-indigo-700"
                               title={`Voir ${item.source}`}
                             >
-                              {item.fileType.icon === 'image' ? <ZoomIn className="w-4 h-4 mx-auto" /> : <ExternalLink className="w-4 h-4 mx-auto" />}
+                              <ZoomIn className="w-4 h-4 mx-auto" />
                             </button>
                           )}
                         </td>
@@ -432,29 +427,82 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
         </div>
       </div>
 
-      {/* Lightbox modal for images */}
-      {lightboxFile && (
-        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center" onClick={() => setLightboxFile(null)}>
-          <div className="absolute top-4 right-4 flex items-center gap-2">
-            <a href={lightboxFile} download className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors" title="Télécharger" onClick={(e) => e.stopPropagation()}>
-              <Download className="w-5 h-5 text-white" />
-            </a>
-            <a href={lightboxFile} target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors" title="Ouvrir dans un nouvel onglet" onClick={(e) => e.stopPropagation()}>
-              <ExternalLink className="w-5 h-5 text-white" />
-            </a>
-            <button onClick={() => setLightboxFile(null)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors" title="Fermer">
-              <X className="w-5 h-5 text-white" />
-            </button>
+      {/* Gallery lightbox — images + PDFs with prev/next navigation */}
+      {lightboxIndex !== null && galleryItems.length > 0 && (() => {
+        const current = galleryItems[lightboxIndex];
+        const isImage = current.type === 'image';
+        const hasPrev = lightboxIndex > 0;
+        const hasNext = lightboxIndex < galleryItems.length - 1;
+        return (
+          <div className="fixed inset-0 z-[60] bg-black/85 flex flex-col" onClick={() => setLightboxIndex(null)}>
+            {/* Top bar */}
+            <div className="flex items-center justify-between px-4 py-3 bg-black/40 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-3 text-white text-sm min-w-0">
+                <span className="px-2 py-0.5 rounded text-xs bg-white/20">{lightboxIndex + 1} / {galleryItems.length}</span>
+                <span className="truncate">{current.filename}</span>
+                <span className="px-2 py-0.5 rounded text-xs bg-purple-500/60">{current.label}</span>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <a href={current.url} download className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Télécharger">
+                  <Download className="w-5 h-5 text-white" />
+                </a>
+                <a href={current.url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Ouvrir dans un nouvel onglet">
+                  <ExternalLink className="w-5 h-5 text-white" />
+                </a>
+                <button onClick={() => setLightboxIndex(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Fermer">
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content area */}
+            <div className="flex-1 flex items-center justify-center relative min-h-0 p-4" onClick={(e) => e.stopPropagation()}>
+              {/* Prev button */}
+              {hasPrev && (
+                <button onClick={() => setLightboxIndex(lightboxIndex - 1)}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/40 hover:bg-black/60 rounded-full transition-colors z-10"
+                  title="Précédent">
+                  <ChevronLeft className="w-6 h-6 text-white" />
+                </button>
+              )}
+
+              {/* Image or PDF viewer */}
+              {isImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={current.url} alt={current.filename}
+                  className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" />
+              ) : (
+                <iframe src={current.url} title={current.filename}
+                  className="w-full h-full max-w-5xl rounded-lg shadow-2xl bg-white" />
+              )}
+
+              {/* Next button */}
+              {hasNext && (
+                <button onClick={() => setLightboxIndex(lightboxIndex + 1)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/40 hover:bg-black/60 rounded-full transition-colors z-10"
+                  title="Suivant">
+                  <ChevronRight className="w-6 h-6 text-white" />
+                </button>
+              )}
+            </div>
+
+            {/* Bottom thumbnails strip */}
+            <div className="flex items-center justify-center gap-2 px-4 py-3 bg-black/40 flex-shrink-0 overflow-x-auto" onClick={(e) => e.stopPropagation()}>
+              {galleryItems.map((item, idx) => (
+                <button key={idx} onClick={() => setLightboxIndex(idx)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap ${
+                    idx === lightboxIndex
+                      ? 'bg-white/20 text-white ring-2 ring-white/50'
+                      : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                  }`}>
+                  {item.type === 'image' ? <Image className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
+                  <span className="max-w-[120px] truncate">{item.filename}</span>
+                </button>
+              ))}
+            </div>
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={lightboxFile}
-            alt="Document preview"
-            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
