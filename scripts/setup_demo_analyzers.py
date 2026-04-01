@@ -2,11 +2,12 @@
 """
 Create custom Content Understanding analyzers for GroupaIQ demo use cases.
 
-Creates two analyzers:
-1. habitationClaimsAnalyzer — For habitation claims (degats des eaux, tempete)
-2. healthUnderwritingAnalyzer — For health insurance underwriting (souscription sante)
+Creates three analyzers:
+1. habitationClaimsAnalyzer — For habitation claims documents (degats des eaux, tempete)
+2. habitationClaimsImageAnalyzer — For damage photos (structured image analysis)
+3. healthUnderwritingAnalyzer — For health insurance underwriting (souscription sante)
 
-These analyzers extract structured fields from uploaded documents with confidence scores.
+These analyzers extract structured fields from uploaded documents and images with confidence scores.
 
 Usage:
     python scripts/setup_demo_analyzers.py
@@ -162,7 +163,93 @@ HABITATION_ANALYZER = {
     },
 }
 
-HEALTH_UNDERWRITING_ANALYZER = {
+HABITATION_CLAIMS_IMAGE_ANALYZER = {
+    "analyzerId": "habitationClaimsImageAnalyzer",
+    "body": {
+        "baseAnalyzerId": "prebuilt-image",
+        "description": "Analyseur de photos de dommages habitation Groupama - photos de sinistres, degats, assessement dommages",
+        "config": {
+            "returnDetails": True,
+        },
+        "fieldSchema": {
+            "name": "habitation_claims_image_schema",
+            "description": "Schema pour l'analyse de photos de dommages habitation",
+            "fields": {
+                "PhotoType": {
+                    "type": "string",
+                    "method": "classify",
+                    "description": "Type de dommage visible sur la photo",
+                    "enum": [
+                        "Dégâts des eaux",
+                        "Dommages tempête",
+                        "Incendie",
+                        "Vol",
+                        "Bris de glace",
+                        "Effondrement",
+                        "Autre",
+                    ],
+                },
+                "AffectedArea": {
+                    "type": "string",
+                    "method": "extract",
+                    "description": "Zone du logement affectée (cave, sous-sol, rez-de-chaussée, cuisine, chambre, salle de bain, etc.)",
+                    "estimateSourceAndConfidence": True,
+                },
+                "DamageSeverity": {
+                    "type": "string",
+                    "method": "classify",
+                    "description": "Niveau de gravité des dommages visibles",
+                    "enum": ["Mineur", "Modéré", "Important", "Critique"],
+                },
+                "DamageDescription": {
+                    "type": "string",
+                    "method": "generate",
+                    "description": "Description détaillée des dommages visibles sur la photo (1-3 phrases)",
+                },
+                "AffectedMaterials": {
+                    "type": "string",
+                    "method": "extract",
+                    "description": "Matériaux ou éléments endommagés (cloisons, plafond, murs, mobilier, revêtements, etc.)",
+                    "estimateSourceAndConfidence": True,
+                },
+                "WaterLevel": {
+                    "type": "string",
+                    "method": "extract",
+                    "description": "Hauteur approximative d'eau si dégâts des eaux (ex: jusqu'aux chevilles, à hauteur de genou, plus haut)",
+                },
+                "VisibleContamination": {
+                    "type": "string",
+                    "method": "classify",
+                    "description": "Contamination visible (boue, moisissure, débris, cendres, etc.)",
+                    "enum": ["Aucune", "Légère", "Modérée", "Importante"],
+                },
+                "PreexistingDamage": {
+                    "type": "string",
+                    "method": "classify",
+                    "description": "Bien y a-t-il des dommages préexistants visibles sur la photo (fissures, taches, usure, etc.)",
+                    "enum": ["Aucun", "Possible", "Probable", "Certain"],
+                },
+                "PhotoQuality": {
+                    "type": "string",
+                    "method": "classify",
+                    "description": "Qualité de la photo pour l'évaluation des sinistres",
+                    "enum": ["Mauvaise", "Acceptable", "Bonne", "Excellente"],
+                },
+                "EstimatedRepairCostRange": {
+                    "type": "string",
+                    "method": "classify",
+                    "description": "Fourchette estimée du coût de réparation basée sur les dommages visibles",
+                    "enum": ["< 500 EUR", "500-2000 EUR", "2000-5000 EUR", "5000-10000 EUR", "> 10000 EUR"],
+                },
+            },
+        },
+        "models": {
+            "completion": "gpt-4.1",
+            "embedding": "text-embedding-3-small",
+        },
+    },
+}
+
     "analyzerId": "healthUnderwritingAnalyzer",
     "body": {
         "baseAnalyzerId": "prebuilt-document",
@@ -333,7 +420,7 @@ def main():
     logger.info(f"Endpoint: {settings.content_understanding.endpoint}")
     logger.info("=" * 60)
 
-    for analyzer_def in [HABITATION_ANALYZER, HEALTH_UNDERWRITING_ANALYZER]:
+    for analyzer_def in [HABITATION_ANALYZER, HABITATION_CLAIMS_IMAGE_ANALYZER, HEALTH_UNDERWRITING_ANALYZER]:
         aid = analyzer_def["analyzerId"]
         field_count = len(analyzer_def["body"]["fieldSchema"]["fields"])
         logger.info(f"\n>>> {aid} ({field_count} fields)")

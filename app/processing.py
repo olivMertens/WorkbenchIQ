@@ -195,9 +195,9 @@ def run_content_understanding_for_files(
     if app_md.persona:
         try:
             persona_config = get_persona_config(app_md.persona)
-            # Only use custom analyzer if it differs from the default placeholder
+            # Use persona-specific custom analyzer if configured
             custom_id = persona_config.custom_analyzer_id
-            if custom_id and custom_id != "underwritingAnalyzer":
+            if custom_id:
                 doc_analyzer_id = custom_id
             image_analyzer_id = getattr(persona_config, 'image_analyzer_id', None)
             video_analyzer_id = getattr(persona_config, 'video_analyzer_id', None)

@@ -35,6 +35,7 @@ from ..multimodal import (
 )
 from ..multimodal.aggregator import aggregate_claim_results
 from ..storage import load_application, load_cu_result
+from .habitation_analyzer import HabitationClaimsAnalyzer, AlertLevel
 import json
 from pathlib import Path
 
@@ -1261,3 +1262,325 @@ async def get_claim_damage_summary(claim_id: str) -> List[DamageAreaResponse]:
     except Exception as e:
         logger.error(f"Failed to get damage summary: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve damage summary")
+
+
+# ============================================================================
+# Habitation Claims Enhanced Analysis
+# ============================================================================
+
+class HabitationAnalysisResponse(BaseModel):
+    """Enhanced habitation claim analysis with alerts, timeline, and responsibility."""
+    
+    class DossierInfoResponse(BaseModel):
+        """Dossier identification information"""
+        claim_id: str
+        customer_name: Optional[str] = None
+        claim_date: Optional[str] = None  # DD/MM/YYYY or ISO format
+        claim_type: str  # "Tempête", "Inondation", "Dégâts des eaux", etc.
+        policy_number: Optional[str] = None
+        location: Optional[str] = None
+    
+    class AlertSignalResponse(BaseModel):
+        signal_type: str  # "tempête", "inondation", "grêle", "neige", "other"
+        level: str  # "high", "medium", "low"
+        description: str
+        evidence: str  # Text from document supporting this signal
+        policy_ref: Optional[str] = None  # Policy section reference
+    
+    class TimelineEventResponse(BaseModel):
+        event_type: str  # "notification", "damage_report", "assessment", "expert_visit", "call"
+        date: str  # ISO format or readable string
+        description: str
+        evidence: str  # Supporting text from document
+        document_section: Optional[str] = None  # Where in document this was found
+    
+    class ResponsibilityResponse(BaseModel):
+        is_covered: bool  # Whether claim is covered by policy
+        confidence: float  # 0.0 to 1.0 confidence score
+        policy_id: str  # Matching policy condition ID
+        policy_name: str  # Human-readable policy name
+        reason: str  # Explanation of determination
+        exceptions: Optional[List[str]] = None  # Any exceptions or caveats
+        supporting_clauses: Optional[List[str]] = None  # Policy clauses supporting determination
+    
+    class PDFReferenceResponse(BaseModel):
+        section_title: str  # Section name in PDF
+        page_number: int
+        page_offset: Optional[int] = None  # Offset within page
+        indicator_text: str  # Text that led to reference
+        context: Optional[str] = None  # Surrounding context
+    
+    class DamageImageAnalysisResponse(BaseModel):
+        image_count: int  # Number of damage photos analyzed
+        images: List[Dict[str, Any]] = []  # List of analyzed images
+        # Each image: {"filename": str, "description": str, "detected_damage": str, 
+        #             "validation_status": str, "matches_description": bool, "notes": str}
+        overall_assessment: str  # Summary of damage photos analysis
+        validation_against_description: str  # How images match written description
+    
+    information_dossier: Dict[str, str]  # Policy holder info with proper French labels
+    dommages_constates: Dict[str, Any]  # Damage details with proper French labels
+    dossier_info: DossierInfoResponse  # Claim file identification
+    claim_id: str
+    alert_signals: List[AlertSignalResponse]
+    timeline: List[TimelineEventResponse]
+    responsibility_evaluation: Optional[ResponsibilityResponse]
+    analyse_images: Optional[DamageImageAnalysisResponse]  # Mistral vision analysis
+    policy_links: List[PDFReferenceResponse]
+    data_quality: dict  # {"field_name": confidence_score, ...}
+    analysis_timestamp: str
+
+
+def _field_label_mapping() -> Dict[str, str]:
+    """Map CamelCase field names to proper French labels"""
+    return {
+        "AssuréNom": "Nom de l'assuré",
+        "AssuréPrenom": "Prénom de l'assuré",
+        "EmailAssure": "Email de l'assuré",
+        "TelephoneAssure": "Téléphone de l'assuré",
+        "AdresseAssure": "Adresse de l'assuré",
+        "NumeroContrat": "Numéro de contrat",
+        "NumeroPolice": "Numéro de police",
+        "NumeroSociétaire": "Numéro sociétaire",
+        "FormuleContrat": "Formule de contrat",
+        "DateSinistre": "Date du sinistre",
+        "NatureSinistre": "Nature du sinistre",
+        "LieuSinistre": "Lieu du sinistre",
+        "DescriptionSinistre": "Description du sinistre",
+        "MontantEstime": "Montant estimé",
+        "DateConstat": "Date de constat",
+        "ExpertNom": "Nom de l'expert",
+        "ExpertContact": "Contact expert",
+    }
+
+
+def _extract_field_value(fields_dict: dict, field_name: str) -> Optional[str]:
+    """Extract value from extracted fields, handling both dict and string formats"""
+    field = fields_dict.get(field_name)
+    if not field:
+        return None
+    # If it's a dict with 'value' key (from CU API)
+    if isinstance(field, dict):
+        return field.get("value")
+    # If it's a string
+    if isinstance(field, str):
+        return field if field.strip() else None
+    return None
+
+
+def _organize_fields_by_category(extracted_fields: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    """Organize extracted fields into logical categories"""
+    label_map = _field_label_mapping()
+    
+    # Define which fields go in each category
+    dossier_fields = {
+        "AssuréNom", "AssuréPrenom", "EmailAssure", "TelephoneAssure",
+        "AdresseAssure", "NumeroContrat", "NumeroPolice", "NumeroSociétaire",
+        "FormuleContrat"
+    }
+    
+    dommages_fields = {
+        "DateSinistre", "NatureSinistre", "LieuSinistre", "DescriptionSinistre",
+        "MontantEstime", "DateConstat", "ExpertNom", "ExpertContact"
+    }
+    
+    info_dossier = {}
+    dommages_constates = {}
+    
+    for field_name in dossier_fields:
+        value = _extract_field_value(extracted_fields, field_name)
+        if value:
+            label = label_map.get(field_name, field_name)
+            info_dossier[label] = value
+    
+    for field_name in dommages_fields:
+        value = _extract_field_value(extracted_fields, field_name)
+        if value:
+            label = label_map.get(field_name, field_name)
+            dommages_constates[label] = value
+    
+    return {
+        "information_dossier": info_dossier,
+        "dommages_constates": dommages_constates,
+    }
+
+
+@router.get("/habitation/{claim_id}/analysis", response_model=HabitationAnalysisResponse)
+async def get_habitation_claims_analysis(claim_id: str) -> dict:
+    """
+    Get enhanced habitation claims analysis including:
+    - Information dossier (policy holder info, contract details)
+    - Dommages constatés (damage details with proper field organization)
+    - Alert signals (weather warnings, risk indicators)
+    - Event chronology (timeline of facts, timestamps)
+    - Responsibility evaluation (liability assessment per climate events)
+    - Analyse images (Mistral vision analysis of damage photos)
+    - PDF source references (indexed links to policy documents)
+    
+    This endpoint analyzes habitation claims against Groupama policy conditions
+    and extracts comprehensive claim analysis with full traceability to source
+    documents and policy sections.
+    
+    Args:
+        claim_id: The application/claim ID
+    
+    Returns:
+        Enhanced analysis with properly organized fields, alert signals, timeline,
+        responsibility evaluation, image analysis, and PDF references
+    
+    Raises:
+        404: Claim not found
+        400: Claim is not a habitation_claims persona
+    """
+    settings = load_settings()
+    
+    # Load application metadata
+    app_md = load_application(settings.app.storage_root, claim_id)
+    if not app_md:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Claim {claim_id} not found"
+        )
+    
+    # Verify this is a habitation claim
+    if app_md.persona != "habitation_claims":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Enhanced analysis only available for habitation claims, got {app_md.persona}"
+        )
+    
+    # Get extracted fields and document markdown
+    extracted_fields = app_md.extracted_fields or {}
+    document_markdown = app_md.document_markdown or ""
+    
+    if not document_markdown:
+        raise HTTPException(
+            status_code=400,
+            detail="No document content available for analysis"
+        )
+    
+    try:
+        # Run enhanced analysis
+        analyzer = HabitationClaimsAnalyzer()
+        analysis = analyzer.analyze(
+            claim_id=claim_id,
+            extracted_fields=extracted_fields,
+            document_markdown=document_markdown,
+            persona_config=None,
+        )
+        
+        # Format alert signals
+        alert_signals = [
+            {
+                "signal_type": signal.signal_type,
+                "level": signal.level.value if hasattr(signal.level, 'value') else str(signal.level),
+                "description": signal.description,
+                "evidence": signal.evidence,
+                "policy_ref": signal.policy_ref,
+            }
+            for signal in analysis.alert_signals
+        ]
+        
+        # Format timeline events
+        timeline_events = [
+            {
+                "event_type": event.event_type.value if hasattr(event.event_type, 'value') else str(event.event_type),
+                "date": event.date,
+                "description": event.description,
+                "evidence": event.evidence,
+                "document_section": event.document_section,
+            }
+            for event in analysis.timeline
+        ]
+        
+        # Format responsibility evaluation
+        responsibility = None
+        if analysis.responsibility_evaluation:
+            resp = analysis.responsibility_evaluation
+            responsibility = {
+                "is_covered": resp.is_covered,
+                "confidence": resp.confidence,
+                "policy_id": resp.policy_id,
+                "policy_name": resp.policy_name,
+                "reason": resp.reason,
+                "exceptions": resp.exceptions,
+                "supporting_clauses": resp.supporting_clauses,
+            }
+        
+        # Format PDF references
+        pdf_references = [
+            {
+                "section_title": ref.section_title,
+                "page_number": ref.page_number,
+                "page_offset": ref.page_offset,
+                "indicator_text": ref.indicator_text,
+                "context": ref.context,
+            }
+            for ref in analysis.policy_links
+        ]
+        
+        # Format data quality scores
+        data_quality = {k: float(v) for k, v in analysis.extracted_data_quality.items()} if analysis.extracted_data_quality else {}
+        
+        # Extract dossier identification information
+        customer_name = _extract_field_value(extracted_fields, "AssuréNom")
+        claim_date = _extract_field_value(extracted_fields, "DateSinistre")
+        claim_type = _extract_field_value(extracted_fields, "NatureSinistre")
+        policy_number = _extract_field_value(extracted_fields, "NumeroPolice")
+        location = _extract_field_value(extracted_fields, "LieuSinistre")
+        
+        dossier_info = {
+            "claim_id": claim_id,
+            "customer_name": customer_name,
+            "claim_date": claim_date,
+            "claim_type": claim_type or "Habitation",
+            "policy_number": policy_number,
+            "location": location,
+        }
+        
+        # Organize fields into proper categories with French labels
+        organized_fields = _organize_fields_by_category(extracted_fields)
+        
+        # Image analysis using Mistral (placeholder for future multimodal integration)
+        image_analysis = None
+        if app_md.documents:
+            image_files = [d for d in app_md.documents if d.get("doc_type") == "damage_photo"]
+            if image_files:
+                image_analysis = {
+                    "image_count": len(image_files),
+                    "images": [
+                        {
+                            "filename": f.get("filename", f"unknown_{i}"),
+                            "description": "Photos de dommages - à analyser avec Mistral",
+                            "detected_damage": "En attente d'analyse Mistral vision",
+                            "validation_status": "pending",
+                            "matches_description": None,
+                            "notes": f"Lien Mistral: Validation des photos vs description écrite ({claim_type})"
+                        }
+                        for i, f in enumerate(image_files)
+                    ],
+                    "overall_assessment": f"Nombre de photos: {len(image_files)} - À valider via Mistral vision API",
+                    "validation_against_description": f"À comparer avec: {claim_type or 'description du sinistre'}"
+                }
+        
+        # Return formatted response
+        return {
+            "information_dossier": organized_fields.get("information_dossier", {}),
+            "dommages_constates": organized_fields.get("dommages_constates", {}),
+            "dossier_info": dossier_info,
+            "claim_id": claim_id,
+            "alert_signals": alert_signals,
+            "timeline": timeline_events,
+            "responsibility_evaluation": responsibility,
+            "analyse_images": image_analysis,
+            "policy_links": pdf_references,
+            "data_quality": data_quality,
+            "analysis_timestamp": datetime.now(UTC).isoformat(),
+        }
+    
+    except Exception as e:
+        logger.error(f"Habitation claim analysis failed for {claim_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Analysis failed: {str(e)}"
+        )

@@ -3497,7 +3497,7 @@ PERSONA_CONFIGS: Dict[PersonaType, PersonaConfig] = {
         color="#6366f1",  # Indigo
         field_schema=UNDERWRITING_FIELD_SCHEMA,
         default_prompts=UNDERWRITING_DEFAULT_PROMPTS,
-        custom_analyzer_id="underwritingAnalyzer",
+        custom_analyzer_id="healthUnderwritingAnalyzer",
         enabled=True,
     ),
     PersonaType.LIFE_HEALTH_CLAIMS: PersonaConfig(
@@ -3623,7 +3623,7 @@ Retourner un JSON avec le montant recommandé, la franchise et les conditions.""
             },
         },
         custom_analyzer_id="habitationClaimsAnalyzer",
-        image_analyzer_id="prebuilt-image",
+        image_analyzer_id="habitationClaimsImageAnalyzer",
         enabled=True,
     ),
 }
