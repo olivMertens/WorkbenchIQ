@@ -286,6 +286,75 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
     return parts.join('\n\n');
   }, [llmOutputs]);
 
+  // Extract alert signals from LLM outputs and extracted fields
+  const alertSignals = useMemo(() => {
+    const signals: { label: string; level: 'high' | 'medium' | 'low'; detail: string }[] = [];
+    
+    // Check estimated amount for high value
+    const montant = getFieldValue(ef, ['MontantEstime', 'TotalIncurred', 'MontantTotal'], '');
+    const montantNum = parseFloat(String(montant).replace(/[^\d.,]/g, '').replace(',', '.'));
+    if (montantNum > 5000) {
+      signals.push({ label: 'Montant élevé', level: 'high', detail: `Montant estimé: ${montantNum.toLocaleString('fr-FR')} € — expertise obligatoire au-delà de 5 000 €` });
+    }
+    
+    // Check nature of claim for severity
+    const nature = getFieldValue(ef, ['NatureSinistre', 'CauseOfLoss'], '').toLowerCase();
+    if (nature.includes('tempête') || nature.includes('catastrophe') || nature.includes('inondation')) {
+      signals.push({ label: 'Événement climatique', level: 'medium', detail: `Sinistre lié à un événement climatique — vérifier arrêté Cat-Nat` });
+    }
+    if (nature.includes('incendie')) {
+      signals.push({ label: 'Incendie', level: 'high', detail: 'Sinistre incendie — expertise systématique requise' });
+    }
+    
+    // Check for third party involvement
+    const tiers = getFieldValue(ef, ['TiersImplique'], '').toLowerCase();
+    if (tiers === 'oui') {
+      signals.push({ label: 'Tiers impliqué', level: 'medium', detail: 'Un tiers est impliqué — vérifier convention IRSI et recours possible' });
+    }
+    
+    // Check urgency level
+    const urgence = getFieldValue(ef, ['NiveauUrgence'], '').toLowerCase();
+    if (urgence === 'critique' || urgence === 'eleve') {
+      signals.push({ label: 'Urgence élevée', level: 'high', detail: `Niveau d'urgence: ${urgence} — traitement prioritaire requis` });
+    }
+    
+    // Check for preexisting damage from image analysis
+    const preexisting = getFieldValue(ef, ['PreexistingDamage'], '').toLowerCase();
+    if (preexisting === 'probable' || preexisting === 'certain') {
+      signals.push({ label: 'Dommages préexistants', level: 'high', detail: 'Dommages préexistants détectés sur les photos — vérifier antériorité' });
+    }
+    
+    // Check description for fraud keywords
+    const desc = getFieldValue(ef, ['DescriptionSinistre'], '').toLowerCase();
+    if (desc.includes('incohéren') || desc.includes('contradictoi')) {
+      signals.push({ label: 'Incohérence détectée', level: 'high', detail: 'Incohérence dans la description du sinistre — investigation recommandée' });
+    }
+    
+    // Parse LLM outputs for additional signals
+    for (const [sectionName, subsections] of Object.entries(llmOutputs)) {
+      if (!subsections || typeof subsections !== 'object') continue;
+      for (const [, val] of Object.entries(subsections as Record<string, unknown>)) {
+        const sub = val as { parsed?: Record<string, unknown>; raw?: string } | undefined;
+        const parsed = sub?.parsed;
+        if (parsed?.fraud_indicators && Array.isArray(parsed.fraud_indicators) && parsed.fraud_indicators.length > 0) {
+          signals.push({ label: 'Indicateurs de fraude', level: 'high', detail: String(parsed.fraud_indicators[0]) });
+        }
+        if (parsed?.exclusions && typeof parsed.exclusions === 'string' && parsed.exclusions.length > 0 && !parsed.exclusions.toLowerCase().includes('aucune')) {
+          signals.push({ label: 'Exclusions possibles', level: 'medium', detail: String(parsed.exclusions).slice(0, 120) });
+        }
+        // Coverage verification signals
+        if (sectionName === 'liability_assessment' && parsed?.coverage_status) {
+          const status = String(parsed.coverage_status).toLowerCase();
+          if (status.includes('non') || status.includes('exclu') || status.includes('refus')) {
+            signals.push({ label: 'Couverture non confirmée', level: 'high', detail: `Statut: ${parsed.coverage_status}` });
+          }
+        }
+      }
+    }
+    
+    return signals;
+  }, [ef, llmOutputs]);
+
   // Build evidence items from actual uploaded files
   const evidenceItems = useMemo(() => {
     return files.map(f => {
@@ -410,12 +479,30 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
                       <div className="px-3 py-2 flex items-center justify-between hover:bg-slate-50">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-slate-900">{"Signaux d'alerte"}</span>
-                          <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs rounded">—</span>
+                          {alertSignals.length > 0 ? (
+                            <span className={clsx('px-1.5 py-0.5 text-xs rounded', alertSignals.some(s => s.level === 'high') ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700')}>
+                              {alertSignals.length} signal{alertSignals.length > 1 ? 'x' : ''}
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded">RAS</span>
+                          )}
                         </div>
                         {expandedSection === 'redflags' ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
                       </div>
                       {expandedSection === 'redflags' && (
-                        <div className="px-3 pb-2 text-slate-600 text-xs">Aucun signal détecté pour le moment.</div>
+                        <div className="px-3 pb-2 space-y-1.5">
+                          {alertSignals.length > 0 ? alertSignals.map((signal, i) => (
+                            <div key={i} className={clsx('flex items-start gap-2 text-xs p-1.5 rounded', signal.level === 'high' ? 'bg-rose-50' : signal.level === 'medium' ? 'bg-amber-50' : 'bg-blue-50')}>
+                              <span className={clsx('w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0', signal.level === 'high' ? 'bg-rose-500' : signal.level === 'medium' ? 'bg-amber-500' : 'bg-blue-500')} />
+                              <div>
+                                <span className="font-medium text-slate-900">{signal.label}</span>
+                                <p className="text-slate-600 mt-0.5">{signal.detail}</p>
+                              </div>
+                            </div>
+                          )) : (
+                            <div className="text-slate-600 text-xs">Aucun signal détecté — dossier conforme.</div>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

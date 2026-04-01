@@ -4119,13 +4119,17 @@ async def seed_customer_360_data():
     settings = load_settings()
     try:
         from app.seed_data_customers import create_groupama_customers
-        from scripts.seed_customer360 import seed_applications
         
         # Seed customer profiles and journeys
         customer_count = create_groupama_customers(settings.app.storage_root)
         
-        # Seed application data (underwriting, claims, mortgage)
-        app_count = seed_applications(settings.app.storage_root)
+        # Try to seed rich application data (only available in dev, not in Docker)
+        app_count = 0
+        try:
+            from scripts.seed_customer360 import seed_applications
+            app_count = seed_applications(settings.app.storage_root)
+        except ImportError:
+            logger.info("scripts.seed_customer360 not available (Docker) — skipping application seeding")
         
         return {
             "status": "ok",
