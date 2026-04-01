@@ -17,6 +17,7 @@ import {
   Activity,
   ExternalLink
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 // Type definitions for structured chat responses
 export interface RiskFactor {
@@ -108,35 +109,35 @@ const riskLevelConfig = {
   },
 };
 
-// Decision styling
+// Decision styling (labels resolved at render time via i18n)
 const decisionConfig = {
   approve: {
     bg: 'bg-emerald-50',
     border: 'border-emerald-300',
     text: 'text-emerald-800',
     icon: ThumbsUp,
-    label: 'Approve',
+    labelKey: 'approve' as const,
   },
   approve_with_conditions: {
     bg: 'bg-amber-50',
     border: 'border-amber-300',
     text: 'text-amber-800',
     icon: AlertCircle,
-    label: 'Approve with Conditions',
+    labelKey: 'approveWithConditions' as const,
   },
   defer: {
     bg: 'bg-slate-50',
     border: 'border-slate-300',
     text: 'text-slate-800',
     icon: Clock,
-    label: 'Defer',
+    labelKey: 'defer' as const,
   },
   decline: {
     bg: 'bg-rose-50',
     border: 'border-rose-300',
     text: 'text-rose-800',
     icon: ThumbsDown,
-    label: 'Decline',
+    labelKey: 'decline' as const,
   },
 };
 
@@ -148,6 +149,7 @@ export function RiskFactorsCard({
   data: RiskFactorsResponse;
   onPolicyClick?: (policyId: string) => void;
 }) {
+  const t = useTranslations('chatCards');
   const overallConfig = riskLevelConfig[data.overall_risk] || riskLevelConfig.moderate;
   const OverallIcon = overallConfig.icon;
 
@@ -158,7 +160,7 @@ export function RiskFactorsCard({
         <div className="flex items-center gap-2 mb-1">
           <OverallIcon className={`w-5 h-5 ${overallConfig.text}`} />
           <span className={`text-sm font-semibold ${overallConfig.text}`}>
-            Overall Risk: {data.overall_risk.replace('-', ' ').toUpperCase()}
+            {t('overallRisk')}: {data.overall_risk.replace('-', ' ').toUpperCase()}
           </span>
         </div>
         <p className="text-sm text-slate-600">{data.summary}</p>
@@ -187,7 +189,7 @@ export function RiskFactorsCard({
                         <button
                           onClick={() => onPolicyClick(factor.policy_id!)}
                           className="flex items-center gap-1 text-xs font-mono bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded hover:bg-indigo-200 transition-colors cursor-pointer"
-                          title="Click to view policy details"
+                          title={t('clickToViewPolicy')}
                         >
                           {factor.policy_id}
                           <ExternalLink className="w-3 h-3" />
@@ -218,6 +220,7 @@ export function PolicyListCard({
   data: PolicyListResponse;
   onPolicyClick?: (policyId: string) => void;
 }) {
+  const t = useTranslations('chatCards');
   return (
     <div className="space-y-3">
       <p className="text-sm text-slate-600">{data.summary}</p>
@@ -229,7 +232,7 @@ export function PolicyListCard({
               key={idx}
               onClick={() => onPolicyClick(policy.policy_id)}
               className="w-full text-left bg-slate-50 border border-slate-200 rounded-lg p-3 hover:bg-indigo-50 hover:border-indigo-200 transition-colors cursor-pointer group"
-              title="Click to view full policy details"
+              title={t('clickToViewFullPolicy')}
             >
               <div className="flex items-center gap-2 mb-2">
                 <Shield className="w-4 h-4 text-indigo-600" />
@@ -241,10 +244,10 @@ export function PolicyListCard({
               </div>
               <div className="pl-6 space-y-1">
                 <p className="text-xs text-slate-500">
-                  <span className="font-medium">Relevance:</span> {policy.relevance}
+                  <span className="font-medium">{t('relevance')}:</span> {policy.relevance}
                 </p>
                 <p className="text-xs text-slate-700">
-                  <span className="font-medium">Finding:</span> {policy.finding}
+                  <span className="font-medium">{t('finding')}:</span> {policy.finding}
                 </p>
               </div>
             </button>
@@ -262,10 +265,10 @@ export function PolicyListCard({
               </div>
               <div className="pl-6 space-y-1">
                 <p className="text-xs text-slate-500">
-                  <span className="font-medium">Relevance:</span> {policy.relevance}
+                  <span className="font-medium">{t('relevance')}:</span> {policy.relevance}
                 </p>
                 <p className="text-xs text-slate-700">
-                  <span className="font-medium">Finding:</span> {policy.finding}
+                  <span className="font-medium">{t('finding')}:</span> {policy.finding}
                 </p>
               </div>
             </div>
@@ -278,6 +281,7 @@ export function PolicyListCard({
 
 // Recommendation Card
 export function RecommendationCard({ data }: { data: RecommendationResponse }) {
+  const t = useTranslations('chatCards');
   const config = decisionConfig[data.decision] || decisionConfig.defer;
   const DecisionIcon = config.icon;
 
@@ -292,14 +296,14 @@ export function RecommendationCard({ data }: { data: RecommendationResponse }) {
           <div>
             <div className="flex items-center gap-2">
               <span className={`text-lg font-bold ${config.text}`}>
-                {config.label}
+                {t(config.labelKey)}
               </span>
               <span className={`text-xs px-2 py-0.5 rounded-full ${
                 data.confidence === 'high' ? 'bg-emerald-100 text-emerald-700' :
                 data.confidence === 'medium' ? 'bg-amber-100 text-amber-700' :
                 'bg-slate-100 text-slate-600'
               }`}>
-                {data.confidence} confidence
+                {t('confidenceLevel', { level: t(`confidence_${data.confidence}`) })}
               </span>
             </div>
             <p className="text-sm text-slate-600 mt-1">{data.summary}</p>
@@ -312,7 +316,7 @@ export function RecommendationCard({ data }: { data: RecommendationResponse }) {
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-2">
             <AlertCircle className="w-4 h-4 text-amber-600" />
-            <span className="text-sm font-medium text-amber-800">Conditions</span>
+            <span className="text-sm font-medium text-amber-800">{t('conditions')}</span>
           </div>
           <ul className="space-y-1 pl-6">
             {data.conditions.map((condition, idx) => (
@@ -326,7 +330,7 @@ export function RecommendationCard({ data }: { data: RecommendationResponse }) {
       <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
         <div className="flex items-center gap-2 mb-2">
           <FileText className="w-4 h-4 text-slate-600" />
-          <span className="text-sm font-medium text-slate-700">Rationale</span>
+          <span className="text-sm font-medium text-slate-700">{t('rationale')}</span>
         </div>
         <p className="text-sm text-slate-600 pl-6">{data.rationale}</p>
       </div>
@@ -336,7 +340,7 @@ export function RecommendationCard({ data }: { data: RecommendationResponse }) {
         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-2">
             <ArrowRight className="w-4 h-4 text-indigo-600" />
-            <span className="text-sm font-medium text-indigo-700">Next Steps</span>
+            <span className="text-sm font-medium text-indigo-700">{t('nextSteps')}</span>
           </div>
           <ul className="space-y-1 pl-6">
             {data.next_steps.map((step, idx) => (

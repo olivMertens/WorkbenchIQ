@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { X, Download, Sparkles, RefreshCw, Loader2, Users } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import BodyDiagram from './BodyDiagram';
 import PendingInvestigationsCard from './PendingInvestigationsCard';
 import LastOfficeVisitCard from './LastOfficeVisitCard';
@@ -32,6 +33,7 @@ export default function BodySystemDeepDiveModal({
   onApplicationUpdate,
 }: BodySystemDeepDiveModalProps) {
   const { addToast } = useToast();
+  const t = useTranslations('deepDive');
   const modalRef = useRef<HTMLDivElement>(null);
   const detailPanelRef = useRef<HTMLDivElement>(null);
   const systemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -296,16 +298,16 @@ ${sections.join('\n')}
     }
     
     setIsRerunning(true);
-    setRerunStatus(force ? 'Force re-running deep dive analysis...' : 'Starting deep dive analysis...');
+    setRerunStatus(force ? t('forceRerunning') : t('startingAnalysis'));
     
     try {
       // Start deep dive in background
       await runDeepDiveAnalysis(currentApp.id, true, force);
-      setRerunStatus('Deep dive analysis running...');
+      setRerunStatus(t('analysisRunning'));
       
       // Poll for completion (checks for processing_status !== 'analyzing')
       const updatedApp = await pollForDeepDiveCompletion(currentApp.id);
-      setRerunStatus('Deep dive complete!');
+      setRerunStatus(t('analysisComplete'));
       setCurrentApp(updatedApp);
       onApplicationUpdate?.(updatedApp);
       
@@ -316,8 +318,8 @@ ${sections.join('\n')}
       }, 2000);
     } catch (err) {
       console.error('Failed to run deep dive:', err);
-      addToast('error', 'Échec du deep dive. Veuillez réessayer.');
-      setRerunStatus('Deep dive failed. Please try again.');
+      addToast('error', t('analysisFailed'));
+      setRerunStatus(t('analysisFailedRetry'));
       timeoutRef.current = setTimeout(() => {
         setRerunStatus('');
         setIsRerunning(false);
@@ -349,12 +351,12 @@ ${sections.join('\n')}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white flex-shrink-0">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-slate-900">
-              Body System Deep Dive
+              {t('title')}
             </h2>
             <span className="text-sm text-slate-500">— {caseRef}</span>
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-100">
               <Sparkles className="w-3 h-3" />
-              AI Analysis
+              {t('aiAnalysis')}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -362,21 +364,21 @@ ${sections.join('\n')}
               onClick={() => handleDeepDiveRerun(true)}
               disabled={isRerunning}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Force re-run all deep dive prompts"
+              title={t('forceRerunTitle')}
             >
               {isRerunning ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <RefreshCw className="w-4 h-4" />
               )}
-              {isRerunning ? 'Analyzing...' : 'Re-run'}
+              {isRerunning ? t('analyzing') : t('rerun')}
             </button>
             <button
               onClick={handleExportFullReport}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
             >
               <Download className="w-4 h-4" />
-              Export
+              {t('export')}
             </button>
             <button
               onClick={onClose}
@@ -391,15 +393,15 @@ ${sections.join('\n')}
         {!hasAnalysis ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <p className="text-slate-500 mb-4">No analysis has been run for this application.</p>
-              <p className="text-sm text-slate-400">Run analysis to generate the body system deep dive.</p>
+              <p className="text-slate-500 mb-4">{t('noAnalysis')}</p>
+              <p className="text-sm text-slate-400">{t('runAnalysisToGenerate')}</p>
             </div>
           </div>
         ) : !deepDive.hasData ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center max-w-md">
               <p className="text-slate-500 mb-4">
-                This application was analyzed before the Deep Dive feature was available.
+                {t('analyzedBeforeDeepDive')}
               </p>
               {rerunStatus && (
                 <div className="mb-4 p-3 bg-indigo-50 text-indigo-700 rounded-lg text-sm flex items-center gap-2 justify-center">
@@ -417,7 +419,7 @@ ${sections.join('\n')}
                 ) : (
                   <RefreshCw className="w-4 h-4" />
                 )}
-                {isRerunning ? 'Analyzing...' : 'Run Deep Dive Analysis'}
+                {isRerunning ? t('analyzing') : t('runDeepDiveAnalysis')}
               </button>
             </div>
           </div>
@@ -441,13 +443,13 @@ ${sections.join('\n')}
               {/* Quick stats */}
               <div className="mt-4 space-y-2">
                 <div className="bg-white rounded-lg p-3 border border-slate-200">
-                  <div className="text-xs text-slate-500 mb-1">Pending Investigations</div>
+                  <div className="text-xs text-slate-500 mb-1">{t('pendingInvestigations')}</div>
                   <div className="text-lg font-semibold text-slate-800">
                     {deepDive.pendingInvestigations?.pending_investigations?.length || 0}
                   </div>
                 </div>
                 <div className="bg-white rounded-lg p-3 border border-slate-200">
-                  <div className="text-xs text-slate-500 mb-1">Abnormal Labs</div>
+                  <div className="text-xs text-slate-500 mb-1">{t('abnormalLabs')}</div>
                   <div className="text-lg font-semibold text-slate-800">
                     {deepDive.abnormalLabs?.abnormal_labs?.length || 0}
                   </div>
@@ -507,7 +509,7 @@ ${sections.join('\n')}
               {familyHistory && (
                 <div className="bg-white rounded-lg border border-slate-200 p-4">
                   <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-3">
-                    <Users className="w-4 h-4 text-purple-500" /> Family History
+                    <Users className="w-4 h-4 text-purple-500" /> {t('familyHistory')}
                   </h3>
                   {familyHistory.summary && (
                     <p className="text-sm text-slate-700 mb-3">{familyHistory.summary}</p>
@@ -532,14 +534,14 @@ ${sections.join('\n')}
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-slate-500 italic">No family history details available.</p>
+                    <p className="text-sm text-slate-500 italic">{t('noFamilyHistory')}</p>
                   )}
                 </div>
               )}
 
               {/* Footer */}
               <div className="text-center py-4">
-                <span className="text-xs text-slate-400">Powered by AI Analysis</span>
+                <span className="text-xs text-slate-400">{t('poweredByAI')}</span>
               </div>
             </div>
           </div>

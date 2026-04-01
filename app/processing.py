@@ -405,10 +405,78 @@ def run_content_understanding_for_files(
     app_md.extracted_fields = all_fields
     app_md.confidence_summary = confidence_summary
     app_md.analyzer_id_used = analyzer_used
+
+    # LLM fallback: extract structured fields from markdown when CU analyzer
+    # did not produce any (e.g. underwriting with generic prebuilt-documentSearch)
+    if not all_fields and combined_md and app_md.persona in (
+        "underwriting", "habitation_claims", "lifeHealthClaims",
+    ):
+        logger.info(
+            "No extracted fields from CU — running LLM field extraction fallback for %s",
+            app_md.id,
+        )
+        llm_fields = _llm_extract_fields(settings, combined_md)
+        if llm_fields:
+            app_md.extracted_fields = llm_fields
+            logger.info("LLM fallback extracted %d fields", len(llm_fields))
+
     app_md.status = "extracted"
     save_application_metadata(settings.app.storage_root, app_md)
     logger.info("Content Understanding completed for application %s", app_md.id)
     return app_md
+
+
+def _llm_extract_fields(settings: Settings, markdown: str) -> Dict[str, Any]:
+    """Use LLM to extract structured patient/applicant fields from document markdown.
+
+    Returns a dict compatible with ``extracted_fields`` format used elsewhere.
+    """
+    # Truncate to first 8000 chars to stay within token limits
+    snippet = markdown[:8000]
+    system_prompt = (
+        "You are a data-extraction assistant for insurance documents. "
+        "Extract the following fields from the document text and return ONLY valid JSON "
+        "(no markdown fences). Use null for missing fields.\n"
+        "Required JSON structure:\n"
+        "{\n"
+        '  "PatientName": "string",\n'
+        '  "DateOfBirth": "string (DD/MM/YYYY)",\n'
+        '  "Gender": "string",\n'
+        '  "Height": "string",\n'
+        '  "Weight": "string",\n'
+        '  "BloodPressure": "string",\n'
+        '  "Smoker": "string",\n'
+        '  "Medications": "string (comma-separated list)",\n'
+        '  "MedicalConditions": "string (comma-separated list)",\n'
+        '  "FamilyHistory": "string (brief summary)",\n'
+        '  "PlanName": "string",\n'
+        '  "PolicyNumber": "string"\n'
+        "}"
+    )
+    try:
+        raw = chat_completion(
+            settings.openai,
+            [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": snippet},
+            ],
+            max_tokens=1024,
+            temperature=0.0,
+        )
+        parsed = json.loads(raw)
+        fields: Dict[str, Any] = {}
+        for key, value in parsed.items():
+            if value is not None:
+                fields[f"llm_extracted:{key}"] = {
+                    "field_name": key,
+                    "value": value,
+                    "confidence": 0.85,
+                    "source": "llm_fallback",
+                }
+        return fields
+    except Exception as exc:
+        logger.warning("LLM field extraction fallback failed: %s", exc)
+        return {}
 
 
 def _try_repair_truncated_json(text: str) -> Dict[str, Any]:

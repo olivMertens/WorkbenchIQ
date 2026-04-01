@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { 
   MessageSquare, 
   Plus, 
@@ -49,6 +50,7 @@ export default function ChatHistoryPanel({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const t = useTranslations('chatHistory');
 
   const conversations = activeTab === 'app' ? appConversations : allConversations;
 
@@ -167,10 +169,10 @@ export default function ChatHistoryPanel({
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
     
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffMins < 1) return t('justNow');
+    if (diffMins < 60) return t('minutesAgo', { count: diffMins });
+    if (diffHours < 24) return t('hoursAgo', { count: diffHours });
+    if (diffDays < 7) return t('daysAgo', { count: diffDays });
     return date.toLocaleDateString();
   };
 
@@ -181,20 +183,20 @@ export default function ChatHistoryPanel({
         <button
           onClick={onToggleCollapse}
           className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
-          title="Expand history"
+          title={t('expandHistory')}
         >
           <ChevronRight className="w-4 h-4 text-slate-600" />
         </button>
         <button
           onClick={onNewConversation}
           className="p-2 hover:bg-indigo-100 rounded-lg transition-colors"
-          title="New conversation"
+          title={t('newConversation')}
         >
           <Plus className="w-4 h-4 text-indigo-600" />
         </button>
         <div className="flex-1" />
         <div className="text-xs text-slate-400 transform -rotate-90 whitespace-nowrap">
-          {conversations.length} chats
+          {t('chatCount', { count: conversations.length })}
         </div>
       </div>
     );
@@ -206,12 +208,12 @@ export default function ChatHistoryPanel({
       <div className="p-3 border-b border-slate-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Clock className="w-4 h-4 text-slate-500" />
-          <span className="text-sm font-medium text-slate-700">History</span>
+          <span className="text-sm font-medium text-slate-700">{t('history')}</span>
         </div>
         <button
           onClick={onToggleCollapse}
           className="p-1 hover:bg-slate-200 rounded transition-colors"
-          title="Collapse"
+          title={t('collapse')}
         >
           <ChevronLeft className="w-4 h-4 text-slate-500" />
         </button>
@@ -226,10 +228,10 @@ export default function ChatHistoryPanel({
               ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white'
               : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
           }`}
-          title="Conversations for this application"
+          title={t('currentAppConversations')}
         >
           <FileText className="w-4 h-4" />
-          <span>Current</span>
+          <span>{t('current')}</span>
         </button>
         <button
           onClick={() => setActiveTab('all')}
@@ -238,10 +240,10 @@ export default function ChatHistoryPanel({
               ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white'
               : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
           }`}
-          title="Conversations across all applications"
+          title={t('allAppsConversations')}
         >
           <Globe className="w-4 h-4" />
-          <span>All Apps</span>
+          <span>{t('allApps')}</span>
         </button>
       </div>
 
@@ -252,7 +254,7 @@ export default function ChatHistoryPanel({
           className="w-full flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
         >
           <Plus className="w-4 h-4" />
-          New Chat
+          {t('newChat')}
         </button>
       </div>
 
@@ -271,10 +273,10 @@ export default function ChatHistoryPanel({
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <MessageSquare className="w-8 h-8 text-slate-300 mb-2" />
             <p className="text-xs text-slate-500">
-              {activeTab === 'app' ? 'No conversations yet' : 'No conversations found'}
+              {activeTab === 'app' ? t('noConversationsYet') : t('noConversationsFound')}
             </p>
             <p className="text-xs text-slate-400">
-              {activeTab === 'app' ? 'Start a new chat!' : 'Start chatting with any application'}
+              {activeTab === 'app' ? t('startNewChat') : t('startChattingAnyApp')}
             </p>
           </div>
         ) : (
@@ -321,7 +323,7 @@ export default function ChatHistoryPanel({
                         {formatDate(conv.updated_at)}
                       </span>
                       <span className="text-xs text-slate-400">
-                        {conv.message_count} msgs
+                        {conv.message_count} {t('msgs')}
                       </span>
                     </div>
                   </div>
@@ -330,7 +332,7 @@ export default function ChatHistoryPanel({
                     className={`p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ${
                       deletingId === conv.id ? 'opacity-100' : ''
                     } hover:bg-rose-100`}
-                    title="Delete"
+                    title={t('delete')}
                   >
                     {deletingId === conv.id ? (
                       <Loader2 className="w-3 h-3 text-rose-500 animate-spin" />
