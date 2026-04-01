@@ -15,6 +15,9 @@ import {
   CheckCircle,
   Image,
   Film,
+  X,
+  ZoomIn,
+  Download,
 } from 'lucide-react';
 import type { ApplicationMetadata } from '@/lib/types';
 import { getMediaUrl } from '@/lib/api';
@@ -124,6 +127,7 @@ function HeaderStrip({ application }: { application: ApplicationMetadata | null 
 export default function PropertyCasualtyClaimsOverview({ application }: PropertyCasualtyClaimsOverviewProps) {
   const [checkedTasks, setCheckedTasks] = useState<number[]>([]);
   const [expandedSection, setExpandedSection] = useState<string>('liability');
+  const [lightboxFile, setLightboxFile] = useState<string | null>(null);
 
   const ef = application?.extracted_fields || {};
   const llmOutputs = (application?.llm_outputs || {}) as Record<string, unknown>;
@@ -371,13 +375,22 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {evidenceItems.map((item, i) => (
-                      <tr key={i} className="hover:bg-slate-50">
+                      <tr key={i} className="hover:bg-slate-50 cursor-pointer" onClick={() => {
+                          if (application?.id) {
+                            const url = getMediaUrl(`/api/applications/${application.id}/files/${encodeURIComponent(item.source)}`);
+                            if (item.fileType.icon === 'image') {
+                              setLightboxFile(url);
+                            } else {
+                              window.open(url, '_blank', 'noopener,noreferrer');
+                            }
+                          }
+                        }}>
                         <td className="px-4 py-2.5 text-slate-900">
                           <div className="flex items-center gap-2">
                             {item.fileType.icon === 'image' ? <Image className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" /> :
                              item.fileType.icon === 'video' ? <Film className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" /> :
                              <FileText className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" />}
-                            <span className="truncate">{item.source}</span>
+                            <span className="truncate text-indigo-600 hover:underline">{item.source}</span>
                           </div>
                         </td>
                         <td className="px-4 py-2.5"><span className="px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-700">{item.type}</span></td>
@@ -386,9 +399,21 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
                         <td className="px-4 py-2.5 text-slate-600 text-xs">{item.summary}</td>
                         <td className="px-4 py-2.5 text-center">
                           {application?.id && (
-                            <a href={getMediaUrl(`/api/applications/${application.id}/files/${encodeURIComponent(item.source)}`)} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700" title={`Ouvrir ${item.source}`}>
-                              <ExternalLink className="w-4 h-4 mx-auto" />
-                            </a>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const url = getMediaUrl(`/api/applications/${application.id}/files/${encodeURIComponent(item.source)}`);
+                                if (item.fileType.icon === 'image') {
+                                  setLightboxFile(url);
+                                } else {
+                                  window.open(url, '_blank', 'noopener,noreferrer');
+                                }
+                              }}
+                              className="text-indigo-600 hover:text-indigo-700"
+                              title={`Voir ${item.source}`}
+                            >
+                              {item.fileType.icon === 'image' ? <ZoomIn className="w-4 h-4 mx-auto" /> : <ExternalLink className="w-4 h-4 mx-auto" />}
+                            </button>
                           )}
                         </td>
                       </tr>
@@ -406,6 +431,30 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
           
         </div>
       </div>
+
+      {/* Lightbox modal for images */}
+      {lightboxFile && (
+        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center" onClick={() => setLightboxFile(null)}>
+          <div className="absolute top-4 right-4 flex items-center gap-2">
+            <a href={lightboxFile} download className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors" title="Télécharger" onClick={(e) => e.stopPropagation()}>
+              <Download className="w-5 h-5 text-white" />
+            </a>
+            <a href={lightboxFile} target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors" title="Ouvrir dans un nouvel onglet" onClick={(e) => e.stopPropagation()}>
+              <ExternalLink className="w-5 h-5 text-white" />
+            </a>
+            <button onClick={() => setLightboxFile(null)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors" title="Fermer">
+              <X className="w-5 h-5 text-white" />
+            </button>
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightboxFile}
+            alt="Document preview"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
