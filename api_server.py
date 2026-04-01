@@ -2268,6 +2268,17 @@ async def chat_with_application(app_id: str, request: ChatRequest):
         # Determine persona - prefer request, then app's persona, then default to underwriting
         persona = request.persona or app_md.persona or "underwriting"
         
+        # --- Agent Framework mode ---
+        from app.agents.api_integration import is_agent_framework_enabled
+        if is_agent_framework_enabled():
+            from app.agents.api_integration import agent_chat
+            history_dicts = None
+            if request.history:
+                history_dicts = [{"role": m.role, "content": m.content} for m in request.history]
+            result = await agent_chat(settings, app_id, request.message, history_dicts, persona)
+            return result
+        # --- End Agent Framework mode ---
+        
         # Build augmented RAG query with claim/application context for better retrieval
         rag_query = request.message
         if app_md.document_markdown:
@@ -2441,6 +2452,52 @@ async def chat_with_application(app_id: str, request: ChatRequest):
     except Exception as e:
         logger.error("Chat failed for application %s: %s", app_id, e, exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# =============================================================================
+# Agent Framework API Endpoints
+# =============================================================================
+
+@app.get("/api/agents/status")
+async def get_agent_status():
+    """Check if Agent Framework mode is enabled and return agent info."""
+    from app.agents.api_integration import is_agent_framework_enabled
+    
+    enabled = is_agent_framework_enabled()
+    agents = []
+    if enabled:
+        agents = [
+            {
+                "name": "ChatAgent",
+                "phase": 1,
+                "description": "Interactive Q&A with policy search, glossary, and application context",
+                "tools": ["search_policies", "get_application_summary", "get_glossary"],
+            },
+            {
+                "name": "AnalysisAgent",
+                "phase": 2,
+                "description": "Prompt-based document analysis with dynamic section selection",
+                "tools": ["analyze_section", "list_available_analyses", "get_extracted_fields", "search_policies"],
+            },
+            {
+                "name": "DocumentAgent",
+                "phase": 3,
+                "description": "Content Understanding extraction with intelligent retry",
+                "tools": ["extract_document", "get_extracted_fields", "get_application_summary"],
+            },
+            {
+                "name": "WorkflowAgent",
+                "phase": 4,
+                "description": "Full pipeline orchestration (extract → analyze → report)",
+                "tools": ["extract_document", "analyze_section", "search_policies", "process_application"],
+            },
+        ]
+    
+    return {
+        "enabled": enabled,
+        "framework": "Microsoft Agent Framework 1.0.0rc3" if enabled else None,
+        "agents": agents,
+    }
 
 
 # =============================================================================
