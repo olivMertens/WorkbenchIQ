@@ -13,21 +13,23 @@ import {
   Tag,
 } from 'lucide-react';
 import type { Customer360View } from '@/lib/customer360-types';
+import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
 
 interface CustomerProfileHeaderProps {
   data: Customer360View;
 }
 
-const RISK_TIER_CONFIG = {
-  low: { label: 'Risque faible', icon: ShieldCheck, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', gradient: 'from-emerald-500 to-emerald-600' },
-  medium: { label: 'Risque modéré', icon: Shield, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', gradient: 'from-amber-500 to-amber-600' },
-  high: { label: 'Risque élevé', icon: ShieldAlert, color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', gradient: 'from-rose-500 to-rose-600' },
+const RISK_TIER_KEYS = {
+  low: { key: 'riskLow' as const, icon: ShieldCheck, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', gradient: 'from-emerald-500 to-emerald-600' },
+  medium: { key: 'riskMedium' as const, icon: Shield, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', gradient: 'from-amber-500 to-amber-600' },
+  high: { key: 'riskHigh' as const, icon: ShieldAlert, color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', gradient: 'from-rose-500 to-rose-600' },
 };
 
 export default function CustomerProfileHeader({ data }: CustomerProfileHeaderProps) {
+  const t = useTranslations('customer360');
   const { profile, total_products, active_claims, overall_risk } = data;
-  const riskConfig = RISK_TIER_CONFIG[profile.risk_tier] || RISK_TIER_CONFIG.low;
+  const riskConfig = RISK_TIER_KEYS[profile.risk_tier] || RISK_TIER_KEYS.low;
   const RiskIcon = riskConfig.icon;
 
   const tenure = getCustomerTenure(profile.customer_since);
@@ -51,6 +53,7 @@ export default function CustomerProfileHeader({ data }: CustomerProfileHeaderPro
                 <span>{profile.id}</span>
                 <span>•</span>
                 <span>{age} ans</span>
+
                 <span>•</span>
                 <span>DOB {formatDate(profile.date_of_birth)}</span>
               </div>
@@ -68,21 +71,21 @@ export default function CustomerProfileHeader({ data }: CustomerProfileHeaderPro
           <div className={clsx('flex items-center gap-2 px-4 py-2 rounded-lg border', riskConfig.bg, riskConfig.border)}>
             <RiskIcon className={clsx('w-5 h-5', riskConfig.color)} />
             <div>
-              <div className={clsx('text-sm font-semibold', riskConfig.color)}>{riskConfig.label}</div>
-              <div className="text-xs text-slate-500">Évaluation globale</div>
+              <div className={clsx('text-sm font-semibold', riskConfig.color)}>{t(riskConfig.key)}</div>
+              <div className="text-xs text-slate-500">{t('overallAssessment')}</div>
             </div>
           </div>
         </div>
 
         {/* Stats strip */}
         <div className="flex items-center gap-6 mt-6 pt-5 border-t border-slate-100">
-          <Stat icon={Calendar} label="Client depuis" value={formatDate(profile.customer_since)} sublabel={tenure} />
+          <Stat icon={Calendar} label={t('customerSince')} value={formatDate(profile.customer_since)} sublabel={tenure} />
           <div className="w-px h-10 bg-slate-200" />
-          <Stat icon={Package} label="Produits" value={String(total_products)} />
+          <Stat icon={Package} label={t('products')} value={String(total_products)} />
           <div className="w-px h-10 bg-slate-200" />
           <Stat
             icon={AlertTriangle}
-            label="Sinistres actifs"
+            label={t('activeClaims')}
             value={String(active_claims)}
             valueColor={active_claims > 0 ? 'text-amber-600' : 'text-slate-900'}
           />

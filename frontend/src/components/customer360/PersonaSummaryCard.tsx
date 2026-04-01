@@ -15,6 +15,7 @@ import {
   Activity,
 } from 'lucide-react';
 import type { PersonaSummary } from '@/lib/customer360-types';
+import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
 import Link from 'next/link';
 
@@ -48,6 +49,7 @@ const RISK_COLORS: Record<string, string> = {
 };
 
 export default function PersonaSummaryCard({ summary }: PersonaSummaryCardProps) {
+  const t = useTranslations('customer360');
   const [expanded, setExpanded] = useState(false);
   const theme = PERSONA_THEME[summary.persona] || PERSONA_THEME.underwriting;
   const PersonaIcon = theme.icon;
@@ -55,7 +57,7 @@ export default function PersonaSummaryCard({ summary }: PersonaSummaryCardProps)
   const StatusIcon = statusInfo.icon;
 
   // Highlight metrics to show in the card header
-  const highlightMetrics = getHighlightMetrics(summary);
+  const highlightMetrics = getHighlightMetrics(summary, t);
 
   return (
     <div className={clsx('rounded-xl border overflow-hidden transition-shadow hover:shadow-md', theme.border, 'bg-white')}>
@@ -110,13 +112,13 @@ export default function PersonaSummaryCard({ summary }: PersonaSummaryCardProps)
               className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 transition-colors"
             >
               {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              {expanded ? 'Masquer' : 'Afficher'} les détails
+              {expanded ? t('hideDetails') : t('showDetails')}
             </button>
             <Link
               href={`/?app=${summary.applications[0].application_id}&persona=${mapPersonaToFrontendId(summary.persona)}`}
               className="flex items-center gap-1 text-xs text-slate-500 hover:text-indigo-600 transition-colors"
             >
-              Ouvrir dans le poste de travail →
+              {t('openWorkbench')}
             </Link>
           </div>
         )}
@@ -150,25 +152,25 @@ interface MetricHighlight {
   color?: string;
 }
 
-function getHighlightMetrics(summary: PersonaSummary): MetricHighlight[] {
+function getHighlightMetrics(summary: PersonaSummary, t: (key: string) => string): MetricHighlight[] {
   const metrics: MetricHighlight[] = [];
   const km = summary.key_metrics;
 
   if (summary.persona === 'underwriting') {
-    if (km.decision) metrics.push({ label: 'Décision', value: km.decision, color: getDecisionColor(km.decision) });
-    if (km.risk_class) metrics.push({ label: 'Classe de risque', value: km.risk_class });
-    if (km.coverage_amount) metrics.push({ label: 'Couverture', value: km.coverage_amount });
-    if (km.monthly_premium) metrics.push({ label: 'Prime', value: km.monthly_premium });
+    if (km.decision) metrics.push({ label: t('decision'), value: km.decision, color: getDecisionColor(km.decision) });
+    if (km.risk_class) metrics.push({ label: t('riskClass'), value: km.risk_class });
+    if (km.coverage_amount) metrics.push({ label: t('coverage'), value: km.coverage_amount });
+    if (km.monthly_premium) metrics.push({ label: t('premium'), value: km.monthly_premium });
   } else if (summary.persona === 'mortgage_underwriting') {
-    if (km.decision) metrics.push({ label: 'Décision', value: km.decision, color: getDecisionColor(km.decision) });
-    if (km.gds_ratio) metrics.push({ label: 'Taux endettement', value: km.gds_ratio, color: parseFloat(km.gds_ratio) > 35 ? 'text-rose-600' : undefined });
-    if (km.tds_ratio) metrics.push({ label: 'Endettement global', value: km.tds_ratio, color: parseFloat(km.tds_ratio) > 35 ? 'text-rose-600' : undefined });
-    if (km.ltv) metrics.push({ label: 'RPV', value: km.ltv });
+    if (km.decision) metrics.push({ label: t('decision'), value: km.decision, color: getDecisionColor(km.decision) });
+    if (km.gds_ratio) metrics.push({ label: t('debtRatio'), value: km.gds_ratio, color: parseFloat(km.gds_ratio) > 35 ? 'text-rose-600' : undefined });
+    if (km.tds_ratio) metrics.push({ label: t('totalDebtRatio'), value: km.tds_ratio, color: parseFloat(km.tds_ratio) > 35 ? 'text-rose-600' : undefined });
+    if (km.ltv) metrics.push({ label: t('ltv'), value: km.ltv });
   } else if (summary.persona === 'automotive_claims' || summary.persona === 'life_health_claims') {
-    if (km.decision) metrics.push({ label: 'Décision', value: km.decision, color: getDecisionColor(km.decision) });
-    if (km.payout) metrics.push({ label: 'Indemnisation', value: km.payout });
-    if (km.fraud_risk) metrics.push({ label: 'Risque fraude', value: km.fraud_risk, color: km.fraud_risk === 'High' ? 'text-rose-600' : undefined });
-    if (km.repair_estimate) metrics.push({ label: 'Devis réparation', value: km.repair_estimate });
+    if (km.decision) metrics.push({ label: t('decision'), value: km.decision, color: getDecisionColor(km.decision) });
+    if (km.payout) metrics.push({ label: t('payout'), value: km.payout });
+    if (km.fraud_risk) metrics.push({ label: t('fraudRisk'), value: km.fraud_risk, color: km.fraud_risk === 'High' ? 'text-rose-600' : undefined });
+    if (km.repair_estimate) metrics.push({ label: t('repairEstimate'), value: km.repair_estimate });
   }
 
   return metrics.slice(0, 4);

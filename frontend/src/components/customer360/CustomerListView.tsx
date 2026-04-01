@@ -14,6 +14,7 @@ import {
   ArrowUpDown,
 } from 'lucide-react';
 import type { CustomerProfile } from '@/lib/customer360-types';
+import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
 
 interface CustomerListViewProps {
@@ -22,10 +23,10 @@ interface CustomerListViewProps {
   onSelectCustomer: (customerId: string) => void;
 }
 
-const RISK_TIER_CONFIG = {
-  low: { label: 'Risque faible', icon: ShieldCheck, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', dot: 'bg-emerald-500' },
-  medium: { label: 'Risque modéré', icon: Shield, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', dot: 'bg-amber-500' },
-  high: { label: 'Risque élevé', icon: ShieldAlert, color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', dot: 'bg-rose-500' },
+const RISK_TIER_KEYS = {
+  low: { key: 'riskLow' as const, icon: ShieldCheck, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', dot: 'bg-emerald-500' },
+  medium: { key: 'riskMedium' as const, icon: Shield, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', dot: 'bg-amber-500' },
+  high: { key: 'riskHigh' as const, icon: ShieldAlert, color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', dot: 'bg-rose-500' },
 };
 
 export default function CustomerListView({
@@ -33,6 +34,7 @@ export default function CustomerListView({
   loading,
   onSelectCustomer,
 }: CustomerListViewProps) {
+  const t = useTranslations('customer360');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<'name' | 'risk_tier' | 'customer_since'>('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -72,7 +74,7 @@ export default function CustomerListView({
     return (
       <div className="flex items-center justify-center py-24">
         <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-        <span className="ml-3 text-slate-500">Chargement des clients…</span>
+        <span className="ml-3 text-slate-500">{t('loadingCustomers')}</span>
       </div>
     );
   }
@@ -85,7 +87,7 @@ export default function CustomerListView({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Rechercher par nom, ID ou étiquette…"
+            placeholder={t('searchPlaceholder')}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -101,8 +103,8 @@ export default function CustomerListView({
       {filteredCustomers.length === 0 ? (
         <div className="text-center py-16 text-slate-400">
           <Users className="w-12 h-12 mx-auto mb-3 opacity-40" />
-          <p className="text-lg font-medium">Aucun client trouvé</p>
-          <p className="text-sm mt-1">Ajustez votre recherche ou chargez les données d’exemple.</p>
+          <p className="text-lg font-medium">{t('noCustomers')}</p>
+          <p className="text-sm mt-1">{t('noCustomersHint')}</p>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
@@ -111,20 +113,20 @@ export default function CustomerListView({
               <tr className="border-b border-slate-100 bg-slate-50/50">
                 <th className="text-left px-5 py-3">
                   <button onClick={() => toggleSort('name')} className="flex items-center gap-1 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-700">
-                    Customer <ArrowUpDown className="w-3 h-3" />
+                    {t('customer')} <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
                 <th className="text-left px-5 py-3">
                   <button onClick={() => toggleSort('risk_tier')} className="flex items-center gap-1 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-700">
-                    Niveau de risque <ArrowUpDown className="w-3 h-3" />
+                    {t('riskTier')} <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
                 <th className="text-left px-5 py-3">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Produits</span>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('products')}</span>
                 </th>
                 <th className="text-left px-5 py-3">
                   <button onClick={() => toggleSort('customer_since')} className="flex items-center gap-1 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-700">
-                    Client depuis <ArrowUpDown className="w-3 h-3" />
+                    {t('customerSince')} <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
                 <th className="px-5 py-3" />
@@ -132,9 +134,9 @@ export default function CustomerListView({
             </thead>
             <tbody>
               {filteredCustomers.map(customer => {
-                const riskConfig = RISK_TIER_CONFIG[customer.risk_tier] || RISK_TIER_CONFIG.low;
+                const riskConfig = RISK_TIER_KEYS[customer.risk_tier] || RISK_TIER_KEYS.low;
                 const RiskIcon = riskConfig.icon;
-                const tenure = getCustomerTenure(customer.customer_since);
+                const tenure = getCustomerTenure(customer.customer_since, t);
 
                 return (
                   <tr
@@ -156,7 +158,7 @@ export default function CustomerListView({
                     <td className="px-5 py-4">
                       <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium', riskConfig.bg, riskConfig.color, 'border', riskConfig.border)}>
                         <RiskIcon className="w-3.5 h-3.5" />
-                        {riskConfig.label}
+                        {t(riskConfig.key)}
                       </span>
                     </td>
                     <td className="px-5 py-4">
@@ -189,13 +191,13 @@ function getInitials(name: string): string {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
-function getCustomerTenure(since: string): string {
+function getCustomerTenure(since: string, t: (key: string) => string): string {
   const start = new Date(since);
   const now = new Date();
   const years = now.getFullYear() - start.getFullYear();
   const months = now.getMonth() - start.getMonth();
   const totalMonths = years * 12 + months;
-  if (totalMonths < 1) return 'Nouveau';
+  if (totalMonths < 1) return t('tenureNew');
   if (totalMonths < 12) return `${totalMonths} mois`;
   const y = Math.floor(totalMonths / 12);
   const m = totalMonths % 12;

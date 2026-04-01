@@ -10,6 +10,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import type { Customer360View } from '@/lib/customer360-types';
+import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
 
 interface CustomerJourneyMetricsProps {
@@ -17,15 +18,16 @@ interface CustomerJourneyMetricsProps {
 }
 
 export default function CustomerJourneyMetrics({ data }: CustomerJourneyMetricsProps) {
+  const t = useTranslations('customer360');
   const { profile, total_products, active_claims, journey_events, risk_correlations } = data;
 
   const criticalCorrelations = risk_correlations.filter(c => c.severity === 'critical').length;
   const warningCorrelations = risk_correlations.filter(c => c.severity === 'warning').length;
 
   const riskConfig = {
-    low: { icon: ShieldCheck, color: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Faible' },
-    medium: { icon: Shield, color: 'text-amber-600', bg: 'bg-amber-50', label: 'Modéré' },
-    high: { icon: ShieldAlert, color: 'text-rose-600', bg: 'bg-rose-50', label: 'Élevé' },
+    low: { icon: ShieldCheck, color: 'text-emerald-600', bg: 'bg-emerald-50', label: t('riskLevelLow') },
+    medium: { icon: Shield, color: 'text-amber-600', bg: 'bg-amber-50', label: t('riskLevelMedium') },
+    high: { icon: ShieldAlert, color: 'text-rose-600', bg: 'bg-rose-50', label: t('riskLevelHigh') },
   }[profile.risk_tier] || { icon: Shield, color: 'text-slate-600', bg: 'bg-slate-50', label: profile.risk_tier };
 
   const RiskIcon = riskConfig.icon;
@@ -33,39 +35,39 @@ export default function CustomerJourneyMetrics({ data }: CustomerJourneyMetricsP
   const metrics = [
     {
       icon: Package,
-      label: 'Produits',
+      label: t('totalProducts'),
       value: String(total_products),
       color: 'text-indigo-600',
       bg: 'bg-indigo-50',
     },
     {
       icon: AlertTriangle,
-      label: 'Sinistres actifs',
+      label: t('activeClaims'),
       value: String(active_claims),
       color: active_claims > 0 ? 'text-amber-600' : 'text-slate-600',
       bg: active_claims > 0 ? 'bg-amber-50' : 'bg-slate-50',
     },
     {
       icon: RiskIcon,
-      label: 'Niveau de risque',
+      label: t('riskScore'),
       value: riskConfig.label,
       color: riskConfig.color,
       bg: riskConfig.bg,
     },
     {
       icon: TrendingUp,
-      label: 'Événements parcours',
+      label: t('journeyEvents'),
       value: String(journey_events.length),
       color: 'text-violet-600',
       bg: 'bg-violet-50',
     },
     {
       icon: AlertTriangle,
-      label: 'Alertes risques',
+      label: t('riskAlerts'),
       value: `${criticalCorrelations + warningCorrelations}`,
       color: criticalCorrelations > 0 ? 'text-rose-600' : warningCorrelations > 0 ? 'text-amber-600' : 'text-slate-600',
       bg: criticalCorrelations > 0 ? 'bg-rose-50' : warningCorrelations > 0 ? 'bg-amber-50' : 'bg-slate-50',
-      sublabel: criticalCorrelations > 0 ? `${criticalCorrelations} critique(s)` : undefined,
+      sublabel: criticalCorrelations > 0 ? `${criticalCorrelations} ${t('critical')}` : undefined,
     },
   ];
 

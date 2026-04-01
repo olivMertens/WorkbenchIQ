@@ -14,6 +14,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import type { CustomerJourneyEvent } from '@/lib/customer360-types';
+import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
 import Link from 'next/link';
 
@@ -21,23 +22,23 @@ interface CustomerTimelineProps {
   events: CustomerJourneyEvent[];
 }
 
-const PERSONA_CONFIG: Record<string, { icon: typeof ClipboardList; color: string; bg: string; border: string; label: string }> = {
-  underwriting: { icon: ClipboardList, color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200', label: 'Souscription Vie & Santé' },
-  life_health_claims: { icon: Stethoscope, color: 'text-cyan-700', bg: 'bg-cyan-50', border: 'border-cyan-200', label: 'Sinistres Santé' },
-  automotive_claims: { icon: Car, color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200', label: 'Sinistres Auto' },
-  mortgage_underwriting: { icon: Home, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', label: 'Souscription Hypothécaire' },
+const PERSONA_CONFIG: Record<string, { icon: typeof ClipboardList; color: string; bg: string; border: string; labelKey: string }> = {
+  underwriting: { icon: ClipboardList, color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200', labelKey: 'personaUnderwriting' },
+  life_health_claims: { icon: Stethoscope, color: 'text-cyan-700', bg: 'bg-cyan-50', border: 'border-cyan-200', labelKey: 'personaHealthClaims' },
+  automotive_claims: { icon: Car, color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200', labelKey: 'personaAutoClaims' },
+  mortgage_underwriting: { icon: Home, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', labelKey: 'personaMortgage' },
 };
 
-const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; label: string }> = {
-  approved: { icon: CheckCircle2, color: 'text-emerald-500', label: 'Approuvé' },
-  completed: { icon: CheckCircle2, color: 'text-emerald-500', label: 'Terminé' },
-  closed: { icon: CheckCircle2, color: 'text-slate-500', label: 'Clôturé' },
-  conditional: { icon: AlertTriangle, color: 'text-amber-500', label: 'Sous conditions' },
-  referred: { icon: Clock, color: 'text-amber-500', label: 'Référé' },
-  pending: { icon: Clock, color: 'text-blue-500', label: 'En attente' },
-  in_progress: { icon: Clock, color: 'text-blue-500', label: 'En cours' },
-  investigating: { icon: SearchIcon, color: 'text-orange-500', label: 'Enquête' },
-  declined: { icon: XCircle, color: 'text-rose-500', label: 'Refusé' },
+const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; labelKey: string }> = {
+  approved: { icon: CheckCircle2, color: 'text-emerald-500', labelKey: 'statusApproved' },
+  completed: { icon: CheckCircle2, color: 'text-emerald-500', labelKey: 'statusCompleted' },
+  closed: { icon: CheckCircle2, color: 'text-slate-500', labelKey: 'statusClosed' },
+  conditional: { icon: AlertTriangle, color: 'text-amber-500', labelKey: 'statusConditional' },
+  referred: { icon: Clock, color: 'text-amber-500', labelKey: 'statusReferred' },
+  pending: { icon: Clock, color: 'text-blue-500', labelKey: 'statusPending' },
+  in_progress: { icon: Clock, color: 'text-blue-500', labelKey: 'statusInProgress' },
+  investigating: { icon: SearchIcon, color: 'text-orange-500', labelKey: 'statusInvestigating' },
+  declined: { icon: XCircle, color: 'text-rose-500', labelKey: 'statusDeclined' },
 };
 
 const EVENT_TYPE_ICONS: Record<string, typeof FileText> = {
@@ -50,11 +51,12 @@ const EVENT_TYPE_ICONS: Record<string, typeof FileText> = {
 };
 
 export default function CustomerTimeline({ events }: CustomerTimelineProps) {
+  const t = useTranslations('customer360');
   if (events.length === 0) {
     return (
       <div className="text-center py-12 text-slate-400">
         <Clock className="w-10 h-10 mx-auto mb-2 opacity-40" />
-        <p>Aucun événement de parcours pour le moment.</p>
+        <p>{t('noJourneyEvents')}</p>
       </div>
     );
   }
@@ -72,7 +74,7 @@ export default function CustomerTimeline({ events }: CustomerTimelineProps) {
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
       <h2 className="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
         <Clock className="w-5 h-5 text-indigo-500" />
-        Parcours client
+        {t('customerJourney')}
       </h2>
 
       <div className="space-y-8">
@@ -107,7 +109,7 @@ export default function CustomerTimeline({ events }: CustomerTimelineProps) {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <span className={clsx('text-xs font-medium px-2 py-0.5 rounded-full', personaCfg.bg, personaCfg.color)}>
-                                {personaCfg.label}
+                                {t(personaCfg.labelKey)}
                               </span>
                               <span className="text-xs text-slate-400">{formatDate(event.date)}</span>
                             </div>
@@ -121,7 +123,7 @@ export default function CustomerTimeline({ events }: CustomerTimelineProps) {
                           {/* Status badge */}
                           <div className="flex items-center gap-1 ml-4 shrink-0">
                             <StatusIcon className={clsx('w-4 h-4', statusCfg.color)} />
-                            <span className={clsx('text-xs font-medium', statusCfg.color)}>{statusCfg.label}</span>
+                            <span className={clsx('text-xs font-medium', statusCfg.color)}>{t(statusCfg.labelKey)}</span>
                           </div>
                         </div>
 

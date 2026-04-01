@@ -20,6 +20,7 @@ import RiskCorrelationBanner from '@/components/customer360/RiskCorrelationBanne
 import CustomerJourneyMetrics from '@/components/customer360/CustomerJourneyMetrics';
 import PersonaSelector from '@/components/PersonaSelector';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useTranslations } from 'next-intl';
 
 export default function CustomerDetailPage() {
   const params = useParams();
@@ -28,6 +29,7 @@ export default function CustomerDetailPage() {
   const [data, setData] = useState<Customer360View | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations('customer360');
   const [authUser, setAuthUser] = useState<string | null>(null);
   const [authEnabled, setAuthEnabled] = useState(false);
 
@@ -93,7 +95,7 @@ export default function CustomerDetailPage() {
               className="flex items-center gap-1 px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
             >
               <Users className="w-4 h-4 text-indigo-600" />
-              <span className="text-sm font-medium text-indigo-700">Client 360</span>
+              <span className="text-sm font-medium text-indigo-700">{t('title')}</span>
             </Link>
           </div>
 
@@ -137,13 +139,13 @@ export default function CustomerDetailPage() {
           className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-indigo-600 transition-colors mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
-          Retour à la liste des clients
+          {t('backToList')}
         </button>
 
         {loading && (
           <div className="flex items-center justify-center py-24">
             <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-            <span className="ml-3 text-slate-500">Chargement des données client…</span>
+            <span className="ml-3 text-slate-500">{t('loadingCustomer')}</span>
           </div>
         )}
 
@@ -155,7 +157,7 @@ export default function CustomerDetailPage() {
               onClick={() => router.push('/customers')}
               className="mt-4 text-sm text-indigo-600 hover:text-indigo-800"
             >
-              ← Retour à la liste des clients
+              ← {t('backToList')}
             </button>
           </div>
         )}
@@ -177,7 +179,7 @@ export default function CustomerDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Persona Summary Cards */}
               <div className="lg:col-span-1 space-y-4">
-                <h2 className="text-lg font-semibold text-slate-900">Résumé des produits</h2>
+                <h2 className="text-lg font-semibold text-slate-900">{t('productSummary')}</h2>
                 {data.persona_summaries.map(summary => (
                   <PersonaSummaryCard key={summary.persona} summary={summary} />
                 ))}

@@ -16,12 +16,14 @@ import type { CustomerProfile } from '@/lib/customer360-types';
 import CustomerListView from '@/components/customer360/CustomerListView';
 import PersonaSelector from '@/components/PersonaSelector';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useTranslations } from 'next-intl';
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
   const router = useRouter();
+  const t = useTranslations('customer360');
   const [authUser, setAuthUser] = useState<string | null>(null);
   const [authEnabled, setAuthEnabled] = useState(false);
 
@@ -94,7 +96,7 @@ export default function CustomersPage() {
             {/* Active tab indicator */}
             <div className="flex items-center gap-1 px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-lg">
               <Users className="w-4 h-4 text-indigo-600" />
-              <span className="text-sm font-medium text-indigo-700">Client 360</span>
+              <span className="text-sm font-medium text-indigo-700">{t('title')}</span>
             </div>
           </div>
 
@@ -104,7 +106,7 @@ export default function CustomersPage() {
               className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             >
               <Settings className="w-4 h-4" />
-              <span>Administration</span>
+              <span>{t('admin')}</span>
             </Link>
 
             <LanguageSwitcher />
@@ -120,7 +122,7 @@ export default function CustomersPage() {
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Déconnexion"
+                  title={t('signOut')}
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -139,10 +141,10 @@ export default function CustomersPage() {
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center">
                 <Users className="w-5 h-5 text-white" />
               </div>
-              Client 360
+              {t('title')}
             </h1>
             <p className="text-sm text-slate-500 mt-1">
-              Vue unifiée multi-persona des parcours clients — souscription, sinistres et hypothécaire.
+              {t('subtitle')}
             </p>
           </div>
 
@@ -158,7 +160,7 @@ export default function CustomersPage() {
               ) : (
                 <Database className="w-4 h-4" />
               )}
-              {seeding ? 'Chargement…' : 'Charger les données d\'exemple'}
+              {seeding ? t('seeding') : t('loadSampleData')}
             </button>
           )}
         </div>

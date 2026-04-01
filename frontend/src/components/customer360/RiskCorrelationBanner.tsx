@@ -10,6 +10,7 @@ import {
   Home,
 } from 'lucide-react';
 import type { RiskCorrelation } from '@/lib/customer360-types';
+import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
 
 interface RiskCorrelationBannerProps {
@@ -50,14 +51,15 @@ const PERSONA_ICONS: Record<string, typeof ClipboardList> = {
   mortgage_underwriting: Home,
 };
 
-const PERSONA_LABELS: Record<string, string> = {
-  underwriting: 'Souscription',
-  life_health_claims: 'Sinistres Santé',
-  automotive_claims: 'Sinistres Auto',
-  mortgage_underwriting: 'Hypothécaire',
+const PERSONA_LABEL_KEYS: Record<string, string> = {
+  underwriting: 'personaUnderwriting',
+  life_health_claims: 'personaHealthClaims',
+  automotive_claims: 'personaAutoClaims',
+  mortgage_underwriting: 'personaMortgage',
 };
 
 export default function RiskCorrelationBanner({ correlations }: RiskCorrelationBannerProps) {
+  const t = useTranslations('customer360');
   if (correlations.length === 0) return null;
 
   // Sort: critical first, then warning, then info
@@ -70,7 +72,7 @@ export default function RiskCorrelationBanner({ correlations }: RiskCorrelationB
     <div className="space-y-3">
       <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
         <AlertTriangle className="w-5 h-5 text-amber-500" />
-        Alertes risques multi-persona
+        {t('riskInsights')}
       </h2>
 
       {sorted.map((correlation, idx) => {
@@ -103,7 +105,7 @@ export default function RiskCorrelationBanner({ correlations }: RiskCorrelationB
                 </p>
                 {/* Persona tags */}
                 <div className="flex items-center gap-2 mt-3">
-                  <span className="text-xs text-slate-400">Concerne :</span>
+                  <span className="text-xs text-slate-400">{t('involves')}</span>
                   {correlation.personas_involved.map(persona => {
                     const Icon = PERSONA_ICONS[persona] || ClipboardList;
                     return (
@@ -112,7 +114,7 @@ export default function RiskCorrelationBanner({ correlations }: RiskCorrelationB
                         className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/70 rounded-full text-xs font-medium text-slate-600 border border-white/50"
                       >
                         <Icon className="w-3 h-3" />
-                        {PERSONA_LABELS[persona] || persona}
+                        {PERSONA_LABEL_KEYS[persona] ? t(PERSONA_LABEL_KEYS[persona]) : persona}
                       </span>
                     );
                   })}
