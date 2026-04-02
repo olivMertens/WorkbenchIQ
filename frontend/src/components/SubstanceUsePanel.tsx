@@ -32,7 +32,11 @@ function parseSubstanceUse(application: ApplicationMetadata): SubstanceData {
   if (lifestyle) {
     const smokingStatus = lifestyle.smoking_status || '';
     const alcoholInfo = lifestyle.alcohol || '';
+    // Use dedicated drug_use field; fall back to other only if it contains drug-related keywords
+    const drugUseInfo = lifestyle.drug_use || '';
     const otherInfo = lifestyle.other || '';
+    const drugKeywords = /cannabis|stup[eé]fiant|drogue|coca[iï]n|hero[iï]n|opiac|marijuana|thc|mdma|amphétamine|recreational|substance|controlled/i;
+    const effectiveDrugInfo = drugUseInfo || (drugKeywords.test(otherInfo) ? otherInfo : '');
     
     const tobaccoFound = smokingStatus.length > 0 && 
       !smokingStatus.toLowerCase().includes('non-smoker') &&
@@ -41,6 +45,10 @@ function parseSubstanceUse(application: ApplicationMetadata): SubstanceData {
     const alcoholFound = alcoholInfo.length > 0 && 
       !alcoholInfo.toLowerCase().includes('no alcohol') &&
       !alcoholInfo.toLowerCase().includes('none');
+    
+    const drugsFound = effectiveDrugInfo.length > 0 &&
+      !effectiveDrugInfo.toLowerCase().includes('aucun') &&
+      !effectiveDrugInfo.toLowerCase().includes('none');
     
     return {
       tobacco: { 
@@ -55,8 +63,8 @@ function parseSubstanceUse(application: ApplicationMetadata): SubstanceData {
       },
       marijuana: { found: false, details: '' },
       drugs: { 
-        found: otherInfo.length > 0, 
-        details: otherInfo,
+        found: drugsFound, 
+        details: effectiveDrugInfo,
         confidence: drugField?.confidence,
       },
     };

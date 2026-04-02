@@ -678,7 +678,9 @@ Return STRICT JSON:
   "lifestyle": {
     "smoking_status": "Non-smoker | Ex-smoker | Smoker",
     "alcohol": "Description if available",
-    "other": "Any other lifestyle notes."
+    "drug_use": "Cannabis, recreational drugs, or controlled substances if mentioned. Empty string if none.",
+    "physical_activity": "Exercise, sports, physical activity if mentioned. Empty string if none.",
+    "other": "Any other lifestyle notes not covered above."
   },
   "risk_assessment": "Low | Moderate | High",
   "underwriting_action": "Notes on whether any additional evidence is required."
