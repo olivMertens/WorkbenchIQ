@@ -93,13 +93,22 @@ export default function TopNav({
       <div className="flex items-center justify-between px-6 py-3">
         {/* Logo & Brand */}
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2.5">
             <img
               src="/groupama-logo.png"
-              alt="GroupaIQ"
+              alt="Groupama"
               className="h-9 w-auto"
             />
-            <span className="font-semibold text-lg text-slate-900">GroupaIQ</span>
+            <span className="text-slate-300 font-light select-none">|</span>
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
+              <rect width="32" height="32" rx="8" fill="url(#giq-grad)"/>
+              <text x="16" y="22" textAnchor="middle" fontFamily="system-ui, sans-serif" fontWeight="800" fontSize="16" fill="white">IQ</text>
+              <circle cx="26" cy="6" r="3" fill="#00a651" opacity="0.9"/>
+              <defs><linearGradient id="giq-grad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stopColor="#006838"/><stop offset="100%" stopColor="#004d2a"/></linearGradient></defs>
+            </svg>
+            <span className="font-bold text-lg tracking-tight">
+              <span className="text-slate-900">Groupa</span><span className="text-[#006838]">IQ</span>
+            </span>
           </Link>
 
           {/* Persona Selector */}

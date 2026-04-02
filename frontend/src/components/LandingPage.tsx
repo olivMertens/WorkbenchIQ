@@ -270,16 +270,6 @@ export default function LandingPage({
         onDismiss={() => { setProcessingStep('idle'); setProcessingMessage(''); setProcessingAppId(null); }}
       />
 
-      {/* Priority Queues */}
-      <PriorityQueues
-        readyForReview={queues.readyForReview}
-        needsAnalysis={queues.needsAnalysis}
-        hasErrors={queues.hasErrors}
-        personaPrimaryColor={personaConfig.primaryColor}
-        getAppDisplayTitle={getAppDisplayTitle}
-        onSelectApp={onSelectApp}
-      />
-
       {/* Upload Drop Zone */}
       <div className="max-w-7xl mx-auto px-6 lg:px-8 pb-6">
         <div className={clsx(
@@ -328,6 +318,16 @@ export default function LandingPage({
           </div>
         )}
       </div>
+
+      {/* Priority Queues */}
+      <PriorityQueues
+        readyForReview={queues.readyForReview}
+        needsAnalysis={queues.needsAnalysis}
+        hasErrors={queues.hasErrors}
+        personaPrimaryColor={personaConfig.primaryColor}
+        getAppDisplayTitle={getAppDisplayTitle}
+        onSelectApp={onSelectApp}
+      />
 
       {/* Applications Table */}
       <ApplicationsList

@@ -180,13 +180,16 @@ export default function DemoGuideModal() {
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-2xl max-h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-primary-600 to-primary-700 rounded-t-2xl">
-          <div>
-            <h2 className="text-lg font-semibold text-white">
-              {lang === 'fr' ? '📋 Guide de Démonstration' : '📋 Demo Guide'}
-            </h2>
-            <p className="text-sm text-primary-100">
-              {lang === 'fr' ? scenario.label : scenario.labelEn}
-            </p>
+          <div className="flex items-center gap-3">
+            <img src="/microsoft-logo-gray.avif" alt="Microsoft" className="h-5 w-auto brightness-0 invert opacity-80" />
+            <div>
+              <h2 className="text-lg font-semibold text-white">
+                {lang === 'fr' ? 'Guide de Démonstration' : 'Demo Guide'}
+              </h2>
+              <p className="text-sm text-primary-100">
+                {lang === 'fr' ? `Démo pour Groupama — ${scenario.label}` : `Demo for Groupama — ${scenario.labelEn}`}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -278,10 +281,15 @@ export default function DemoGuideModal() {
 
         {/* Footer */}
         <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 rounded-b-2xl flex items-center justify-between">
-          <p className="text-xs text-slate-500">
+          <div className="flex items-center gap-3">
+            <img src="/microsoft-logo-gray.avif" alt="Microsoft" className="h-3.5 w-auto opacity-50" />
+            <span className="text-xs text-slate-400">×</span>
+            <img src="/groupama-logo.png" alt="Groupama" className="h-4 w-auto opacity-50" />
+          </div>
+          <p className="text-xs text-slate-400">
             {lang === 'fr'
-              ? `PDF de démo : ${scenario.demoPdf}`
-              : `Demo PDF: ${scenario.demoPdf}`}
+              ? `PDF : ${scenario.demoPdf}`
+              : `PDF: ${scenario.demoPdf}`}
           </p>
           <button
             onClick={() => setIsOpen(false)}
