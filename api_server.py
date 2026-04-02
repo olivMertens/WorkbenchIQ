@@ -33,6 +33,7 @@ from app.storage import (
 from app.processing import (
     run_content_understanding_for_files,
     run_underwriting_prompts,
+    ALL_SUPPORTED_EXTENSIONS,
 )
 from app.prompts import load_prompts, save_prompts
 from app.content_understanding_client import (
@@ -835,6 +836,16 @@ async def create_application(
     try:
         if not files:
             raise HTTPException(status_code=400, detail="No files provided")
+
+        # Validate file extensions against CU-supported formats
+        for f in files:
+            if f.filename:
+                ext = Path(f.filename).suffix.lower()
+                if ext and ext not in ALL_SUPPORTED_EXTENSIONS:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Unsupported file type: {f.filename}",
+                    )
 
         settings = load_settings()
         app_id = str(uuid.uuid4())[:8]

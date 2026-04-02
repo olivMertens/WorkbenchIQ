@@ -54,15 +54,19 @@ export default function LandingPage({
   const isUnderwritingPersona = currentPersona === 'underwriting';
 
   const getAcceptedFileTypes = () => {
-    if (isAutomotiveClaims) return '.pdf,.png,.jpg,.jpeg,.gif,.webp,.mp4,.mov,.avi,.webm';
-    return '.pdf,.png,.jpg,.jpeg,.gif,.webp';
+    const docs = '.pdf,.docx,.xlsx,.pptx,.tiff';
+    const images = '.jpg,.jpeg,.jpe,.png,.bmp,.heif,.heic,.gif,.webp';
+    const video = '.mp4,.m4v,.mov,.avi,.mkv,.wmv,.flv';
+    if (isAutomotiveClaims) return `${docs},${images},${video}`;
+    return `${docs},${images}`;
   };
 
   const getAcceptedMimeTypes = () => {
-    if (isAutomotiveClaims) {
-      return ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
-    }
-    return ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+    const docs = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'image/tiff'];
+    const images = ['image/png', 'image/jpeg', 'image/bmp', 'image/heif', 'image/heic', 'image/gif', 'image/webp'];
+    const video = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/x-ms-wmv', 'video/x-flv'];
+    if (isAutomotiveClaims) return [...docs, ...images, ...video];
+    return [...docs, ...images];
   };
 
   // Dashboard stats
@@ -292,9 +296,16 @@ export default function LandingPage({
               <div className="flex items-center gap-4">
                 <Upload className="w-5 h-5 text-slate-400" />
                 <span className="text-slate-500">{t('dropFilesHere')}</span>
-                <span className="text-xs text-slate-400 border-l border-slate-200 pl-4">
-                  {getAcceptedFileTypes().replaceAll('.', '').toUpperCase().split(',').join(', ')}
-                </span>
+                <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
+                  <span className="text-xs font-medium text-slate-500">{t('acceptedDocuments')}</span>
+                  <span className="text-xs text-slate-400">{'·'}</span>
+                  <span className="text-xs font-medium text-slate-500">{t('acceptedImages')}</span>
+                  {isAutomotiveClaims && (
+                    <><span className="text-xs text-slate-400">{'·'}</span><span className="text-xs font-medium text-slate-500">{t('acceptedVideo')}</span></>
+                  )}
+                  <span className="text-xs text-slate-400">{'·'}</span>
+                  <span className="text-xs text-slate-400">{t('maxFileSize')}</span>
+                </div>
               </div>
               {isUnderwritingPersona && (
                 <button type="button" onClick={(e) => { e.stopPropagation(); setLargeDocumentMode(!largeDocumentMode); }}

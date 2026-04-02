@@ -74,7 +74,13 @@
     "condense": "Gros document",
     "condenseHelp": "Résume les documents volumineux pour respecter les limites de contexte IA. S'active automatiquement au-delà de 1,5 Mo.",
     "processing": "Traitement en cours...",
-    "supportedFormats": "PDF, images acceptés"
+    "supportedFormats": "PDF, images acceptés",
+    "acceptedDocuments": "PDF, DOCX, XLSX, PPTX",
+    "acceptedImages": "JPG, PNG, TIFF, BMP",
+    "acceptedVideo": "MP4, MOV, AVI, MKV",
+    "maxFileSize": "200 Mo max",
+    "maxFiles": "10 fichiers max",
+    "unsupportedFileType": "Type de fichier non supporté : {name}"
   },
   "documents": {
     "title": "Documents",

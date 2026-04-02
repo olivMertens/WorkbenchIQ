@@ -39,15 +39,19 @@ from .glossary import format_glossary_for_prompt
 logger = setup_logging()
 
 # Media type detection based on file extension
-DOCUMENT_EXTENSIONS = {'.pdf', '.docx', '.doc', '.txt', '.rtf', '.xlsx', '.xls', '.pptx', '.ppt'}
-IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.heic'}
-VIDEO_EXTENSIONS = {'.mp4', '.mov', '.avi', '.mkv', '.webm', '.wmv', '.m4v'}
+# Aligned with Azure Content Understanding supported formats
+DOCUMENT_EXTENSIONS = {'.pdf', '.tiff', '.docx', '.xlsx', '.pptx', '.txt', '.rtf', '.html', '.md', '.eml', '.msg', '.xml'}
+IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.jpe', '.png', '.bmp', '.heif', '.heic', '.gif', '.webp'}
+VIDEO_EXTENSIONS = {'.mp4', '.m4v', '.flv', '.wmv', '.asf', '.avi', '.mkv', '.mov'}
+AUDIO_EXTENSIONS = {'.wav', '.mp3', '.ogg', '.flac', '.wma', '.aac', '.amr', '.m4a', '.spx'}
+
+ALL_SUPPORTED_EXTENSIONS = DOCUMENT_EXTENSIONS | IMAGE_EXTENSIONS | VIDEO_EXTENSIONS | AUDIO_EXTENSIONS
 
 
 def detect_media_type(filename: str) -> str:
     """Detect media type from filename extension.
     
-    Returns: 'document', 'image', 'video', or 'unknown'
+    Returns: 'document', 'image', 'video', 'audio', or 'unknown'
     """
     ext = os.path.splitext(filename.lower())[1]
     if ext in DOCUMENT_EXTENSIONS:
@@ -56,6 +60,8 @@ def detect_media_type(filename: str) -> str:
         return 'image'
     elif ext in VIDEO_EXTENSIONS:
         return 'video'
+    elif ext in AUDIO_EXTENSIONS:
+        return 'audio'
     return 'unknown'
 
 

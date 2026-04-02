@@ -16,10 +16,14 @@ import puppeteer from 'puppeteer';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 
-// Read the Groupama logo as base64
+// Read logos as base64 data URIs
 const logoPath = path.join(ROOT, 'frontend', 'public', 'groupama-logo.png');
 const logoBase64 = fs.readFileSync(logoPath).toString('base64');
 const logoDataUri = `data:image/png;base64,${logoBase64}`;
+
+const msLogoPath = path.join(ROOT, 'assets', 'Microsoft-logo_rgb_c-gray-18.avif');
+const msLogoBase64 = fs.readFileSync(msLogoPath).toString('base64');
+const msLogoDataUri = `data:image/avif;base64,${msLogoBase64}`;
 
 // Files to convert
 const files = [
@@ -86,14 +90,21 @@ function buildHtmlPage(bodyHtml, subtitle) {
   .cover-header {
     display: flex;
     align-items: center;
-    gap: 18px;
+    justify-content: space-between;
     margin-bottom: 10px;
     padding-bottom: 14px;
     border-bottom: 3px solid #006838;
   }
-  .cover-header img {
+  .cover-header .logo-ms img {
+    height: 36px;
+    width: auto;
+  }
+  .cover-header .logo-groupama img {
     height: 48px;
     width: auto;
+  }
+  .cover-header .title-block {
+    text-align: center;
   }
   .cover-header .title-block h1 {
     margin: 0;
@@ -220,11 +231,12 @@ function buildHtmlPage(bodyHtml, subtitle) {
 <body>
 
 <div class="cover-header">
-  <img src="${logoDataUri}" alt="Groupama" />
+  <div class="logo-ms"><img src="${msLogoDataUri}" alt="Microsoft" /></div>
   <div class="title-block">
     <h1>GroupaIQ</h1>
     <div class="subtitle">${subtitle} — Avril 2026</div>
   </div>
+  <div class="logo-groupama"><img src="${logoDataUri}" alt="Groupama" /></div>
 </div>
 
 ${bodyHtml}
@@ -301,7 +313,7 @@ async function generatePdf(file) {
     headerTemplate: '<span></span>',
     footerTemplate: `
       <div style="width:100%; font-size:8pt; color:#94a3b8; display:flex; justify-content:space-between; padding: 0 18mm;">
-        <span>GroupaIQ — ${file.subtitle}</span>
+        <span>GroupaIQ — Microsoft × Groupama — ${file.subtitle}</span>
         <span>Page <span class="pageNumber"></span> / <span class="totalPages"></span></span>
       </div>
     `,
@@ -318,7 +330,7 @@ async function generatePdf(file) {
 
 // Main
 async function main() {
-  console.log('Generating architecture PDFs with Groupama logo + Mermaid diagrams...\n');
+  console.log('Generating architecture PDFs with Microsoft + Groupama logos + Mermaid diagrams...\n');
 
   for (const file of files) {
     await generatePdf(file);
