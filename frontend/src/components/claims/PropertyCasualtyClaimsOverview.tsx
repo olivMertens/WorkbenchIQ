@@ -586,7 +586,7 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
                           <span className="font-medium text-slate-900">{"Signaux d'alerte"}</span>
                           {alertSignals.length > 0 ? (
                             <span className={clsx('px-1.5 py-0.5 text-xs rounded', alertSignals.some(s => s.level === 'high') ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700')}>
-                              {alertSignals.length} signal{alertSignals.length > 1 ? 'x' : ''}
+                              {alertSignals.length} {alertSignals.length > 1 ? 'signaux' : 'signal'}
                             </span>
                           ) : (
                             <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded">RAS</span>
