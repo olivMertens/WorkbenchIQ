@@ -413,6 +413,10 @@ async def run_extract_and_analyze_background(app_id: str, processing_mode: Optio
     settings = load_settings()
     app_md = load_application(settings.app.storage_root, app_id)
     if app_md and app_md.processing_status != "error" and app_md.document_markdown:
+        # Bridge status to "analyzing" immediately to prevent null gap
+        # that stops frontend polling between extraction and analysis
+        app_md.processing_status = "analyzing"
+        save_application_metadata(settings.app.storage_root, app_md)
         await run_analysis_background(app_id, processing_mode=processing_mode)
     else:
         logger.warning("Skipping analysis for %s - extraction failed or no content", app_id)

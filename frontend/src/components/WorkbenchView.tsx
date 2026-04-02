@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sparkles, FileText, ChevronLeft, Loader2, Activity } from 'lucide-react';
 import TopNav from '@/components/TopNav';
 import PatientHeader from '@/components/PatientHeader';
@@ -83,18 +83,31 @@ export default function WorkbenchView({
   }, [applicationId]);
 
   // Poll for status updates if application is processing
+  const lastProcessingTime = useRef(0);
   useEffect(() => {
     if (!selectedApp) return;
-    // Stop polling when processing is done (processing_status is null/undefined and we have content)
-    const isProcessing = selectedApp.processing_status === 'extracting' || selectedApp.processing_status === 'analyzing';
-    if (!isProcessing) return;
+
+    if (selectedApp.processing_status) {
+      lastProcessingTime.current = Date.now();
+    }
+
+    // Continue polling during processing OR for 8s after it ends (grace period
+    // to catch brief null gaps between extraction→analysis transitions)
+    const shouldPoll = selectedApp.processing_status ||
+                       (lastProcessingTime.current > 0 && Date.now() - lastProcessingTime.current < 8000);
+    if (!shouldPoll) return;
     
     const appId = selectedApp.id;
     const interval = setInterval(async () => {
       try {
         const updatedApp = await getApplication(appId);
-        // Verify we're still looking at the same app (prevent cross-persona pollution)
         if (updatedApp.id !== appId) return;
+
+        // End grace polling after timeout
+        if (!updatedApp.processing_status && Date.now() - lastProcessingTime.current >= 8000) {
+          clearInterval(interval);
+        }
+
         if (updatedApp.status !== selectedApp.status || updatedApp.processing_status !== selectedApp.processing_status) {
             setSelectedApp(updatedApp);
         }
@@ -288,13 +301,14 @@ export default function WorkbenchView({
             </div>
           ) : selectedApp ? (
             <>
-               {/* Processing progress banner */}
-               {selectedApp.processing_status && (
-                 <div className={`border-b px-6 py-3 flex items-center gap-3 ${
-                   selectedApp.processing_status === 'analyzing'
-                     ? 'bg-violet-50 border-violet-200'
-                     : 'bg-sky-50 border-sky-200'
-                 }`}>
+               {/* Processing progress banner — always mounted, hidden via CSS transition */}
+               <div className={`border-b px-6 flex items-center gap-3 transition-all duration-300 overflow-hidden ${
+                 selectedApp.processing_status
+                   ? selectedApp.processing_status === 'analyzing'
+                     ? 'max-h-14 py-3 opacity-100 bg-violet-50 border-violet-200'
+                     : 'max-h-14 py-3 opacity-100 bg-sky-50 border-sky-200'
+                   : 'max-h-0 py-0 opacity-0 border-transparent'
+               }`}>
                    {selectedApp.processing_status === 'analyzing' ? (
                      <Activity className="w-4 h-4 text-violet-600 animate-pulse flex-shrink-0" />
                    ) : (
@@ -315,8 +329,7 @@ export default function WorkbenchView({
                      </span>
                    </div>
                    <span className="text-xs bg-sky-100 text-sky-600 px-2 py-0.5 rounded-full font-medium flex-shrink-0">{tw('live')}</span>
-                 </div>
-               )}
+               </div>
                {currentPersona === 'underwriting' && <PatientHeader application={selectedApp} />}
                {renderContent()}
             </>

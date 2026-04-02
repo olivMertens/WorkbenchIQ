@@ -17,9 +17,11 @@ import {
   Film,
   ZoomIn,
   FileDown,
+  Layers,
 } from 'lucide-react';
 import type { ApplicationMetadata } from '@/lib/types';
-import { getMediaUrl } from '@/lib/api';
+import type { FieldSchema } from '@/lib/types';
+import { getMediaUrl, getAnalyzerSchema } from '@/lib/api';
 import clsx from 'clsx';
 import GalleryLightbox from '../GalleryLightbox';
 import type { GalleryItem } from '../GalleryLightbox';
@@ -196,6 +198,8 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
   const [checkedTasks, setCheckedTasks] = useState<number[]>([]);
   const [expandedSection, setExpandedSection] = useState<string>('liability');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [showSchema, setShowSchema] = useState(false);
+  const [analyzerSchema, setAnalyzerSchema] = useState<FieldSchema | null>(null);
 
   const ef = application?.extracted_fields || {};
   const llmOutputs = (application?.llm_outputs || {}) as Record<string, unknown>;
@@ -211,6 +215,15 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
       .then(data => { if (data) setCustomerData(data); })
       .catch(() => {});
   }, [application?.external_reference]);
+
+  // Fetch analyzer schema on demand
+  useEffect(() => {
+    if (!showSchema || analyzerSchema) return;
+    const persona = application?.persona || 'habitation_claims';
+    getAnalyzerSchema(persona)
+      .then(schema => setAnalyzerSchema(schema))
+      .catch(() => {});
+  }, [showSchema, analyzerSchema, application?.persona]);
 
   // Derive key info from document_markdown when extracted_fields is empty
   const markdownDerivedFields = useMemo(() => {
@@ -602,14 +615,44 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
               </div>
             </div>
             
-            {/* Extracted Fields */}
+            {/* Extracted Fields / Analyzer Schema (toggle) */}
             <div className="col-span-4 bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col overflow-hidden">
               <div className="px-3 py-2 border-b border-slate-100 flex items-center gap-2 bg-slate-50 flex-shrink-0">
                 <TrendingUp className="w-4 h-4 text-indigo-600" />
-                <span className="font-semibold text-slate-900 text-sm">Information du dossier</span>
+                <span className="font-semibold text-slate-900 text-sm">
+                  {showSchema ? 'Schéma d\'extraction CU' : 'Information du dossier'}
+                </span>
+                <button
+                  onClick={() => setShowSchema(!showSchema)}
+                  className="ml-auto flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 transition-colors"
+                  title={showSchema ? 'Voir les données extraites' : 'Voir le schéma d\'extraction'}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  {showSchema ? 'Données' : 'Schéma CU'}
+                </button>
               </div>
               <div className="flex-1 overflow-auto p-3 text-xs">
-                {Object.keys(ef).length > 0 ? (
+                {showSchema ? (
+                  analyzerSchema ? (
+                    <div className="space-y-1">
+                      <div className="text-slate-500 mb-2">{analyzerSchema.field_count} champs définis — <span className="font-mono text-xs">{analyzerSchema.schema.name}</span></div>
+                      {Object.entries(analyzerSchema.schema.fields).map(([fieldName, field]) => (
+                        <div key={fieldName} className="flex items-start justify-between py-1 border-b border-slate-50 last:border-0">
+                          <div className="min-w-0 flex-1">
+                            <div className="font-mono text-xs font-medium text-slate-900">{fieldName}</div>
+                            <div className="text-slate-500 truncate" title={field.description}>{field.description}</div>
+                          </div>
+                          <span className="ml-2 px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-xs flex-shrink-0">{field.type}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-slate-400">
+                      <Layers className="w-6 h-6 mx-auto mb-1" />
+                      <p>Chargement du schéma...</p>
+                    </div>
+                  )
+                ) : Object.keys(ef).length > 0 ? (
                   <div className="space-y-1">
                     {Object.entries(ef).filter(([key]) => {
                       const rawName = key.split(':').pop() || key;
