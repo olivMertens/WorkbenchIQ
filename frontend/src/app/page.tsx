@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect, useCallback } from 'react';
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import LandingPage from '@/components/LandingPage';
 import WorkbenchView from '@/components/WorkbenchView';
@@ -28,6 +28,7 @@ function HomeContent() {
   const { currentPersona, setPersona } = usePersona();
   const searchParams = useSearchParams();
   const [deepLinkHandled, setDeepLinkHandled] = useState(false);
+  const isFirstRender = useRef(true);
 
   const fetchUsername = useCallback(async () => {
     try {
@@ -105,8 +106,12 @@ function HomeContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (deepLinkHandled) return;
-    // Reset view to landing when persona changes
+    // Skip first render (initial load handled by deep-link or searchParams effect)
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    // Always reset view to landing when persona changes
     setView('landing');
     setSelectedAppId(null);
     fetchApplications();
