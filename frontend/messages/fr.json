@@ -248,7 +248,6 @@
     "name": "Nom",
     "save": "Enregistrer",
     "cancel": "Annuler",
-    "delete": "Supprimer",
     "create": "Créer"
   },
   "patient": {
@@ -294,7 +293,11 @@
       "moderate": "Risque modéré",
       "low": "Risque faible",
       "notAssessed": "Non évalué"
-    }
+    },
+    "aiAnalysis": "Analyse IA",
+    "unknown": "Inconnu",
+    "rerunTooltip": "Relancer l'analyse des risques",
+    "reportFooter": "Ce rapport a été généré automatiquement par l'assistant de souscription. Veuillez vérifier tous les résultats avant de prendre des décisions définitives."
   },
   "body": {
     "systemMap": "Carte des systèmes corporels",
@@ -315,7 +318,8 @@
     "returnToList": "Retour à la liste",
     "live": "en direct",
     "extractionInProgress": "Agent d'extraction en cours",
-    "analysisInProgress": "Agent d'analyse en cours"
+    "analysisInProgress": "Agent d'analyse en cours",
+    "riskAnalysisError": "Erreur lors de la ré-analyse des risques"
   },
   "actions": {
     "cancel": "Annuler",
@@ -585,5 +589,102 @@
     "poweredByAI": "Alimenté par l'analyse IA",
     "familyHistory": "Antécédents familiaux",
     "noFamilyHistory": "Aucun antécédent familial disponible."
+  },
+  "lab": {
+    "title": "Résultats biologiques et mesures",
+    "riskAssessment": "Évaluation du risque",
+    "noResults": "Aucun résultat biologique extrait",
+    "bloodPressure": "Tension artérielle",
+    "totalCholesterol": "Cholestérol total",
+    "ldlCholesterol": "LDL",
+    "hdlCholesterol": "HDL",
+    "triglycerides": "Triglycérides",
+    "pulseRate": "Fréquence cardiaque",
+    "urinalysis": "Analyse d'urine",
+    "protein": "Protéines",
+    "glucose": "Glucose",
+    "blood": "Sang"
+  },
+  "substance": {
+    "tobacco": "Tabac",
+    "alcohol": "Alcool",
+    "cannabis": "Cannabis",
+    "drugs": "Stupéfiants",
+    "detected": "Détecté",
+    "notDetected": "Non détecté",
+    "extractedInfo": "Informations extraites",
+    "noInfo": "Aucune information sur la consommation extraite des documents"
+  },
+  "family": {
+    "title": "Antécédents familiaux",
+    "noHistory": "Aucun antécédent familial disponible",
+    "diedAt": "décédé(e) à",
+    "onset": "début",
+    "risk": "Risque"
+  },
+  "allergies": {
+    "title": "Allergies connues",
+    "noAllergies": "Aucune allergie extraite"
+  },
+  "occupation": {
+    "title": "Profession et facteurs de risque",
+    "profession": "Profession",
+    "hazardousActivities": "Activités à risque",
+    "foreignTravel": "Déplacements à l'étranger",
+    "nonePlanned": "Aucun prévu",
+    "yesDetails": "Oui — voir détails",
+    "noData": "Aucune donnée professionnelle extraite"
+  },
+  "confidence": {
+    "high": "Élevée",
+    "medium": "Moyenne",
+    "low": "Faible",
+    "confidence": "Confiance"
+  },
+  "citation": {
+    "sourceTitle": "Citation source",
+    "document": "Document",
+    "page": "Page {pageNumber}",
+    "viewInDocument": "Voir dans le document",
+    "openPdf": "Ouvrir le PDF",
+    "source": "Source : {source}"
+  },
+  "riskPopover": {
+    "riskRating": "Niveau de risque : {rating}",
+    "rationale": "Justification",
+    "policyCitations": "Citations de polices",
+    "finding": "Constat : {finding}",
+    "noDetails": "Aucun détail supplémentaire disponible."
+  },
+  "chronological": {
+    "claimsTitle": "Chronologie du sinistre",
+    "claimsSubtitle": "Événements et documents extraits du dossier sinistre",
+    "habitationSubtitle": "Événements et documents extraits du dossier habitation",
+    "mortgageTitle": "Chronologie du dossier",
+    "mortgageSubtitle": "Étapes et documents du dossier hypothécaire",
+    "defaultTitle": "Aperçu chronologique",
+    "defaultSubtitle": "Événements médicaux et documents extraits du dossier",
+    "eventsTab": "Événements",
+    "medicalEventsTab": "Événements médicaux",
+    "stepsTab": "Étapes",
+    "documentsTab": "Documents",
+    "noEvents": "Aucun événement chronologique extrait",
+    "noMedicalEvents": "Aucune donnée chronologique extraite",
+    "noSteps": "Aucune étape chronologique extraite",
+    "noDocuments": "Aucun document téléchargé",
+    "unknownProcedure": "Procédure inconnue",
+    "unknownTest": "Examen inconnu",
+    "unknownCondition": "Pathologie inconnue",
+    "dateLabel": "Date :",
+    "reasonLabel": "Motif :",
+    "outcomeLabel": "Résultat :",
+    "resultLabel": "Résultat :",
+    "onsetLabel": "Début :",
+    "statusLabel": "État :",
+    "detailsLabel": "Détails :",
+    "statusOngoing": "En cours",
+    "statusResolved": "Résolu",
+    "statusActive": "Actif",
+    "statusMonitoring": "Suivi"
   }
 }

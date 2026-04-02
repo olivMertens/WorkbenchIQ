@@ -1,6 +1,7 @@
 'use client';
 
 import { Cigarette, Wine, Cannabis, AlertCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { ApplicationMetadata } from '@/lib/types';
 import ConfidenceIndicator from './ConfidenceIndicator';
 import clsx from 'clsx';
@@ -104,13 +105,14 @@ function parseSubstanceUse(application: ApplicationMetadata): SubstanceData {
 
 export default function SubstanceUsePanel({ application }: SubstanceUsePanelProps) {
   const [activeTab, setActiveTab] = useState<'tobacco' | 'alcohol' | 'marijuana' | 'drugs'>('tobacco');
+  const t = useTranslations('substance');
   const substanceData = parseSubstanceUse(application);
 
   const tabs = [
-    { id: 'tobacco' as const, label: 'Tabac', icon: Cigarette, data: substanceData.tobacco },
-    { id: 'alcohol' as const, label: 'Alcool', icon: Wine, data: substanceData.alcohol },
-    { id: 'marijuana' as const, label: 'Cannabis', icon: Cannabis, data: substanceData.marijuana },
-    { id: 'drugs' as const, label: 'Stupéfiants', icon: AlertCircle, data: substanceData.drugs },
+    { id: 'tobacco' as const, label: t('tobacco'), icon: Cigarette, data: substanceData.tobacco },
+    { id: 'alcohol' as const, label: t('alcohol'), icon: Wine, data: substanceData.alcohol },
+    { id: 'marijuana' as const, label: t('cannabis'), icon: Cannabis, data: substanceData.marijuana },
+    { id: 'drugs' as const, label: t('drugs'), icon: AlertCircle, data: substanceData.drugs },
   ];
 
   const activeData = tabs.find(t => t.id === activeTab)?.data;
@@ -133,7 +135,7 @@ export default function SubstanceUsePanel({ application }: SubstanceUsePanelProp
             <tab.icon className="w-4 h-4 mb-1" />
             <span>{tab.label}</span>
             <span className="text-[10px] text-slate-400">
-              {tab.data.found ? 'Détecté' : 'Non détecté'}
+              {tab.data.found ? t('detected') : t('notDetected')}
             </span>
           </button>
         ))}
@@ -144,7 +146,7 @@ export default function SubstanceUsePanel({ application }: SubstanceUsePanelProp
         {activeData?.details ? (
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <h4 className="text-sm font-medium text-slate-700">Informations extraites</h4>
+              <h4 className="text-sm font-medium text-slate-700">{t('extractedInfo')}</h4>
               {activeData.confidence !== undefined && (
                 <ConfidenceIndicator 
                   confidence={activeData.confidence} 
@@ -158,7 +160,7 @@ export default function SubstanceUsePanel({ application }: SubstanceUsePanelProp
           </div>
         ) : (
           <p className="text-sm text-slate-500 italic">
-            Aucune information sur la consommation extraite des documents
+            {t('noInfo')}
           </p>
         )}
       </div>

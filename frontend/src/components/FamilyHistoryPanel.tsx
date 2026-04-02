@@ -1,6 +1,7 @@
 'use client';
 
 import { Users } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { ApplicationMetadata, ExtractedField } from '@/lib/types';
 import ConfidenceIndicator from './ConfidenceIndicator';
 import CitationTooltip from './CitationTooltip';
@@ -17,7 +18,7 @@ interface FamilyHistoryData {
   citation?: ExtractedField;
 }
 
-function parseFamilyHistory(application: ApplicationMetadata): FamilyHistoryData {
+function parseFamilyHistory(application: ApplicationMetadata, t: (key: string) => string): FamilyHistoryData {
   const fields = application.extracted_fields || {};
   
   // Get confidence from underlying extracted fields (supports both English and French field names)
@@ -36,8 +37,8 @@ function parseFamilyHistory(application: ApplicationMetadata): FamilyHistoryData
       const parts: string[] = [];
       if (rel.relationship) parts.push(rel.relationship);
       if (rel.condition && rel.condition !== 'None reported') parts.push(rel.condition);
-      if (rel.age_at_death) parts.push(`died at ${rel.age_at_death}`);
-      if (rel.age_at_onset && rel.age_at_onset !== 'N/A') parts.push(`onset ${rel.age_at_onset}`);
+      if (rel.age_at_death) parts.push(`${t('diedAt')} ${rel.age_at_death}`);
+      if (rel.age_at_onset && rel.age_at_onset !== 'N/A') parts.push(`${t('onset')} ${rel.age_at_onset}`);
       if (rel.notes) parts.push(`(${rel.notes})`);
       return parts.join(': ');
     }).filter(Boolean);
@@ -98,7 +99,8 @@ function parseFamilyHistory(application: ApplicationMetadata): FamilyHistoryData
 }
 
 export default function FamilyHistoryPanel({ application }: FamilyHistoryPanelProps) {
-  const { summary, conditions, riskAssessment, confidence, citation } = parseFamilyHistory(application);
+  const t = useTranslations('family');
+  const { summary, conditions, riskAssessment, confidence, citation } = parseFamilyHistory(application, t);
 
   // Build citation data for tooltip
   const citationData = citation ? {
@@ -115,7 +117,7 @@ export default function FamilyHistoryPanel({ application }: FamilyHistoryPanelPr
           <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0">
             <Users className="w-5 h-5 text-teal-600" />
           </div>
-          <h2 className="text-base font-semibold text-slate-900">Antécédents familiaux</h2>
+          <h2 className="text-base font-semibold text-slate-900">{t('title')}</h2>
         </div>
         <div className="flex items-center gap-2">
           {/* Confidence & Citation indicators */}
@@ -135,7 +137,7 @@ export default function FamilyHistoryPanel({ application }: FamilyHistoryPanelPr
                 : riskAssessment.toLowerCase().includes('moderate')
                 ? 'bg-amber-100 text-amber-700'
                 : 'bg-emerald-100 text-emerald-700'
-            }`} title={`${riskAssessment} Risk`}>
+            })"`} title={`${riskAssessment} ${t('risk')}`}>
               {riskAssessment.length > 10 ? riskAssessment.split('-')[0] : riskAssessment}
             </span>
           )}
@@ -158,7 +160,7 @@ export default function FamilyHistoryPanel({ application }: FamilyHistoryPanelPr
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-slate-500 italic">Aucun antécédent familial disponible</p>
+        <p className="text-sm text-slate-500 italic">{t('noHistory')}</p>
       )}
     </div>
   );

@@ -166,7 +166,7 @@ export default function WorkbenchView({
         }
       } catch (err) {
         console.error('Failed to re-run risk analysis:', err);
-        addToast('error', 'Erreur lors de la ré-analyse des risques');
+        addToast('error', tw('riskAnalysisError'));
       }
     };
     

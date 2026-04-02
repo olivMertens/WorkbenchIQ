@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import type { ApplicationMetadata } from '@/lib/types';
 import ConfidenceIndicator from './ConfidenceIndicator';
@@ -137,13 +138,13 @@ function buildTimelineFromData(application: ApplicationMetadata): TimelineEntry[
         // Handle nested valueObject structure from Azure Content Understanding
         const surgery = item.valueObject || item;
         
-        const procedure = getStringValue(surgery.procedure) || 'Unknown procedure';
+        const procedure = getStringValue(surgery.procedure) || 'Procédure inconnue';
         const date = getStringValue(surgery.date) || '';
         const reason = getStringValue(surgery.reason) || '';
         const outcome = getStringValue(surgery.outcome) || '';
         
         const title = `${procedure}${reason ? ' - ' + reason : ''}`;
-        const details = `${procedure}\nDate: ${date}\nReason: ${reason}\nOutcome: ${outcome}`;
+        const details = `${procedure}\nDate : ${date}\nMotif : ${reason}\nRésultat : ${outcome}`;
         
         const parsedDate = parseDate(date);
         const displayDate = formatDateDisplay(parsedDate);
@@ -189,13 +190,13 @@ function buildTimelineFromData(application: ApplicationMetadata): TimelineEntry[
         // Handle nested valueObject structure from Azure Content Understanding
         const test = item.valueObject || item;
         
-        const testType = getStringValue(test.testType) || 'Unknown test';
+        const testType = getStringValue(test.testType) || 'Examen inconnu';
         const date = getStringValue(test.date) || '';
         const reason = getStringValue(test.reason) || '';
         const result = getStringValue(test.result) || '';
         
         const title = `${testType}${result ? ' - ' + result : ''}`;
-        const details = `${testType}\nDate: ${date}\nReason: ${reason}\nResult: ${result}`;
+        const details = `${testType}\nDate : ${date}\nMotif : ${reason}\nRésultat : ${result}`;
         
         const parsedDate = parseDate(date);
         const displayDate = formatDateDisplay(parsedDate);
@@ -493,51 +494,52 @@ function buildHabitationTimeline(application: ApplicationMetadata): TimelineEntr
 }
 
 /** Labels for persona context */
-function getPersonaLabels(persona?: string) {
+function getPersonaLabels(persona: string | undefined, t: (key: string) => string) {
   const isHabitation = persona?.includes('habitation') || persona?.includes('property');
   const isClaims = persona?.includes('claims') || persona?.includes('sinistre');
   const isMortgage = persona?.includes('mortgage') || persona?.includes('hypothe');
 
   if (isHabitation) return {
-    title: 'Chronologie du sinistre',
-    subtitle: 'Événements et documents extraits du dossier habitation',
-    itemsTab: 'Événements',
-    docsTab: 'Documents',
-    emptyItems: 'Aucun événement chronologique extrait',
-    emptyDocs: 'Aucun document téléchargé',
+    title: t('claimsTitle'),
+    subtitle: t('habitationSubtitle'),
+    itemsTab: t('eventsTab'),
+    docsTab: t('documentsTab'),
+    emptyItems: t('noEvents'),
+    emptyDocs: t('noDocuments'),
   };
   if (isClaims) return {
-    title: 'Chronologie du sinistre',
-    subtitle: 'Événements et documents extraits du dossier sinistre',
-    itemsTab: 'Événements',
-    docsTab: 'Documents',
-    emptyItems: 'Aucun événement chronologique extrait',
-    emptyDocs: 'Aucun document téléchargé',
+    title: t('claimsTitle'),
+    subtitle: t('claimsSubtitle'),
+    itemsTab: t('eventsTab'),
+    docsTab: t('documentsTab'),
+    emptyItems: t('noEvents'),
+    emptyDocs: t('noDocuments'),
   };
   if (isMortgage) return {
-    title: 'Chronologie du dossier',
-    subtitle: 'Étapes et documents du dossier hypothécaire',
-    itemsTab: 'Étapes',
-    docsTab: 'Documents',
-    emptyItems: 'Aucune étape chronologique extraite',
-    emptyDocs: 'Aucun document téléchargé',
+    title: t('mortgageTitle'),
+    subtitle: t('mortgageSubtitle'),
+    itemsTab: t('stepsTab'),
+    docsTab: t('documentsTab'),
+    emptyItems: t('noSteps'),
+    emptyDocs: t('noDocuments'),
   };
   // Default: underwriting / medical
   return {
-    title: 'Aperçu chronologique',
-    subtitle: 'Événements médicaux et documents extraits du dossier',
-    itemsTab: 'Événements médicaux',
-    docsTab: 'Documents',
-    emptyItems: 'Aucune donnée chronologique extraite',
-    emptyDocs: 'Aucun document téléchargé',
+    title: t('defaultTitle'),
+    subtitle: t('defaultSubtitle'),
+    itemsTab: t('medicalEventsTab'),
+    docsTab: t('documentsTab'),
+    emptyItems: t('noMedicalEvents'),
+    emptyDocs: t('noDocuments'),
   };
 }
 
 export default function ChronologicalOverview({ application, fullWidth, persona }: ChronologicalOverviewProps) {
   const [activeTab, setActiveTab] = useState<'items' | 'documents'>('items');
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+  const t = useTranslations('chronological');
 
-  const labels = getPersonaLabels(persona || application.persona);
+  const labels = getPersonaLabels(persona || application.persona, t);
   const isMedicalPersona = !persona?.includes('habitation') && !persona?.includes('property') && !persona?.includes('mortgage') &&
     !application.persona?.includes('habitation') && !application.persona?.includes('property') && !application.persona?.includes('mortgage');
 

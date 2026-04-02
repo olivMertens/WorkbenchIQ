@@ -677,9 +677,139 @@ def _arnaud_thierry_auto() -> Dict[str, Any]:
     }
 
 
+def _girard_laurent_habitation() -> Dict[str, Any]:
+    """GRP-013 GIRARD Laurent — habitation tempête février 2024 à Versailles."""
+    return {
+        "id": "app-house-hab-001",
+        "created_at": "2024-02-15T09:30:00Z",
+        "external_reference": "GRP-013",
+        "status": "completed",
+        "persona": "habitation_claims",
+        "files": [
+            {"filename": "declaration_sinistre.pdf", "path": "applications/app-house-hab-001/declaration_sinistre.pdf", "content_type": "application/pdf", "media_type": "document"},
+            {"filename": "attestation_tempete.pdf", "path": "applications/app-house-hab-001/attestation_tempete.pdf", "content_type": "application/pdf", "media_type": "document"},
+            {"filename": "photo_toiture.jpg", "path": "applications/app-house-hab-001/photo_toiture.jpg", "content_type": "image/jpeg", "media_type": "image"},
+            {"filename": "photo_tuiles_endommagees.jpg", "path": "applications/app-house-hab-001/photo_tuiles_endommagees.jpg", "content_type": "image/jpeg", "media_type": "image"},
+            {"filename": "rapport_expert.pdf", "path": "applications/app-house-hab-001/rapport_expert.pdf", "content_type": "application/pdf", "media_type": "document"},
+        ],
+        "llm_outputs": {
+            "extraction_summary": {
+                "document_analysis": {
+                    "section": "extraction_summary",
+                    "raw": (
+                        "Dossier sinistre habitation : tempête du 12 février 2024 à Versailles. "
+                        "Dégâts à la toiture avec tuiles endommagées et infiltration d'eau. "
+                        "Expert mobilisé le 13 février. Assuré Laurent GIRARD, police MRH-GRP-001245."
+                    ),
+                    "parsed": {
+                        "summary": "Tempête habitation 12/02/2024 — dégâts toiture — couvert par contrat MRH",
+                        "nature_sinistre": "Tempête",
+                        "date_sinistre": "12/02/2024",
+                        "lieu_sinistre": "22 chemin de Ronde, 78000 Versailles",
+                        "assuré": "GIRARD Laurent",
+                        "numero_police": "MRH-GRP-001245",
+                        "montant_estime": "8500€",
+                    },
+                },
+            },
+            "alert_signals": {
+                "weather_analysis": {
+                    "section": "alert_signals",
+                    "raw": "Tempête avec vents > 100 km/h attestée par Météo-France. Alerte tempête active.",
+                    "parsed": {
+                        "alert_type": "Tempête",
+                        "severity": "high",
+                        "indicators": ["Vents violents > 100 km/h", "Certificat Météo-France"],
+                        "policy_coverage": "Couverte sous HAB-TMP-001",
+                        "confidence": 0.98,
+                    },
+                },
+            },
+            "timeline": {
+                "event_sequence": {
+                    "section": "timeline",
+                    "raw": "12/02 14:30 tempête observée, 13/02 09:00 appel assuré, 13/02 14:00 visite expert",
+                    "parsed": [
+                        {
+                            "date": "12/02/2024 14:30",
+                            "event": "Tempête observée — premiers dégâts constatés",
+                            "source": "déclaration_assuré",
+                        },
+                        {
+                            "date": "12/02/2024 18:00",
+                            "event": "Infiltration d'eau constatée dans salon",
+                            "source": "rapport_expert",
+                        },
+                        {
+                            "date": "13/02/2024 09:00",
+                            "event": "Appel Groupama — sinistre déclaré",
+                            "source": "declaration_sinistre",
+                        },
+                        {
+                            "date": "13/02/2024 14:00",
+                            "event": "Expert mobilisé sur site",
+                            "source": "rapport_expert",
+                        },
+                    ],
+                },
+            },
+            "responsibility_evaluation": {
+                "coverage_determination": {
+                    "section": "responsibility_evaluation",
+                    "raw": (
+                        "Sinistre causé par tempête couverte sous la clause HAB-TMP-001. "
+                        "Assuré n'a pas commis de faute. Couverture complète recommandée."
+                    ),
+                    "parsed": {
+                        "is_covered": True,
+                        "confidence": 0.96,
+                        "policy_id": "HAB-TMP-001",
+                        "policy_name": "Couverture Tempête",
+                        "reason": "Tempête couverte sans franchise spéciale tempête",
+                        "franchise": "300€ franchise standard",
+                        "applicable_clauses": [
+                            "Art. 5.2 : Garantie Dommages Tempête",
+                            "Art. 8.1 : Franchise Standard",
+                        ],
+                    },
+                },
+            },
+        },
+        "extracted_fields": {
+            "AssuréNom": {"field_name": "AssuréNom", "value": "GIRARD Laurent", "confidence": 0.99, "source_file": "declaration_sinistre.pdf"},
+            "DateSinistre": {"field_name": "DateSinistre", "value": "12/02/2024", "confidence": 0.97, "source_file": "declaration_sinistre.pdf"},
+            "NatureSinistre": {"field_name": "NatureSinistre", "value": "Tempête", "confidence": 0.98, "source_file": "attestation_tempete.pdf"},
+            "LieuSinistre": {"field_name": "LieuSinistre", "value": "22 chemin de Ronde, 78000 Versailles", "confidence": 0.96, "source_file": "declaration_sinistre.pdf"},
+            "NumeroPolice": {"field_name": "NumeroPolice", "value": "MRH-GRP-001245", "confidence": 0.99, "source_file": "declaration_sinistre.pdf"},
+            "DescriptionSinistre": {"field_name": "DescriptionSinistre", "value": "Dégâts à la toiture avec tuiles endommagées suite à tempête, infiltrations d'eau", "confidence": 0.94, "source_file": "declaration_sinistre.pdf"},
+            "MontantEstime": {"field_name": "MontantEstime", "value": "8500€", "confidence": 0.87, "source_file": "rapport_expert.pdf"},
+            "DateConstat": {"field_name": "DateConstat", "value": "13/02/2024", "confidence": 0.98, "source_file": "rapport_expert.pdf"},
+        },
+        "confidence_summary": {
+            "total_fields": 8,
+            "average_confidence": 0.96,
+            "high_confidence_count": 7,
+            "medium_confidence_count": 1,
+            "high_confidence_fields": [
+                {"name": "AssuréNom", "confidence": 0.99},
+                {"name": "NumeroPolice", "confidence": 0.99},
+                {"name": "DateSinistre", "confidence": 0.97},
+                {"name": "NatureSinistre", "confidence": 0.98},
+                {"name": "DateConstat", "confidence": 0.98},
+                {"name": "LieuSinistre", "confidence": 0.96},
+                {"name": "DescriptionSinistre", "confidence": 0.94},
+            ],
+            "medium_confidence_fields": [
+                {"name": "MontantEstime", "confidence": 0.87},
+            ],
+        },
+    }
+
+
 def get_claims_apps() -> List[Dict[str, Any]]:
-    """Return seed data for 3 claims applications (1 health + 2 automotive)."""
+    """Return seed data for 4 claims applications (1 habitation + 1 health + 2 automotive).""" 
     return [
+        _girard_laurent_habitation(),
         _garcia_antonio_auto(),
         _rousseau_marc_health(),
         _arnaud_thierry_auto(),

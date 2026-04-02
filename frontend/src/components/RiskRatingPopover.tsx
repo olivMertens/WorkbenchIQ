@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Info, AlertTriangle, Shield, FileText } from 'lucide-react';
 import type { PolicyCitation } from '@/lib/types';
 
@@ -39,6 +40,7 @@ export default function RiskRatingPopover({
   const [isOpen, setIsOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations('riskPopover');
   const colors = getRatingColor(rating);
 
   // Close popover when clicking outside
@@ -109,7 +111,7 @@ export default function RiskRatingPopover({
             <div className="flex items-center gap-2">
               {getRatingIcon(rating)}
               <span className={`font-semibold ${colors.text}`}>
-                Risk Rating: {rating}
+                {t('riskRating', { rating })}
               </span>
             </div>
           </div>
@@ -118,7 +120,7 @@ export default function RiskRatingPopover({
           {rationale && (
             <div className="px-4 py-3 border-b border-slate-100">
               <h4 className="text-xs font-semibold text-slate-500 uppercase mb-1">
-                Rationale
+                {t('rationale')}
               </h4>
               <p className="text-sm text-slate-700 leading-relaxed">
                 {rationale}
@@ -130,7 +132,7 @@ export default function RiskRatingPopover({
           {citations.length > 0 && (
             <div className="px-4 py-3">
               <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">
-                Policy Citations
+                {t('policyCitations')}
               </h4>
               <div className="space-y-2">
                 {citations.map((citation, idx) => (
@@ -155,7 +157,7 @@ export default function RiskRatingPopover({
                         </p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-xs text-slate-500">
-                            Finding: {citation.finding}
+                            {t('finding', { finding: citation.finding })}
                           </span>
                           <span className={`text-xs font-medium ${
                             citation.rating_impact.toLowerCase().includes('increase') ||
@@ -179,7 +181,7 @@ export default function RiskRatingPopover({
           {/* Empty state if no details */}
           {!rationale && citations.length === 0 && (
             <div className="px-4 py-3 text-sm text-slate-500 italic">
-              No additional details available.
+              {t('noDetails')}
             </div>
           )}
         </div>

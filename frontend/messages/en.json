@@ -43,7 +43,7 @@
       "evening": "Good Evening"
     },
     "readyForReview": "Ready for Review",
-    "readyForReviewDesc": "Analysis complete \u2014 awaiting your decision",
+    "readyForReviewDesc": "Analysis complete — awaiting your decision",
     "noReviewCases": "No cases waiting for review",
     "needsAnalysis": "Agents at Work",
     "needsAnalysisDesc": "AI agents extracting & analyzing",
@@ -191,7 +191,8 @@
     "viewRawSchemaJson": "View Raw Schema JSON",
     "loadingSchema": "Loading schema...",
     "delete": "Delete",
-    "prebuiltCannotDelete": "Prebuilt analyzers cannot be deleted",    "reindex": "Reindex",
+    "prebuiltCannotDelete": "Prebuilt analyzers cannot be deleted",
+    "reindex": "Reindex",
     "indexing": "Indexing...",
     "newPolicy": "New Policy",
     "ragIndex": "RAG Index:",
@@ -252,7 +253,6 @@
     "name": "Name",
     "save": "Save",
     "cancel": "Cancel",
-    "delete": "Delete",
     "create": "Create"
   },
   "patient": {
@@ -294,7 +294,11 @@
       "moderate": "Moderate Risk",
       "low": "Low Risk",
       "notAssessed": "Not Assessed"
-    }
+    },
+    "aiAnalysis": "AI Analysis",
+    "unknown": "Unknown",
+    "rerunTooltip": "Re-run risk analysis",
+    "reportFooter": "This report was generated automatically by the Underwriting Assistant. Please review all findings before making final decisions."
   },
   "body": {
     "systemMap": "Body System Map",
@@ -315,7 +319,8 @@
     "returnToList": "Return to list",
     "live": "live",
     "extractionInProgress": "Data Agent extracting",
-    "analysisInProgress": "Risk Agent analyzing"
+    "analysisInProgress": "Risk Agent analyzing",
+    "riskAnalysisError": "Error re-running risk analysis"
   },
   "actions": {
     "cancel": "Cancel",
@@ -585,5 +590,102 @@
     "poweredByAI": "Powered by AI Analysis",
     "familyHistory": "Family History",
     "noFamilyHistory": "No family history details available."
+  },
+  "lab": {
+    "title": "Lab Results & Measurements",
+    "riskAssessment": "Risk Assessment",
+    "noResults": "No lab results extracted",
+    "bloodPressure": "Blood Pressure",
+    "totalCholesterol": "Total Cholesterol",
+    "ldlCholesterol": "LDL",
+    "hdlCholesterol": "HDL",
+    "triglycerides": "Triglycerides",
+    "pulseRate": "Pulse Rate",
+    "urinalysis": "Urinalysis",
+    "protein": "Protein",
+    "glucose": "Glucose",
+    "blood": "Blood"
+  },
+  "substance": {
+    "tobacco": "Tobacco",
+    "alcohol": "Alcohol",
+    "cannabis": "Cannabis",
+    "drugs": "Drugs",
+    "detected": "Detected",
+    "notDetected": "Not detected",
+    "extractedInfo": "Extracted information",
+    "noInfo": "No substance use information extracted from documents"
+  },
+  "family": {
+    "title": "Family History",
+    "noHistory": "No family history available",
+    "diedAt": "died at",
+    "onset": "onset",
+    "risk": "Risk"
+  },
+  "allergies": {
+    "title": "Known Allergies",
+    "noAllergies": "No allergies extracted"
+  },
+  "occupation": {
+    "title": "Occupation & Risk Factors",
+    "profession": "Occupation",
+    "hazardousActivities": "Hazardous Activities",
+    "foreignTravel": "Foreign Travel",
+    "nonePlanned": "None planned",
+    "yesDetails": "Yes — see details",
+    "noData": "No occupation data extracted"
+  },
+  "confidence": {
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "confidence": "Confidence"
+  },
+  "citation": {
+    "sourceTitle": "Source Citation",
+    "document": "Document",
+    "page": "Page {pageNumber}",
+    "viewInDocument": "View in Document",
+    "openPdf": "Open PDF",
+    "source": "Source: {source}"
+  },
+  "riskPopover": {
+    "riskRating": "Risk Rating: {rating}",
+    "rationale": "Rationale",
+    "policyCitations": "Policy Citations",
+    "finding": "Finding: {finding}",
+    "noDetails": "No additional details available."
+  },
+  "chronological": {
+    "claimsTitle": "Claim Timeline",
+    "claimsSubtitle": "Events and documents extracted from the claim file",
+    "habitationSubtitle": "Events and documents extracted from the habitation file",
+    "mortgageTitle": "File Timeline",
+    "mortgageSubtitle": "Steps and documents from the mortgage file",
+    "defaultTitle": "Chronological Overview",
+    "defaultSubtitle": "Medical events and documents extracted from the file",
+    "eventsTab": "Events",
+    "medicalEventsTab": "Medical Events",
+    "stepsTab": "Steps",
+    "documentsTab": "Documents",
+    "noEvents": "No chronological events extracted",
+    "noMedicalEvents": "No chronological data extracted",
+    "noSteps": "No chronological steps extracted",
+    "noDocuments": "No documents uploaded",
+    "unknownProcedure": "Unknown procedure",
+    "unknownTest": "Unknown test",
+    "unknownCondition": "Unknown condition",
+    "dateLabel": "Date:",
+    "reasonLabel": "Reason:",
+    "outcomeLabel": "Outcome:",
+    "resultLabel": "Result:",
+    "onsetLabel": "Onset:",
+    "statusLabel": "Status:",
+    "detailsLabel": "Details:",
+    "statusOngoing": "Ongoing",
+    "statusResolved": "Resolved",
+    "statusActive": "Active",
+    "statusMonitoring": "Monitoring"
   }
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { ApplicationMetadata } from '@/lib/types';
 import ConfidenceIndicator from './ConfidenceIndicator';
 
@@ -55,6 +56,7 @@ function parseAllergies(application: ApplicationMetadata): AllergiesData {
 }
 
 export default function AllergiesPanel({ application }: AllergiesPanelProps) {
+  const t = useTranslations('allergies');
   const { allergies, confidence } = parseAllergies(application);
 
   return (
@@ -64,7 +66,7 @@ export default function AllergiesPanel({ application }: AllergiesPanelProps) {
         <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
           <AlertTriangle className="w-5 h-5 text-amber-600" />
         </div>
-        <h2 className="text-base font-semibold text-slate-900">Allergies connues</h2>
+        <h2 className="text-base font-semibold text-slate-900">{t('title')}</h2>
         {confidence !== undefined && (
           <ConfidenceIndicator confidence={confidence} fieldName="Allergies" />
         )}
@@ -82,7 +84,7 @@ export default function AllergiesPanel({ application }: AllergiesPanelProps) {
         </ul>
       ) : (
         <div className="flex flex-col items-center justify-center py-4 text-center">
-          <p className="text-sm text-slate-500 italic">Aucune allergie extraite</p>
+          <p className="text-sm text-slate-500 italic">{t('noAllergies')}</p>
         </div>
       )}
     </div>

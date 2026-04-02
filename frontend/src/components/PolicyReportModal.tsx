@@ -211,7 +211,7 @@ export default function PolicyReportModal({
           ` : ''}
           
           <div class="footer">
-            <p>This report was generated automatically by the Underwriting Assistant. Please review all findings before making final decisions.</p>
+            <p>Ce rapport a été généré automatiquement par l'assistant de souscription. Veuillez vérifier tous les résultats avant de prendre des décisions définitives.</p>
           </div>
         </body>
       </html>

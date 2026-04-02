@@ -175,11 +175,11 @@ export default function PolicySummaryPanel({
                 </h2>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-100">
                   <Sparkles className="w-3 h-3" />
-                  AI Analysis
+                  {t('aiAnalysis')}
                 </span>
               </div>
               <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${riskInfo.bgColor} ${riskInfo.textColor} border ${riskInfo.borderColor}`}>
-                {riskAnalysis.overall_risk_level || 'Unknown'}
+                {riskAnalysis.overall_risk_level || t('unknown')}
               </div>
             </div>
           </div>
@@ -294,7 +294,7 @@ export default function PolicySummaryPanel({
           onClick={handleRunRiskAnalysis}
           disabled={isRunningAnalysis}
           className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
-          title="Re-run risk analysis"
+          title={t('rerunTooltip')}
         >
           {isRunningAnalysis ? (
             <Loader2 className="w-4 h-4 animate-spin" />

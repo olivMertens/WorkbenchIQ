@@ -1,6 +1,7 @@
 'use client';
 
 import { Activity } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { ApplicationMetadata, ExtractedField } from '@/lib/types';
 import ConfidenceIndicator from './ConfidenceIndicator';
 import CitationTooltip from './CitationTooltip';
@@ -114,17 +115,17 @@ function parseLabResults(application: ApplicationMetadata): LabResultsData {
     if (typeof lipidField.value === 'object' && !Array.isArray(lipidField.value)) {
       const lipid = lipidField.value as any;
       // Only add if the nested value has an actual valueString, not just confidence
-      if (lipid.totalCholesterol?.valueString) results.push({ name: 'Total Cholesterol', value: String(lipid.totalCholesterol.valueString).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate?.valueString, confidence, citation: lipidField });
-      else if (lipid.totalCholesterol && typeof lipid.totalCholesterol === 'string') results.push({ name: 'Total Cholesterol', value: String(lipid.totalCholesterol).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate, confidence, citation: lipidField });
+      if (lipid.totalCholesterol?.valueString) results.push({ name: 'Cholestérol total', value: String(lipid.totalCholesterol.valueString).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate?.valueString, confidence, citation: lipidField });
+      else if (lipid.totalCholesterol && typeof lipid.totalCholesterol === 'string') results.push({ name: 'Cholestérol total', value: String(lipid.totalCholesterol).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate, confidence, citation: lipidField });
       
-      if (lipid.hdl?.valueString) results.push({ name: 'HDL Cholesterol', value: String(lipid.hdl.valueString).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate?.valueString, confidence, citation: lipidField });
-      else if (lipid.hdl && typeof lipid.hdl === 'string') results.push({ name: 'HDL Cholesterol', value: String(lipid.hdl).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate, confidence, citation: lipidField });
+      if (lipid.hdl?.valueString) results.push({ name: 'HDL', value: String(lipid.hdl.valueString).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate?.valueString, confidence, citation: lipidField });
+      else if (lipid.hdl && typeof lipid.hdl === 'string') results.push({ name: 'HDL', value: String(lipid.hdl).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate, confidence, citation: lipidField });
       
-      if (lipid.ldl?.valueString) results.push({ name: 'LDL Cholesterol', value: String(lipid.ldl.valueString).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate?.valueString, confidence, citation: lipidField });
-      else if (lipid.ldl && typeof lipid.ldl === 'string') results.push({ name: 'LDL Cholesterol', value: String(lipid.ldl).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate, confidence, citation: lipidField });
+      if (lipid.ldl?.valueString) results.push({ name: 'LDL', value: String(lipid.ldl.valueString).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate?.valueString, confidence, citation: lipidField });
+      else if (lipid.ldl && typeof lipid.ldl === 'string') results.push({ name: 'LDL', value: String(lipid.ldl).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate, confidence, citation: lipidField });
       
-      if (lipid.triglycerides?.valueString) results.push({ name: 'Triglycerides', value: String(lipid.triglycerides.valueString).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate?.valueString, confidence, citation: lipidField });
-      else if (lipid.triglycerides && typeof lipid.triglycerides === 'string') results.push({ name: 'Triglycerides', value: String(lipid.triglycerides).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate, confidence, citation: lipidField });
+      if (lipid.triglycerides?.valueString) results.push({ name: 'Triglycérides', value: String(lipid.triglycerides.valueString).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate?.valueString, confidence, citation: lipidField });
+      else if (lipid.triglycerides && typeof lipid.triglycerides === 'string') results.push({ name: 'Triglycérides', value: String(lipid.triglycerides).replace(/[^\d.]/g, ''), unit: 'mg/dL', date: lipid.testDate, confidence, citation: lipidField });
     } else {
       // Handle old format: string with embedded values
       const lipidStr = String(lipidField.value);
@@ -133,10 +134,10 @@ function parseLabResults(application: ApplicationMetadata): LabResultsData {
       const ldlMatch = lipidStr.match(/ldl[:\s]+(\d+)/i);
       const trigMatch = lipidStr.match(/triglycerides?[:\s]+(\d+)/i);
       
-      if (cholMatch) results.push({ name: 'Total Cholesterol', value: cholMatch[1], unit: 'mg/dL', confidence, citation: lipidField });
-      if (hdlMatch) results.push({ name: 'HDL Cholesterol', value: hdlMatch[1], unit: 'mg/dL', confidence, citation: lipidField });
-      if (ldlMatch) results.push({ name: 'LDL Cholesterol', value: ldlMatch[1], unit: 'mg/dL', confidence, citation: lipidField });
-      if (trigMatch) results.push({ name: 'Triglycerides', value: trigMatch[1], unit: 'mg/dL', confidence, citation: lipidField });
+      if (cholMatch) results.push({ name: 'Cholestérol total', value: cholMatch[1], unit: 'mg/dL', confidence, citation: lipidField });
+      if (hdlMatch) results.push({ name: 'HDL', value: hdlMatch[1], unit: 'mg/dL', confidence, citation: lipidField });
+      if (ldlMatch) results.push({ name: 'LDL', value: ldlMatch[1], unit: 'mg/dL', confidence, citation: lipidField });
+      if (trigMatch) results.push({ name: 'Triglycérides', value: trigMatch[1], unit: 'mg/dL', confidence, citation: lipidField });
     }
   }
 
@@ -144,7 +145,7 @@ function parseLabResults(application: ApplicationMetadata): LabResultsData {
   const pulseField = Object.values(fields).find(f => f.field_name === 'PulseRate');
   if (pulseField?.value) {
     results.push({
-      name: 'Pulse Rate',
+      name: 'Fréquence cardiaque',
       value: String(pulseField.value),
       unit: 'bpm',
       confidence: pulseField.confidence,
@@ -165,15 +166,15 @@ function parseLabResults(application: ApplicationMetadata): LabResultsData {
         const bloodVal = urine.blood?.valueString || (typeof urine.blood === 'string' ? urine.blood : null);
         const otherVal = urine.other?.valueString || (typeof urine.other === 'string' ? urine.other : null);
         
-        if (proteinVal) parts.push(`Protein: ${proteinVal}`);
-        if (glucoseVal) parts.push(`Glucose: ${glucoseVal}`);
-        if (bloodVal) parts.push(`Blood: ${bloodVal}`);
+        if (proteinVal) parts.push(`Protéines : ${proteinVal}`);
+        if (glucoseVal) parts.push(`Glucose : ${glucoseVal}`);
+        if (bloodVal) parts.push(`Sang : ${bloodVal}`);
         if (otherVal) parts.push(otherVal);
         
         // Only add if we have actual values
         if (parts.length > 0) {
           results.push({
-            name: 'Urinalysis',
+            name: 'Analyse d\'urine',
             value: parts.join(', '),
             confidence: urineField.confidence,
             citation: urineField,
@@ -184,7 +185,7 @@ function parseLabResults(application: ApplicationMetadata): LabResultsData {
         const valueStr = String(urineField.value).trim();
         if (valueStr) {
           results.push({
-            name: 'Urinalysis',
+            name: 'Analyse d\'urine',
             value: valueStr.substring(0, 50) + (valueStr.length > 50 ? '...' : ''),
             confidence: urineField.confidence,
             citation: urineField,
@@ -198,6 +199,7 @@ function parseLabResults(application: ApplicationMetadata): LabResultsData {
 }
 
 export default function LabResultsPanel({ application }: LabResultsPanelProps) {
+  const t = useTranslations('lab');
   const { results, summary, riskAssessment } = parseLabResults(application);
 
   return (
@@ -208,7 +210,7 @@ export default function LabResultsPanel({ application }: LabResultsPanelProps) {
           <Activity className="w-5 h-5 text-violet-600" />
         </div>
         <h2 className="text-lg font-semibold text-slate-900">
-          Résultats biologiques et mesures
+          {t('title')}
         </h2>
       </div>
 
@@ -222,7 +224,7 @@ export default function LabResultsPanel({ application }: LabResultsPanelProps) {
       {/* Risk Assessment if available */}
       {riskAssessment && (
         <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-sm font-medium text-amber-800">Risk Assessment</p>
+          <p className="text-sm font-medium text-amber-800">{t('riskAssessment')}</p>
           <p className="text-sm text-amber-700">{riskAssessment}</p>
         </div>
       )}
@@ -265,7 +267,7 @@ export default function LabResultsPanel({ application }: LabResultsPanelProps) {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-slate-500 italic">Aucun résultat biologique extrait</p>
+        <p className="text-sm text-slate-500 italic">{t('noResults')}</p>
       )}
     </div>
   );

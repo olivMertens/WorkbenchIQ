@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface ConfidenceIndicatorProps {
   confidence: number; // 0-1 scale
@@ -14,12 +15,13 @@ export default function ConfidenceIndicator({
   size = 'sm',
 }: ConfidenceIndicatorProps) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const t = useTranslations('confidence');
 
   // Determine confidence level
   const getConfidenceLevel = (conf: number) => {
-    if (conf >= 0.8) return { label: 'High', color: 'bg-emerald-500', textColor: 'text-emerald-700' };
-    if (conf >= 0.5) return { label: 'Medium', color: 'bg-amber-500', textColor: 'text-amber-700' };
-    return { label: 'Low', color: 'bg-rose-500', textColor: 'text-rose-700' };
+    if (conf >= 0.8) return { label: t('high'), color: 'bg-emerald-500', textColor: 'text-emerald-700' };
+    if (conf >= 0.5) return { label: t('medium'), color: 'bg-amber-500', textColor: 'text-amber-700' };
+    return { label: t('low'), color: 'bg-rose-500', textColor: 'text-rose-700' };
   };
 
   const level = getConfidenceLevel(confidence);
@@ -43,7 +45,7 @@ export default function ConfidenceIndicator({
             </div>
             <div className="flex items-center gap-2">
               <span className={`inline-block w-2 h-2 rounded-full ${level.color}`} />
-              <span>{level.label} Confidence</span>
+              <span>{level.label} — {t('confidence')}</span>
               <span className="text-slate-400">({percentage}%)</span>
             </div>
           </div>

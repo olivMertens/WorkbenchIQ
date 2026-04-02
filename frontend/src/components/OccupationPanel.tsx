@@ -1,6 +1,7 @@
 'use client';
 
 import { Briefcase, AlertTriangle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { ApplicationMetadata, ExtractedField } from '@/lib/types';
 import ConfidenceIndicator from './ConfidenceIndicator';
 import CitationTooltip from './CitationTooltip';
@@ -136,6 +137,7 @@ function parseOccupationData(application: ApplicationMetadata): OccupationData {
 }
 
 export default function OccupationPanel({ application }: OccupationPanelProps) {
+  const t = useTranslations('occupation');
   const data = parseOccupationData(application);
   const hasData = data.occupation.value || data.hazardousActivities.value || data.foreignTravel.value;
 
@@ -153,7 +155,7 @@ export default function OccupationPanel({ application }: OccupationPanelProps) {
         <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
           <Briefcase className="w-5 h-5 text-indigo-600" />
         </div>
-        <h2 className="text-base font-semibold text-slate-900">Profession et facteurs de risque</h2>
+        <h2 className="text-base font-semibold text-slate-900">{t('title')}</h2>
       </div>
 
       {/* Content */}
@@ -162,7 +164,7 @@ export default function OccupationPanel({ application }: OccupationPanelProps) {
           {data.occupation.value && (
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <h4 className="text-xs font-medium text-slate-500 uppercase">Profession</h4>
+                <h4 className="text-xs font-medium text-slate-500 uppercase">{t('profession')}</h4>
                 {data.occupation.confidence !== undefined && (
                   <ConfidenceIndicator confidence={data.occupation.confidence} fieldName="Occupation" />
                 )}
@@ -180,7 +182,7 @@ export default function OccupationPanel({ application }: OccupationPanelProps) {
               <div className="flex items-center gap-2 mb-1">
                 <h4 className="text-xs font-medium text-slate-500 uppercase flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3 text-amber-500" />
-                  Activités à risque
+                  {t('hazardousActivities')}
                 </h4>
                 {data.hazardousActivities.confidence !== undefined && (
                   <ConfidenceIndicator confidence={data.hazardousActivities.confidence} fieldName="Hazardous Activities" />
@@ -197,7 +199,7 @@ export default function OccupationPanel({ application }: OccupationPanelProps) {
           {data.foreignTravel.value && (
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <h4 className="text-xs font-medium text-slate-500 uppercase">Déplacements à l'étranger</h4>
+                <h4 className="text-xs font-medium text-slate-500 uppercase">{t('foreignTravel')}</h4>
                 {data.foreignTravel.confidence !== undefined && (
                   <ConfidenceIndicator confidence={data.foreignTravel.confidence} fieldName="Foreign Travel" />
                 )}
@@ -212,7 +214,7 @@ export default function OccupationPanel({ application }: OccupationPanelProps) {
           )}
         </div>
       ) : (
-        <p className="text-sm text-slate-500 italic">Aucune donnée professionnelle extraite</p>
+        <p className="text-sm text-slate-500 italic">{t('noData')}</p>
       )}
     </div>
   );
