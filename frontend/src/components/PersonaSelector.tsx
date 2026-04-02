@@ -24,7 +24,7 @@ interface PlaceholderPersona {
 }
 
 const PLACEHOLDER_PERSONAS: PlaceholderPersona[] = [
-  { id: 'securities_lending', label: 'Securities Lending', enabled: false },
+  { id: 'securities_lending', label: 'Prêt de titres', enabled: false },
 ];
 
 // Group personas into categories for the dropdown
@@ -166,7 +166,7 @@ export default function PersonaSelector() {
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-slate-400">{placeholder.label}</span>
                           <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded font-medium">
-                            Coming Soon
+                            Bientôt disponible
                           </span>
                         </div>
                       </div>
