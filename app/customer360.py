@@ -132,6 +132,21 @@ def _load_blob_json(blob_path: str) -> Optional[Any]:
         return None
 
 
+def _save_blob_json(blob_path: str, data: Any) -> bool:
+    """Save JSON to Azure Blob. Returns True on success."""
+    container = _get_blob_container()
+    if not container:
+        return False
+    try:
+        content = json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8")
+        blob_client = container.get_blob_client(blob_path)
+        blob_client.upload_blob(content, overwrite=True)
+        return True
+    except Exception as e:
+        logger.warning("Blob write failed for %s: %s", blob_path, e)
+        return False
+
+
 def _list_blob_prefixes(prefix: str) -> List[str]:
     """List unique sub-prefixes under a blob prefix (simulates directory listing)."""
     container = _get_blob_container()
@@ -151,11 +166,15 @@ def _list_blob_prefixes(prefix: str) -> List[str]:
 
 
 def save_customer_profile(storage_root: str, profile: CustomerProfile) -> None:
-    """Save a customer profile to disk."""
+    """Save a customer profile (blob + local)."""
+    data = asdict(profile)
+    # Persist to Azure Blob (survives container redeployments)
+    _save_blob_json(f"customers/{profile.id}/profile.json", data)
+    # Also save locally for fast reads
     customer_dir = _customers_dir(storage_root) / profile.id
     customer_dir.mkdir(parents=True, exist_ok=True)
     profile_path = customer_dir / "profile.json"
-    profile_path.write_text(json.dumps(asdict(profile), indent=2), encoding="utf-8")
+    profile_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     logger.info("Saved customer profile: %s", profile.id)
 
 
@@ -164,12 +183,14 @@ def save_customer_journey(
     customer_id: str,
     events: List[CustomerJourneyEvent],
 ) -> None:
-    """Save pre-computed journey events for a customer."""
+    """Save pre-computed journey events for a customer (blob + local)."""
+    data = [asdict(e) for e in events]
+    _save_blob_json(f"customers/{customer_id}/journey.json", data)
     customer_dir = _customers_dir(storage_root) / customer_id
     customer_dir.mkdir(parents=True, exist_ok=True)
     journey_path = customer_dir / "journey.json"
     journey_path.write_text(
-        json.dumps([asdict(e) for e in events], indent=2), encoding="utf-8"
+        json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
     )
     logger.info("Saved %d journey events for customer %s", len(events), customer_id)
 
@@ -179,12 +200,14 @@ def save_customer_risk_correlations(
     customer_id: str,
     correlations: List[RiskCorrelation],
 ) -> None:
-    """Save risk correlations for a customer."""
+    """Save risk correlations for a customer (blob + local)."""
+    data = [asdict(c) for c in correlations]
+    _save_blob_json(f"customers/{customer_id}/risk_correlations.json", data)
     customer_dir = _customers_dir(storage_root) / customer_id
     customer_dir.mkdir(parents=True, exist_ok=True)
     path = customer_dir / "risk_correlations.json"
     path.write_text(
-        json.dumps([asdict(c) for c in correlations], indent=2), encoding="utf-8"
+        json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
     )
 
 
@@ -300,12 +323,28 @@ def get_customer_360(storage_root: str, customer_id: str) -> Optional[Customer36
 
 
 def delete_customer(storage_root: str, customer_id: str) -> bool:
-    """Delete a customer profile and all associated data."""
+    """Delete a customer profile and all associated data (blob + local)."""
     import shutil
 
+    deleted = False
+    # Delete from Azure Blob
+    container = _get_blob_container()
+    if container:
+        try:
+            prefix = f"customers/{customer_id}/"
+            blobs = container.list_blobs(name_starts_with=prefix)
+            for blob in blobs:
+                container.delete_blob(blob.name)
+                deleted = True
+        except Exception as e:
+            logger.warning("Blob delete failed for %s: %s", customer_id, e)
+
+    # Delete from local filesystem
     customer_dir = _customers_dir(storage_root) / customer_id
     if customer_dir.exists():
         shutil.rmtree(customer_dir)
+        deleted = True
+
+    if deleted:
         logger.info("Deleted customer: %s", customer_id)
-        return True
-    return False
+    return deleted

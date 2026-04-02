@@ -145,6 +145,21 @@ async def startup_event():
             logger.error("Failed to initialize database pool: %s", e)
             raise
 
+    # Auto-seed Customer 360 data if no customers exist yet
+    try:
+        from app.customer360 import list_customers as _list_all_customers
+        existing = _list_all_customers(settings.app.storage_root)
+        if not existing:
+            logger.info("No customers found — auto-seeding Customer 360 data...")
+            from app.seed_data_customers import create_groupama_customers
+            _link_apps_to_customers(settings.app.storage_root)
+            count = create_groupama_customers(settings.app.storage_root)
+            logger.info("Auto-seeded %d customers on startup", count)
+        else:
+            logger.info("Found %d existing customers — skipping auto-seed", len(existing))
+    except Exception as e:
+        logger.warning("Customer 360 auto-seed failed (non-fatal): %s", e)
+
 
 # Pydantic models for API responses
 class ApplicationListItem(BaseModel):
