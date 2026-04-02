@@ -1,14 +1,18 @@
 # GroupaIQ — Architecture Agentique Cible (V2)
 
-> **Audience** : Direction générale, architectes d'entreprise, décideurs techniques et non-techniques
+> Ce document présente l'**architecture cible** que le système GroupaIQ pourrait adopter :
+> comment le POC actuel s'étendrait vers une plateforme d'entreprise intégrant
+> **Microsoft Foundry (FoundryIQ)**, **Microsoft Agent Framework** (pro-code),
+> des sources de données hétérogènes (SharePoint, SAP, systèmes on-premise),
+> et optionnellement **Microsoft Fabric (FabricIQ)** pour l'unification des données.
 >
-> Ce document présente l'**architecture cible** du système GroupaIQ :
-> comment le POC actuel s'étend vers une plateforme d'entreprise intégrant
-> **Microsoft Fabric (FabricIQ)**, **Microsoft Foundry (FoundryIQ)**,
-> **Microsoft Agent Framework** (pro-code), des sources de données hétérogènes
-> (SharePoint, SAP, systèmes on-premise), et des APIs métiers connectées.
+> **Principe fondamental : les données restent là où elles sont.**
+> L'architecture est conçue pour accéder aux données **in situ**, sans copie ni déplacement obligatoire.
+> Fabric et OneLake sont des **accélérateurs optionnels**, pas des prérequis.
 >
-> Chaque intégration a été **vérifiée dans la documentation Microsoft officielle** (avril 2026).
+> Les intégrations décrites s'appuient sur des **connecteurs vérifiés dans la documentation Microsoft** (avril 2026).
+> Les références à des systèmes spécifiques (SAP, Oracle, GED) sont données à titre d'**exemples représentatifs**
+> et seraient à adapter selon le SI réel du client.
 >
 > Pour l'architecture POC actuelle, voir [ARCHITECTURE-AGENTIC.md](ARCHITECTURE-AGENTIC.md).
 
@@ -16,109 +20,69 @@
 
 ## 1. Vue d'ensemble — Architecture cible
 
-L'architecture cible repose sur **trois couches** qui s'empilent naturellement :
-les **sources de données** alimentent la **plateforme de données unifiée (FabricIQ)**,
-qui nourrit la **couche agentique (FoundryIQ)** pour produire des décisions.
+L'architecture cible reposerait sur **trois couches** qui s'empilent naturellement :
+les **sources de données** alimenteraient la **couche agentique (FoundryIQ)** pour produire des décisions.
+La **plateforme de données (FabricIQ)** est un **accélérateur optionnel** qui ajouterait
+unification, gouvernance et ontologie métier — mais **n'est pas un prérequis**.
 
 ```mermaid
-graph TB
-    subgraph SOURCES["🏢 Sources de données hétérogènes"]
-        direction LR
-        SP["📂 SharePoint<br/><i>Polices, courriers,<br/>pièces justificatives</i>"]
-        SAP["🔷 SAP<br/><i>Contrats, clients,<br/>historique sinistres</i>"]
-        ONPREM["🖥️ APIs On-Premise<br/><i>SI métier Groupama,<br/>tarificateurs, GED</i>"]
-        LEGACY["🗄️ Bases legacy<br/><i>Oracle, SQL Server,<br/>AS/400</i>"]
-        DOCS["📄 Documents<br/><i>PDF, photos,<br/>vidéos, scans</i>"]
+graph LR
+    subgraph SOURCES["🏢 Sources de données"]
+        SP["📂 SharePoint"] ~~~ SAP["🔷 ERP / SAP"]
+        ONPREM["🖥️ APIs On-Premise"] ~~~ DOCS["📄 Documents"]
     end
-
-    subgraph FABRIC["🟦 FabricIQ — Plateforme de données unifiée"]
-        direction LR
-        DF["Data Factory<br/><i>200+ connecteurs<br/>+ passerelle on-premise</i>"]
-        OL["OneLake<br/><i>Lac de données<br/>unifié (Delta Lake)</i>"]
-        IQ_F["Fabric IQ<br/><i>Ontologie métier,<br/>agents de données</i>"]
+    subgraph FABRIC["🟦 FabricIQ (optionnel)"]
+        DF["Data Factory"] --> OL["OneLake"] --> IQ_F["Fabric IQ"]
     end
-
-    subgraph FOUNDRY["🟪 FoundryIQ — Couche agentique"]
-        direction LR
-        AS["Agent Service<br/><i>Orchestration,<br/>outils, identité</i>"]
-        IQ_A["Foundry IQ<br/><i>Knowledge retrieval,<br/>grounding RAG</i>"]
-        MODELS["Modèles IA<br/><i>GPT-4.1, embeddings,<br/>Document Intelligence</i>"]
+    subgraph FOUNDRY["🟪 FoundryIQ"]
+        AS["Agent Service"] ~~~ IQ_A["Foundry IQ"] ~~~ MODELS["Modèles IA"]
     end
-
-    subgraph OUTPUT["📊 Décisions métier"]
-        direction LR
-        O1["Souscription<br/><i>Scoring risque</i>"]
-        O2["Sinistres<br/><i>Indemnisation</i>"]
-        O3["Hypothécaire<br/><i>Éligibilité</i>"]
-        O4["Client 360<br/><i>Vue unifiée</i>"]
+    subgraph OUTPUT["📊 Décisions"]
+        O1["Souscription"] ~~~ O2["Sinistres"] ~~~ O3["Hypothécaire"] ~~~ O4["Client 360"]
     end
-
-    SOURCES --> FABRIC
-    FABRIC --> FOUNDRY
-    FOUNDRY --> OUTPUT
-
+    SOURCES --> FOUNDRY --> OUTPUT
+    SOURCES -.->|"⚙️ Optionnel"| FABRIC -.-> FOUNDRY
     style SOURCES fill:#f1f5f9,stroke:#64748b,color:#334155
-    style FABRIC fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    style FABRIC fill:#e0f2fe,stroke:#0284c7,stroke-dasharray: 5 5,color:#0c4a6e
     style FOUNDRY fill:#e0e7ff,stroke:#6366f1,color:#312e81
     style OUTPUT fill:#d1fae5,stroke:#059669,color:#064e3b
 ```
 
-| Couche | Rôle | Produit Microsoft |
-|--------|------|-------------------|
-| **Sources** | Les données brutes là où elles sont aujourd'hui | SharePoint, SAP, APIs on-premise, bases SQL, documents |
-| **FabricIQ** | Unifie, nettoie et gouverne toutes les données | Microsoft Fabric (Data Factory + OneLake + IQ) |
-| **FoundryIQ** | Agents IA qui raisonnent sur les données unifiées | Microsoft Foundry (Agent Service + IQ + Modèles) |
-| **Décisions** | Résultats métier traçables pour chaque persona | Dashboards GroupaIQ + rapports PDF |
+| Couche | Rôle | Produit Microsoft | Obligatoire ? |
+|--------|------|-------------------|---------------|
+| **Sources** | Les données brutes **restent là où elles sont** | SharePoint, ERP, APIs on-premise, bases relationnelles, documents | — |
+| **FabricIQ** | Unifierait, nettoierait et gouvernerait les données | Microsoft Fabric (Data Factory + OneLake + IQ) | ⚠️ **Optionnel** |
+| **FoundryIQ** | Agents IA qui raisonneraient sur les données | Microsoft Foundry (Agent Service + IQ + Modèles) | ✅ **Requis** |
+| **Décisions** | Résultats métier traçables pour chaque persona | Dashboards GroupaIQ + rapports PDF | ✅ **Requis** |
+
+> 💡 **Les données ne bougent pas.** Foundry IQ et les agents Foundry accèdent directement
+> aux données via **Azure AI Search**, **Azure Blob Storage**, **SharePoint**, **MCP Servers**
+> et **APIs REST** — sans qu'il soit nécessaire de copier quoi que ce soit dans OneLake.
+> Fabric intervient uniquement si le client souhaite une **couche d'unification et d'ontologie métier** supplémentaire.
 
 ---
 
 ## 2. Sources de données — Connecteurs vérifiés
 
-Ce diagramme détaille **comment chaque source de données** rejoint la plateforme.
-Toutes les connexions listées sont **documentées et supportées par Microsoft**.
+Ce diagramme détaille **comment chaque type de source de données** pourrait rejoindre la plateforme.
+Les connecteurs listés sont **documentés et supportés par Microsoft** ; les systèmes spécifiques
+(SAP, Oracle, etc.) sont donnés à titre d'exemple et dépendraient du SI réel.
 
 ```mermaid
 flowchart LR
-    subgraph ON_PREM["🏢 Réseau Groupama (On-Premise)"]
-        direction TB
-        SAP_HANA["🔷 SAP HANA<br/><i>Base clients &<br/>contrats</i>"]
-        SAP_BW["🔷 SAP BW<br/><i>Entrepôt de<br/>données métier</i>"]
-        SAP_TABLE["🔷 SAP Table<br/><i>Données<br/>transactionnelles</i>"]
-        ORACLE["🗄️ Oracle DB<br/><i>Système sinistres<br/>legacy</i>"]
-        SQLSRV["🗄️ SQL Server<br/><i>Tarificateurs,<br/>référentiels</i>"]
-        API_REST["⚡ APIs REST<br/><i>SI métier interne,<br/>GED, workflow</i>"]
-        FICHIERS["📁 Fichiers réseau<br/><i>Partages SMB,<br/>exports batch</i>"]
+    subgraph ON_PREM["🏢 Réseau interne"]
+        SAP_HANA["🔷 ERP / SAP"] ~~~ ORACLE["🗄️ Bases legacy"]
+        API_REST["⚡ APIs métier"] ~~~ FICHIERS["📁 Fichiers réseau"]
     end
-
-    GW["🔐 <b>Data Gateway</b><br/><i>Passerelle sécurisée<br/>On-Premise → Cloud</i>"]
-
-    subgraph CLOUD["☁️ Services Cloud"]
-        direction TB
-        SHAREPOINT["📂 SharePoint<br/><i>Documents métier,<br/>polices, courriers</i>"]
-        AI_SEARCH["🔍 Azure AI Search<br/><i>Index sémantique<br/>centralisé</i>"]
-        BLOB["💾 Azure Blob<br/><i>Documents téléchargés,<br/>photos, scans</i>"]
-        PG["🐘 PostgreSQL<br/><i>Polices vectorisées<br/>(pgvector)</i>"]
+    GW["🔐 Data Gateway"]
+    subgraph CLOUD["☁️ Cloud"]
+        SHAREPOINT["📂 SharePoint"] ~~~ BLOB["💾 Blob Storage"]
+        AI_SEARCH["🔍 AI Search"] ~~~ PG["🐘 PostgreSQL"]
     end
-
-    FABRIC_DF["🟦 <b>Fabric Data Factory</b><br/><i>Orchestration &<br/>transformation</i>"]
-
-    SAP_HANA --> GW
-    SAP_BW --> GW
-    SAP_TABLE --> GW
-    ORACLE --> GW
-    SQLSRV --> GW
-    API_REST --> GW
-    FICHIERS --> GW
-
-    GW --> FABRIC_DF
-
-    SHAREPOINT --> FABRIC_DF
-    AI_SEARCH --> FABRIC_DF
-    BLOB --> FABRIC_DF
-    PG --> FABRIC_DF
-
-    FABRIC_DF --> ONELAKE["🟦 <b>OneLake</b><br/><i>Source unique<br/>de vérité</i>"]
-
+    FABRIC_DF["🟦 Fabric Data Factory"]
+    ON_PREM --> GW --> FABRIC_DF
+    CLOUD --> FABRIC_DF
+    FABRIC_DF --> ONELAKE["🟦 OneLake"]
     style ON_PREM fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
     style GW fill:#fef3c7,stroke:#d97706,color:#78350f
     style CLOUD fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
@@ -126,6 +90,9 @@ flowchart LR
 ```
 
 ### Connecteurs SAP vérifiés dans Fabric Data Factory
+
+> Les connecteurs ci-dessous sont documentés par Microsoft. Leur utilisation dépendrait
+> de la présence effective de SAP dans le SI du client.
 
 | Connecteur | Mode | Passerelle | Authentification |
 |-----------|------|-----------|------------------|
@@ -137,6 +104,9 @@ flowchart LR
 | **SAP CDC** (via ADF) | Incrémental (delta) | Azure Data Factory | ODP Framework |
 
 ### Autres connecteurs on-premise confirmés
+
+> Cette liste couvre les connecteurs les plus courants dans le secteur de l'assurance.
+> Les sources effectivement présentes dépendraient du SI en place.
 
 | Source | Type | Passerelle requise |
 |--------|------|--------------------|
@@ -151,55 +121,40 @@ flowchart LR
 
 ---
 
-## 3. FabricIQ — Plateforme de données unifiée
+## 3. FabricIQ — Plateforme de données unifiée (optionnel)
 
-Microsoft Fabric centralise **toutes les données** dans OneLake et expose des capacités intelligentes via **Fabric IQ** (preview).
+Microsoft Fabric **pourrait** centraliser les données dans OneLake et exposer des capacités intelligentes via **Fabric IQ** (preview).
+Cependant, **Fabric n'est pas un prérequis** pour faire fonctionner la couche agentique.
+
+> 🔑 **Données in situ** : même avec Fabric, les données peuvent rester à leur emplacement d'origine
+> grâce aux **OneLake Shortcuts** — des références virtuelles (zero-copy) vers Azure Data Lake Storage,
+> Amazon S3, Google Cloud Storage ou d'autres workspaces Fabric.
+> **Aucune copie de données n'est nécessaire.** Les moteurs Fabric (Spark, SQL, Power BI) interrogent
+> les données à travers les shortcuts comme si elles étaient locales.
+> *(Source : [OneLake Shortcuts — Microsoft Learn](https://learn.microsoft.com/fabric/onelake/onelake-shortcuts))*
 
 ```mermaid
-graph TB
+graph LR
     subgraph FABRIC_FULL["🟦 Microsoft Fabric"]
-        direction TB
-
         subgraph INGESTION["Ingestion"]
-            direction LR
-            DF["Data Factory<br/><i>200+ connecteurs</i>"]
-            RT["Real-Time Intelligence<br/><i>Flux en temps réel</i>"]
-            MIRROR["Mirroring<br/><i>Réplication continue<br/>SQL, Cosmos DB, Snowflake</i>"]
+            DF["Data Factory"] ~~~ RT["Real-Time Intel."] ~~~ MIRROR["Mirroring"]
         end
-
-        subgraph STORAGE["Stockage unifié"]
-            ONELAKE["<b>OneLake</b><br/><i>Lac de données unifié<br/>Format Delta Lake ouvert<br/>Accès zero-copy via Shortcuts</i>"]
+        subgraph STORAGE["Stockage"]
+            ONELAKE["OneLake — Delta Lake unifié"]
         end
-
-        subgraph COMPUTE["Traitement & Analyse"]
-            direction LR
-            DW["Data Warehouse<br/><i>SQL analytique</i>"]
-            DE["Data Engineering<br/><i>Apache Spark</i>"]
-            DS["Data Science<br/><i>ML & prédictions</i>"]
-            PBI["Power BI<br/><i>Visualisation</i>"]
+        subgraph COMPUTE["Traitement"]
+            DW["Data Warehouse"] ~~~ DE["Spark"] ~~~ DS["Data Science"] ~~~ PBI["Power BI"]
         end
-
         subgraph IQ_LAYER["Fabric IQ (preview)"]
-            direction LR
-            ONTO["Ontologie métier<br/><i>Concepts assurance<br/>standardisés</i>"]
-            DA["Data Agents<br/><i>Interrogation en<br/>langage naturel</i>"]
-            SEM["Semantic Models<br/><i>Métriques partagées<br/>gouvernées</i>"]
+            ONTO["Ontologie métier"] ~~~ DA["Data Agents"] ~~~ SEM["Semantic Models"]
         end
-
-        INGESTION --> STORAGE
-        STORAGE --> COMPUTE
+        INGESTION --> STORAGE --> COMPUTE
         STORAGE --> IQ_LAYER
     end
-
-    subgraph GOVERNANCE["🔒 Gouvernance (Microsoft Purview)"]
-        direction LR
-        GOV1["Contrôle d'accès<br/><i>RBAC + row-level</i>"]
-        GOV2["Classification<br/><i>Données sensibles</i>"]
-        GOV3["Audit<br/><i>Traçabilité complète</i>"]
+    subgraph GOVERNANCE["🔒 Gouvernance (Purview)"]
+        GOV1["RBAC"] ~~~ GOV2["Classification"] ~~~ GOV3["Audit"]
     end
-
     FABRIC_FULL --> GOVERNANCE
-
     style FABRIC_FULL fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
     style INGESTION fill:#dbeafe,stroke:#3b82f6,color:#1e3a5f
     style STORAGE fill:#006838,stroke:#004d2a,color:#fff
@@ -208,7 +163,7 @@ graph TB
     style GOVERNANCE fill:#fef3c7,stroke:#d97706,color:#78350f
 ```
 
-**Fabric IQ** (preview avril 2026) apporte :
+**Fabric IQ** (preview avril 2026) apporterait :
 - **Ontologie** : définitions métier standardisées (« sinistre », « prime », « assuré ») partagées entre les agents
 - **Data Agents** : interrogation des données en langage naturel, sans écrire de SQL
 - **Semantic Models** : métriques et KPIs réutilisables et gouvernés dans toute l'organisation
@@ -218,48 +173,26 @@ graph TB
 
 ## 4. FoundryIQ — Couche agentique
 
-Microsoft Foundry **orchestre les agents IA** qui raisonnent sur les données unifiées par Fabric.
+Microsoft Foundry **orchestrerait les agents IA** qui raisonnent sur les données unifiées par Fabric.
 
 ```mermaid
-graph TB
+graph LR
     subgraph FOUNDRY_FULL["🟪 Microsoft Foundry"]
-        direction TB
-
-        subgraph AGENT_SERVICE["Agent Service — Runtime managé"]
-            direction LR
-            PA["Prompt Agents<br/><i>Configuration, sans code<br/>Prototypage rapide</i>"]
-            WA["Workflow Agents<br/><i>Multi-agents, branchement<br/>Approbation humaine</i>"]
-            HA["Hosted Agents<br/><i>Code custom, containers<br/>Contrôle total</i>"]
+        subgraph AGENT_SERVICE["Agent Service"]
+            PA["Prompt Agents"] ~~~ WA["Workflow Agents"] ~~~ HA["Hosted Agents"]
         end
-
-        subgraph TOOLS_BUILTIN["Outils intégrés (built-in)"]
-            direction LR
-            T_SP["📂 SharePoint<br/><i>Recherche dans les<br/>sites & dossiers<br/>OBO auth</i>"]
-            T_SEARCH["🔍 Azure AI Search<br/><i>Index sémantique<br/>full-text + vectoriel</i>"]
-            T_IQ["📊 Foundry IQ<br/><i>Knowledge retrieval<br/>RAG clé en main</i>"]
-            T_FABRIC["🟦 Fabric Data Agent<br/><i>Interrogation OneLake<br/>en langage naturel</i>"]
-            T_MCP["🔌 MCP Servers<br/><i>Connecteurs custom<br/>APIs on-premise</i>"]
+        subgraph TOOLS_BUILTIN["Outils intégrés"]
+            T_SP["📂 SharePoint"] ~~~ T_SEARCH["🔍 AI Search"] ~~~ T_IQ["📊 Foundry IQ"]
+            T_FABRIC["🟦 Fabric Agent"] ~~~ T_MCP["🔌 MCP Servers"]
         end
-
-        subgraph MODELS_LAYER["Catalogue de modèles"]
-            direction LR
-            GPT41["GPT-4.1<br/><i>Analyse contextuelle</i>"]
-            DOCINT["Document Intelligence<br/><i>Extraction de champs</i>"]
-            EMB["Embeddings<br/><i>Vectorisation</i>"]
+        subgraph MODELS_LAYER["Modèles"]
+            GPT41["GPT-4.1"] ~~~ DOCINT["Doc Intelligence"] ~~~ EMB["Embeddings"]
         end
-
-        subgraph ENTERPRISE["Sécurité & Observabilité"]
-            direction LR
-            ID["Entra ID<br/><i>Identité par agent</i>"]
-            TRACE["Tracing<br/><i>Chaque décision<br/>observable</i>"]
-            SAFETY["Content Safety<br/><i>Filtres & guardrails</i>"]
+        subgraph ENTERPRISE["Sécurité"]
+            ID["Entra ID"] ~~~ TRACE["Tracing"] ~~~ SAFETY["Content Safety"]
         end
-
-        AGENT_SERVICE --> TOOLS_BUILTIN
-        AGENT_SERVICE --> MODELS_LAYER
-        AGENT_SERVICE --> ENTERPRISE
+        AGENT_SERVICE --> TOOLS_BUILTIN & MODELS_LAYER & ENTERPRISE
     end
-
     style FOUNDRY_FULL fill:#e0e7ff,stroke:#6366f1,color:#312e81
     style AGENT_SERVICE fill:#c7d2fe,stroke:#818cf8,color:#312e81
     style TOOLS_BUILTIN fill:#dbeafe,stroke:#3b82f6,color:#1e3a5f
@@ -267,14 +200,14 @@ graph TB
     style ENTERPRISE fill:#d1fae5,stroke:#059669,color:#064e3b
 ```
 
-### Outils Foundry vérifiés pour GroupaIQ
+### Outils Foundry vérifiés pour un contexte assurance
 
-| Outil | Statut | Usage pour Groupama |
-|-------|--------|---------------------|
-| **SharePoint** | Preview (GA prévue 2026) | Accès direct aux polices et pièces dans SharePoint Groupama, avec SSO (OBO) |
-| **Azure AI Search** | GA | Index sémantique des Conditions Générales (remplace pgvector à terme) |
+| Outil | Statut | Usage potentiel |
+|-------|--------|------------------|
+| **SharePoint** | Preview (GA prévue 2026) | Accès aux polices et pièces dans SharePoint, avec SSO (OBO) |
+| **Azure AI Search** | GA | Index sémantique des Conditions Générales (remplacerait pgvector à terme) |
 | **Foundry IQ** | GA | Knowledge bases clé en main pour le grounding RAG des agents |
-| **Fabric Data Agent** | Preview | Interrogation OneLake : données SAP, contrats, historique sinistres |
+| **Fabric Data Agent** | Preview | Interrogation OneLake : données ERP, contrats, historique sinistres |
 | **MCP Servers** | Preview | Pont vers les APIs REST on-premise (SI métier, GED, tarificateurs) |
 | **Code Interpreter** | GA | Calculs financiers complexes (ratios GDS/TDS/LTV) |
 | **Web Search** | ✅ GA (avril 2026) | Enrichissement externe (cours immobilier, cotes véhicules), citations inline |
@@ -283,135 +216,71 @@ graph TB
 
 ## 5. APIs métiers On-Premise — Stratégie de connexion
 
-Les systèmes métier Groupama sont accessibles via **deux chemins complémentaires** selon le type d'accès requis.
+Les systèmes métier internes seraient accessibles via **deux chemins complémentaires** selon le type d'accès requis.
 
 ```mermaid
-flowchart TD
-    subgraph SI_GROUPAMA["🏢 SI Groupama — Systèmes métier"]
-        direction TB
-        GED["📁 GED<br/><i>Gestion Électronique<br/>de Documents</i>"]
-        TARIF["💰 Tarificateur<br/><i>Calcul de prime<br/>en temps réel</i>"]
-        SINISTRE["📋 Gestion Sinistres<br/><i>Suivi des dossiers,<br/>statuts, paiements</i>"]
-        REF["📚 Référentiels<br/><i>Produits, garanties,<br/>barèmes</i>"]
-        CRM["👥 CRM<br/><i>Fiche client,<br/>historique relation</i>"]
+flowchart LR
+    subgraph SI["🏢 SI interne"]
+        GED["📁 GED"] ~~~ TARIF["💰 Tarificateur"]
+        SINISTRE["📋 Gestion Sinistres"] ~~~ REF["📚 Référentiels"]
     end
-
-    NEED{"Type d'accès<br/>requis ?"}
-
-    subgraph BATCH["📦 Chemin Batch — Fabric Data Factory"]
-        direction TB
-        B1["Extraction programmée<br/><i>Quotidien / horaire</i>"]
-        B2["Transformation<br/><i>Nettoyage, enrichissement</i>"]
-        B3["Chargement OneLake<br/><i>Delta Lake incrémental</i>"]
+    NEED{"Batch ou<br/>temps réel ?"}
+    subgraph BATCH["📦 Batch — Data Factory"]
+        B1["Extraction"] --> B2["Transformation"] --> B3["OneLake"]
     end
-
-    subgraph REALTIME["⚡ Chemin Temps Réel — MCP / APIM"]
-        direction TB
-        APIM["Azure API Management<br/><i>Exposition sécurisée<br/>des APIs internes</i>"]
-        MCP["MCP Server custom<br/><i>Pont Foundry ↔<br/>API on-premise</i>"]
-        VPN["ExpressRoute / VPN<br/><i>Tunnel sécurisé<br/>Azure ↔ Datacenter</i>"]
+    subgraph REALTIME["⚡ Temps réel — MCP / APIM"]
+        APIM["API Management"] --> MCP["MCP Server"] --> VPN["ExpressRoute / VPN"]
     end
-
-    SI_GROUPAMA --> NEED
-    NEED -->|"Données historiques<br/>volumétrie importante"| BATCH
-    NEED -->|"Appel en temps réel<br/>par un agent IA"| REALTIME
-
-    BATCH --> ONELAKE["🟦 OneLake"]
-    REALTIME --> FOUNDRY["🟪 Foundry Agent Service"]
-
-    ONELAKE --> FOUNDRY
-
-    style SI_GROUPAMA fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
+    SI --> NEED
+    NEED -->|"Historique"| BATCH
+    NEED -->|"Live"| REALTIME
+    BATCH --> OL["🟦 OneLake"]
+    REALTIME --> FD["🟪 Agent Service"]
+    OL --> FD
+    style SI fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
     style NEED fill:#fef3c7,stroke:#d97706,color:#78350f
     style BATCH fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
     style REALTIME fill:#e0e7ff,stroke:#6366f1,color:#312e81
-    style ONELAKE fill:#006838,stroke:#004d2a,color:#fff
-    style FOUNDRY fill:#6366f1,stroke:#4f46e5,color:#fff
+    style OL fill:#006838,stroke:#004d2a,color:#fff
+    style FD fill:#6366f1,stroke:#4f46e5,color:#fff
 ```
 
-### Exemples concrets d'intégration
+### Exemples d'intégration (selon le SI en place)
 
-| Système Groupama | Chemin | Méthode | Usage |
-|-----------------|--------|---------|-------|
-| **SAP (contrats)** | Batch | Data Factory → SAP HANA connector → OneLake | Données contractuelles pour Client 360 |
-| **GED (documents)** | Temps réel | MCP Server → API REST GED | Agent Données récupère une pièce jointe à la volée |
-| **Tarificateur** | Temps réel | APIM → API SOAP/REST interne | Agent Risque appelle le tarificateur pour valider une prime |
-| **Gestion Sinistres** | Batch + Temps réel | Data Factory (historique) + MCP (statut live) | Historique dans OneLake + statut temps réel pour le gestionnaire |
-| **Référentiels** | Batch | Data Factory → SQL Server → OneLake | Barèmes, produits, garanties indexés par Fabric IQ |
-| **CRM** | Batch | Data Factory → Oracle/SQL → OneLake | Fiche client complète pour Client 360 |
+| Système (exemple) | Chemin | Méthode | Usage potentiel |
+|-------------------|--------|---------|------------------|
+| **ERP / SAP** | Batch | Data Factory → connecteur SAP → OneLake | Données contractuelles pour Client 360 |
+| **GED** | Temps réel | MCP Server → API REST GED | Agent Données récupère une pièce jointe à la volée |
+| **Tarificateur** | Temps réel | APIM → API SOAP/REST interne | Agent Risque appellerait le tarificateur pour valider une prime |
+| **Gestion Sinistres** | Batch + Live | Data Factory (historique) + MCP (statut) | Historique dans OneLake + statut temps réel |
+| **Référentiels** | Batch | Data Factory → base relationnelle → OneLake | Barèmes, produits, garanties indexés par Fabric IQ |
+| **CRM** | Batch | Data Factory → base relationnelle → OneLake | Fiche client complète pour Client 360 |
 
 ---
 
 ## 6. Architecture cible intégrée — Flux complet
 
-Ce diagramme montre le **flux de bout en bout** : de la donnée brute à la décision, en passant par FabricIQ et FoundryIQ.
+Ce diagramme montre le **flux de bout en bout** envisagé : de la donnée brute à la décision, en passant par FabricIQ et FoundryIQ.
 
 ```mermaid
-flowchart TD
-    subgraph SOURCES["🏢 Sources de données"]
-        direction LR
-        S1["📂 SharePoint"]
-        S2["🔷 SAP"]
-        S3["🖥️ APIs on-premise"]
-        S4["🗄️ Bases legacy"]
-        S5["📄 Documents"]
+flowchart LR
+    subgraph SOURCES["🏢 Sources"]
+        S1["📂 SharePoint"] ~~~ S2["🔷 ERP"]
+        S3["🖥️ APIs"] ~~~ S4["📄 Documents"]
     end
-
-    subgraph INGESTION["🟦 FabricIQ — Ingestion & Unification"]
-        direction TB
-        GW["🔐 Data Gateway<br/><i>Passerelle on-premise</i>"]
-        DF["Data Factory<br/><i>Pipelines ETL</i>"]
-        OL["OneLake<br/><i>Données unifiées</i>"]
-        FIQ["Fabric IQ<br/><i>Ontologie + Data Agents</i>"]
-
-        GW --> DF
-        DF --> OL
-        OL --> FIQ
+    subgraph INGESTION["🟦 FabricIQ"]
+        GW["🔐 Gateway"] --> DF["Data Factory"] --> OL["OneLake"] --> FIQ["Fabric IQ"]
     end
-
-    subgraph AGENTS["🟪 FoundryIQ — Agents IA"]
-        direction TB
-
-        ORCH["<b>Orchestrateur</b><br/><i>Workflow Agent</i>"]
-
-        subgraph AGENTS_3["Les 3 agents spécialisés"]
-            direction LR
-            AD["🗂️ Agent Données<br/><i>Extraction</i>"]
-            AR["🧠 Agent Risque<br/><i>Analyse</i>"]
-            AP["📚 Agent Police<br/><i>Conformité</i>"]
-        end
-
-        subgraph TOOLS["Outils connectés"]
-            direction LR
-            T1["SharePoint<br/><i>Documents live</i>"]
-            T2["AI Search<br/><i>Index polices</i>"]
-            T3["Fabric Agent<br/><i>Données OneLake</i>"]
-            T4["MCP Server<br/><i>APIs métier</i>"]
-        end
-
-        ORCH --> AGENTS_3
-        AGENTS_3 --> TOOLS
+    subgraph AGENTS["🟪 FoundryIQ"]
+        ORCH["Orchestrateur"] --> AD["🗂️ Données"] & AR["🧠 Risque"] & AP["📚 Police"]
     end
-
     subgraph DELIVERY["📊 Livraison"]
-        direction LR
-        DASH["Dashboard<br/>GroupaIQ"]
-        REPORT["Rapports<br/>PDF"]
-        TEAMS["Microsoft<br/>Teams"]
-        PBI["Power BI<br/>Analytique"]
+        DASH["Dashboard"] ~~~ REPORT["Rapports"] ~~~ TEAMS["Teams"] ~~~ PBI["Power BI"]
     end
-
-    SOURCES --> INGESTION
-    INGESTION --> AGENTS
-    S1 -.->|"Accès direct<br/>OBO auth"| T1
-    S3 -.->|"Appel temps réel<br/>MCP/APIM"| T4
-    AGENTS --> DELIVERY
-
+    SOURCES --> INGESTION --> AGENTS --> DELIVERY
     style SOURCES fill:#f1f5f9,stroke:#64748b,color:#334155
     style INGESTION fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
     style AGENTS fill:#e0e7ff,stroke:#6366f1,color:#312e81
-    style AGENTS_3 fill:#c7d2fe,stroke:#818cf8,color:#312e81
-    style TOOLS fill:#dbeafe,stroke:#3b82f6,color:#1e3a5f
     style DELIVERY fill:#d1fae5,stroke:#059669,color:#064e3b
 ```
 
@@ -421,32 +290,14 @@ flowchart TD
 
 ```mermaid
 graph LR
-    subgraph POC["🟢 POC GroupaIQ (actuel)"]
-        direction TB
-        P1["Upload manuel<br/>de documents"]
-        P2["Azure Document<br/>Intelligence"]
-        P3["Azure OpenAI<br/>GPT-4.1"]
-        P4["PostgreSQL<br/>pgvector (RAG)"]
-        P5["Dashboard<br/>Next.js"]
-
-        P1 --> P2 --> P3 --> P4 --> P5
+    subgraph POC["🟢 POC actuel"]
+        P1["Upload"] --> P2["Doc Intelligence"] --> P3["GPT-4.1"] --> P4["pgvector RAG"] --> P5["Dashboard"]
     end
-
-    ARROW["<b>ÉVOLUTION</b><br/><br/>Le POC a validé<br/>le pipeline agentique.<br/><br/>L'architecture cible<br/>ajoute les sources<br/>entreprise et la<br/>gouvernance."]
-
-    subgraph TARGET["🔵 Architecture cible"]
-        direction TB
-        T1["Données multi-sources<br/>SAP + SharePoint + Legacy"]
-        T2["FabricIQ<br/>OneLake + Data Factory"]
-        T3["FoundryIQ<br/>Agent Service + Workflow"]
-        T4["AI Search + Fabric IQ<br/>(remplace pgvector)"]
-        T5["Dashboard + Teams<br/>+ Power BI"]
-
-        T1 --> T2 --> T3 --> T4 --> T5
+    ARROW["⮕ Évolution"]
+    subgraph TARGET["🔵 Cible"]
+        T1["Multi-sources"] --> T2["FabricIQ"] --> T3["FoundryIQ"] --> T4["AI Search"] --> T5["Multi-canal"]
     end
-
     POC --> ARROW --> TARGET
-
     style POC fill:#d1fae5,stroke:#059669,color:#064e3b
     style ARROW fill:#fef3c7,stroke:#d97706,color:#78350f
     style TARGET fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
@@ -454,8 +305,8 @@ graph LR
 
 | Composant | POC actuel | Architecture cible | Changement |
 |-----------|-----------|-------------------|------------|
-| **Sources de données** | Upload manuel de PDF/photos | SAP, SharePoint, GED, APIs on-premise, bases legacy | Multi-canal automatisé |
-| **Stockage** | Azure Blob Storage | OneLake (Fabric) + Blob | Lac unifié gouverné |
+| **Sources de données** | Upload manuel de PDF/photos | ERP, SharePoint, GED, APIs on-premise, bases legacy | Multi-canal automatisé |
+| **Stockage** | Azure Blob Storage | OneLake (Fabric) + Blob *ou* Blob + AI Search seuls | Lac unifié **ou** stockage existant |
 | **Recherche polices** | PostgreSQL + pgvector | Azure AI Search + Foundry IQ | Scalable + managed |
 | **Orchestration agents** | FastAPI custom Python | Foundry Agent Service (Workflow Agents) | Managed + observable |
 | **Modèle IA** | Azure OpenAI (direct) | Foundry Model Catalog (même modèles) | Versioning + guardrails |
@@ -468,50 +319,34 @@ graph LR
 
 ## 8. Séquence cible — Traitement d'un sinistre auto
 
-Ce diagramme montre le déroulement complet dans l'architecture cible, avec les sources multi-canaux et les outils Foundry.
+Ce diagramme montre le déroulement complet envisagé dans l'architecture cible, avec les sources multi-canaux et les outils Foundry.
 
 ```mermaid
 sequenceDiagram
     actor G as 👤 Gestionnaire
-    participant TEAMS as 📱 Teams
-    participant ORCH as ⚙️ Workflow Agent
+    participant ORCH as ⚙️ Orchestrateur
     participant DA as 🗂️ Agent Données
     participant FIQ as 🟦 FabricIQ
     participant AR as 🧠 Agent Risque
     participant AP as 📚 Agent Police
-    participant MCP as 🔌 MCP Server
 
-    G->>TEAMS: Nouveau sinistre auto<br/>(constat + photos)
-    TEAMS->>ORCH: Déclenchement workflow
-
+    G->>ORCH: Nouveau sinistre (constat + photos)
     rect rgb(224, 242, 254)
-        Note over DA: Phase 1 — Collecte multi-sources
-        ORCH->>DA: Traiter les pièces jointes
-        DA->>DA: Document Intelligence<br/>extraction des champs
-        ORCH->>FIQ: Récupérer historique client
-        FIQ-->>ORCH: Contrats SAP + sinistres passés
-        ORCH->>MCP: Statut dossier en cours ?
-        MCP-->>ORCH: Données SI métier
+        Note over DA,FIQ: Phase 1 — Collecte
+        ORCH->>DA: Extraction Document Intelligence
+        ORCH->>FIQ: Historique client + contrats ERP
     end
-
     rect rgb(254, 243, 199)
-        Note over AR: Phase 2 — Analyse enrichie
-        ORCH->>AR: Dossier complet enrichi
-        AR->>AR: Évaluation dommages<br/>(photos multimodales)
-        AR->>AR: Analyse responsabilité<br/>+ détection fraude
-        AR->>AR: Croisement historique<br/>(Client 360)
-        AR-->>ORCH: Évaluation + signalements
+        Note over AR: Phase 2 — Analyse
+        ORCH->>AR: Dossier enrichi
+        AR-->>ORCH: Évaluation + scoring
     end
-
     rect rgb(209, 250, 229)
         Note over AP: Phase 3 — Conformité
-        ORCH->>AP: Recherche AI Search<br/>+ SharePoint
-        AP->>AP: Conditions Générales Auto<br/>articles applicables
+        ORCH->>AP: Recherche AI Search + SharePoint
         AP-->>ORCH: Citations + couverture
     end
-
-    ORCH-->>TEAMS: Résultat dans Teams<br/>avec décision documentée
-    ORCH-->>G: Notification + dashboard
+    ORCH-->>G: Décision documentée
 ```
 
 ---
@@ -519,6 +354,7 @@ sequenceDiagram
 ## 9. Matrice de faisabilité — Vérification technique
 
 Chaque intégration est classée selon son **statut réel** dans l'écosystème Microsoft (avril 2026).
+Le niveau de complexité dépendrait du SI existant et de l'infrastructure réseau.
 
 | Intégration | Statut Microsoft | Complexité | Pré-requis |
 |-------------|-----------------|------------|------------|
@@ -584,43 +420,45 @@ graph LR
 
 ## 11. Microsoft Agent Framework — Pro-code pour workflows custom
 
-Le POC GroupaIQ est actuellement implémenté en **FastAPI custom**. L'architecture cible migre les agents vers **Microsoft Agent Framework SDK**, qui offre un runtime managé, de l'observabilité native, et une publication multi-canal.
+Le POC GroupaIQ est actuellement implémenté en **FastAPI custom**. L'architecture cible pourrait migrer les agents vers **Microsoft Agent Framework SDK**, qui offre un runtime managé, de l'observabilité native, et une publication multi-canal.
+
+> **Stratégie hybride** : l'architecture ne se limiterait pas à un seul framework.
+> **Microsoft Agent Framework** et **LangChain / LangGraph** sont les deux piliers recommandés,
+> combinables librement selon les workloads. Les agents peuvent être hébergés soit dans
+> **Foundry Agent Service** (Hosted Agents), soit dans **Azure Container Apps** (ACA).
+> Le choix dépendrait de la complexité du workflow, des compétences de l'équipe et des exigences d'intégration.
+> Voir la **matrice de décision** en fin de section pour guider le choix par workload.
 
 ### Trois niveaux d'agents Foundry
 
 ```mermaid
-graph TB
-    subgraph PROMPT["🟢 Prompt Agents (sans code)"]
-        PA1["Prototypage rapide<br/><i>Configuration portal Foundry<br/>Instructions + outils built-in</i>"]
+graph LR
+    subgraph PROMPT["🟢 Prompt Agents"]
+        PA1["Sans code — portal Foundry"]
     end
-
-    subgraph WORKFLOW["🟡 Workflow Agents (YAML / Visual)"]
-        WA1["Orchestration multi-agents<br/><i>Branchement, approbation humaine<br/>Séquence ou group-chat</i>"]
+    subgraph WORKFLOW["🟡 Workflow Agents"]
+        WA1["YAML / Visual — multi-agents"]
     end
-
-    subgraph HOSTED["🔵 Hosted Agents (pro-code)"]
-        HA1["Microsoft Agent Framework<br/><i>Python SDK, containers Docker<br/>Contrôle total, logique custom</i>"]
-        HA2["LangGraph / Custom<br/><i>Frameworks alternatifs<br/>même runtime managé</i>"]
+    subgraph HOSTED["🔵 Hosted Agents"]
+        HA1["Agent Framework SDK"]
+        HA2["LangChain / LangGraph"]
     end
-
-    PROMPT --> |"Besoin de<br/>logique métier"| WORKFLOW
-    WORKFLOW --> |"Besoin de<br/>code custom"| HOSTED
-
+    PROMPT -->|"Logique métier"| WORKFLOW -->|"Code custom"| HOSTED
     style PROMPT fill:#d1fae5,stroke:#059669,color:#064e3b
     style WORKFLOW fill:#fef3c7,stroke:#d97706,color:#78350f
     style HOSTED fill:#e0e7ff,stroke:#6366f1,color:#312e81
 ```
 
-### Stratégie agents par workflow GroupaIQ
+### Stratégie agents par workflow
 
-| Workflow | Type d'agent cible | Justification | Outils connectés |
-|----------|-------------------|---------------|------------------|
-| **Sinistres Habitation** | Hosted Agent (Agent Framework) | Logique custom : scoring dommages, corrélation historique, photos multimodales | CU, GPT-4.1, AI Search, **Web Search** (cotes immobilières), MCP→GED |
-| **Sinistres Auto** | Hosted Agent (Agent Framework) | Pipeline multimodale : analyse photos + constat + cotes Argus via web search | CU, GPT-4.1 multimodal, **Web Search** (cotes véhicules), Fabric Agent→SAP |
-| **Sinistres Santé** | Workflow Agent | Flux standardisé : extraction facture → vérification couverture → calcul remboursement | CU, AI Search (polices santé), Code Interpreter (calcul) |
-| **Souscription** | Hosted Agent (Agent Framework) | Scoring risque complexe, APS médical multi-pages, deep dive body systems | CU, GPT-4.1, AI Search, Fabric Agent→historique sinistres |
-| **Hypothécaire** | Workflow Agent + Code Interpreter | Calculs réglementaires GDS/TDS/LTV, validation documents multiples | CU, Code Interpreter, **Web Search** (taux immobiliers), AI Search |
-| **Client 360** | Prompt Agent + Fabric Data Agent | Agrégation cross-persona, interrogation en langage naturel | Fabric Data Agent→OneLake, SharePoint, AI Search |
+| Workflow | Type d'agent envisagé | Justification | Outils connectés |
+|----------|----------------------|---------------|------------------|
+| **Sinistres Habitation** | Hosted Agent | Logique custom : scoring dommages, corrélation historique, photos multimodales | CU, GPT-4.1, AI Search, **Web Search**, MCP→GED |
+| **Sinistres Auto** | Hosted Agent | Pipeline multimodale : analyse photos + constat + cotes via web search | CU, GPT-4.1, **Web Search**, Fabric Agent→ERP |
+| **Sinistres Santé** | Workflow Agent | Flux standardisé : extraction facture → couverture → calcul | CU, AI Search, Code Interpreter |
+| **Souscription** | Hosted Agent | Scoring complexe, APS médical multi-pages, deep dive | CU, GPT-4.1, AI Search, Fabric Agent |
+| **Hypothécaire** | Workflow Agent + Code Interpreter | Calculs réglementaires GDS/TDS/LTV | CU, Code Interpreter, **Web Search**, AI Search |
+| **Client 360** | Prompt Agent + Fabric Data Agent | Agrégation cross-persona, langage naturel | Fabric Agent→OneLake, SharePoint, AI Search |
 
 ### Exemple pro-code — Agent Sinistres Habitation
 
@@ -663,78 +501,264 @@ if __name__ == "__main__":
     from_agent_framework(agent).run()  # localhost:8088 en dev
 ```
 
-### Connecteurs agents — Fabric et outils built-in
+### Connecteurs agents — Fabric, API, MCP et outils built-in
+
+Les agents disposeraient de **trois familles de connexions** pour accéder aux données et aux services :
 
 ```mermaid
 graph LR
-    subgraph HOSTED_AGENT["🔵 Hosted Agent (GroupaIQ)"]
-        AGENT["Agent Framework<br/><i>Python container</i>"]
+    subgraph AGENT["🔵 Hosted Agent"]
+        AF["Agent Framework"]
     end
-
-    subgraph BUILTIN["🟢 Outils Built-in"]
-        direction TB
-        WS["🌐 Web Search (GA)<br/><i>Cotes, taux, prix marché<br/>Citations inline</i>"]
-        CI["💻 Code Interpreter<br/><i>Calculs GDS/TDS/LTV<br/>Graphiques</i>"]
-        FS["📁 File Search<br/><i>Documents uploadés<br/>Vector search</i>"]
+    subgraph BUILTIN["🟢 Built-in"]
+        WS["🌐 Web Search"] ~~~ CI["💻 Code Interpreter"] ~~~ FS["📁 File Search"]
     end
-
-    subgraph CONNECTED["🔗 Outils connectés"]
-        direction TB
-        AIS["🔍 AI Search<br/><i>Polices Groupama<br/>Index sémantique</i>"]
-        FAB["🟦 Fabric Data Agent<br/><i>OneLake : SAP,<br/>historique, CRM</i>"]
-        MCP_SI["🔌 MCP → SI Groupama<br/><i>GED, tarificateur,<br/>gestion sinistres</i>"]
-        SP["📂 SharePoint<br/><i>Polices, courriers<br/>OBO auth</i>"]
+    subgraph CONNECTED["🔗 Connectés"]
+        AIS["🔍 AI Search"] ~~~ FAB["🟦 Fabric Agent"] ~~~ SP["📂 SharePoint"]
     end
-
-    AGENT --> BUILTIN
-    AGENT --> CONNECTED
-
-    style HOSTED_AGENT fill:#e0e7ff,stroke:#6366f1,color:#312e81
+    subgraph APIMCP["🔌 API / MCP"]
+        MCP["MCP Servers"] ~~~ REST["APIs REST"] ~~~ A2A["A2A Agents"]
+    end
+    AF --> BUILTIN & CONNECTED & APIMCP
+    style AGENT fill:#e0e7ff,stroke:#6366f1,color:#312e81
     style BUILTIN fill:#d1fae5,stroke:#059669,color:#064e3b
     style CONNECTED fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    style APIMCP fill:#fef3c7,stroke:#d97706,color:#78350f
 ```
+
+| Type de connexion | Protocole | Usage | Exemple |
+|-------------------|-----------|-------|----------|
+| **Built-in tools** | Natif Foundry | Outils intégrés au runtime, configuration sans code | Web Search, Code Interpreter, File Search |
+| **Azure AI Search** | REST / SDK | Index sémantique managé pour le grounding RAG | Polices Groupama vectorisées |
+| **SharePoint** | Graph API (OBO) | Accès documents métier avec identité utilisateur | Pièces justificatives, courriers |
+| **Fabric Data Agent** | OneLake SDK | Interrogation données unifiées en langage naturel | Données ERP, historique sinistres |
+| **MCP Servers** | Model Context Protocol | Pont standardisé vers APIs on-premise ou SaaS | GED, tarificateur, gestion sinistres |
+| **APIs REST custom** | HTTP / APIM | Appels directs via Azure API Management | Référentiels internes, services tiers |
+| **A2A (Agent-to-Agent)** | A2A Protocol | Communication inter-agents via endpoints standardisés | Orchestration multi-agents cross-domaine |
+| **OpenAPI tools** | OpenAPI spec | Import automatique d'APIs depuis leur spécification | Toute API documentée en OpenAPI 3.x |
+
+### Stratégie hybride — Liberté de choix par workload
+
+L'architecture cible ne reposerait **pas sur un seul framework** mais sur une **approche hybride**
+permettant de combiner les outils les plus adaptés à chaque workload. Cette liberté de choix
+éviterait le verrouillage technologique et permettrait à chaque équipe de capitaliser sur ses compétences.
+
+```mermaid
+graph LR
+    subgraph WORKLOAD["📋 Workloads"]
+        W1["Simple / standardisé"] ~~~ W2["Complexe / custom"] ~~~ W3["Data-intensive"]
+    end
+    subgraph FRAMEWORK["🛠️ Framework"]
+        F1["Prompt / Workflow Agent"] ~~~ F2["Agent Framework SDK"] ~~~ F3["LangChain / LangGraph"]
+    end
+    subgraph RUNTIME["⚙️ Runtime"]
+        R1["Foundry Agent Service"] ~~~ R2["Azure Container Apps"]
+    end
+    W1 --> F1 --> R1
+    W2 --> F2 --> R1
+    W3 --> F3 --> R2
+    style WORKLOAD fill:#f1f5f9,stroke:#64748b,color:#334155
+    style FRAMEWORK fill:#e0e7ff,stroke:#6366f1,color:#312e81
+    style RUNTIME fill:#d1fae5,stroke:#059669,color:#064e3b
+```
+
+#### Matrice de décision — Quel framework pour quel workload ?
+
+| Critère | Prompt / Workflow Agent | Agent Framework SDK | LangChain / LangGraph |
+|---------|------------------------|--------------------|-----------------------|
+| **Complexité** | Flux linéaires, règles simples | Logique métier custom, multi-outils | Graphs complexes, boucles, état riche |
+| **Compétences requises** | No-code / low-code | Python / .NET | Python avancé |
+| **Gouvernance Foundry** | ✅ Natif portal | ✅ Hosted Agent managé | ⚠️ Via ACA + APIM |
+| **Observabilité** | ✅ Traces Foundry natives | ✅ OpenTelemetry intégré | ✅ LangSmith / App Insights |
+| **Évaluation** | ✅ Foundry Evaluation | ✅ Foundry Evaluation | ⚠️ LangSmith ou custom |
+| **Multi-agent** | ✅ Workflow YAML natif | ✅ Agent-to-Agent (A2A) | ✅ LangGraph natif |
+| **Écosystème outils** | Built-in Foundry | @ai_function custom | 700+ intégrations LangChain |
+| **Distribution M365** | ✅ Agents 365, Teams | ✅ Via Agent Registry | ⚠️ Via API custom |
+| **Portabilité** | ⚠️ Foundry only | ⚠️ Azure-centric | ✅ Multi-cloud |
+
+#### Scénarios hybrides recommandés pour l'assurance
+
+| Scénario | Combinaison recommandée | Justification |
+|----------|------------------------|---------------|
+| **Sinistres Auto** (photos + constat + cotes) | Agent Framework SDK (orchestration) + LangGraph (graph de décision fraude) | L'orchestration multimodale se fait en Agent Framework ; la détection de fraude nécessite un graph complexe avec boucles de vérification |
+| **Sinistres Habitation** (expertise + historique) | Agent Framework SDK uniquement | Workflow custom suffisant, bénéfice maximal de l'écosystème Foundry (tracing, évaluation) |
+| **Souscription** (APS médical) | Agent Framework SDK + Code Interpreter | Scoring complexe avec calculs réglementaires, deep dive médical |
+| **Client 360** (agrégation) | Prompt Agent (Fabric Data Agent) + Agent Framework (enrichissement) | Requêtes naturelles sur OneLake via Prompt Agent, enrichissement par un Hosted Agent |
+| **Recherche polices RAG** | LangChain (retrieval) + Agent Framework (agent) | LangChain excelle pour les pipelines RAG complexes (re-ranking, hybrid search) ; le résultat alimente un agent Foundry |
+| **Chatbot Teams** | Prompt Agent Foundry | Cas standard, no-code, distribution native Teams/M365 |
+
+#### Comment choisir — Arbre de décision
+
+```mermaid
+graph LR
+    Q1{"Logique métier<br/>custom ?"}
+    Q2{"Graph de décision<br/>complexe ?"}
+    Q3{"Distribution<br/>M365 requise ?"}
+    Q4{"Écosystème<br/>multi-cloud ?"}
+    PA["🟢 Prompt /<br/>Workflow Agent"]
+    AF["🔵 Agent<br/>Framework SDK"]
+    LG["🟣 LangChain /<br/>LangGraph"]
+    HY["🟠 Hybride :<br/>AF + LangGraph"]
+    Q1 -->|Non| PA
+    Q1 -->|Oui| Q2
+    Q2 -->|Non| Q3
+    Q2 -->|Oui| Q4
+    Q3 -->|Oui| AF
+    Q3 -->|Non| AF
+    Q4 -->|Oui| LG
+    Q4 -->|Non| HY
+    style PA fill:#d1fae5,stroke:#059669,color:#064e3b
+    style AF fill:#e0e7ff,stroke:#6366f1,color:#312e81
+    style LG fill:#e0e7ff,stroke:#7c3aed,color:#312e81
+    style HY fill:#fef3c7,stroke:#d97706,color:#78350f
+```
+
+> **Clé** : la plupart des workloads d'assurance se satisferaient de **Microsoft Agent Framework SDK**
+> pour bénéficier de la gouvernance Foundry native. **LangChain / LangGraph** serait privilégié
+> pour les graphs de décision complexes (fraude, multi-vérification) ou lorsque la portabilité multi-cloud est requise.
+> Les deux cohabitent dans la même architecture via **ACA** ou **Foundry Agent Service**.
 
 ---
 
-## 12. Stockage des résultats agents — Traçabilité et entraînement
+## 12. Gouvernance des agents — Sécurité, identité et contrôle
 
-Les agents produisent des **résultats transformés** qui doivent être stockés pour la traçabilité réglementaire, l'amélioration continue des prompts, et l'entraînement des modèles.
+Le déploiement d'agents IA en entreprise nécessiterait un **cadre de gouvernance robuste**.
+L'écosystème Microsoft propose un **control plane unifié** qui couvrirait l'identité, la sécurité,
+la distribution et l'observabilité des agents.
+
+### Architecture de gouvernance
+
+```mermaid
+graph LR
+    subgraph CONTROL["🔒 Control Plane"]
+        ENTRA["Entra ID"] ~~~ REGISTRY["Agent Registry"]
+        SAFETY["Content Safety"] ~~~ GATEWAY["AI Gateway"]
+    end
+    subgraph RUNTIME["⚙️ Runtime"]
+        FOUNDRY["Foundry Agent Service"] ~~~ ACA["Azure Container Apps"]
+    end
+    subgraph DISTRIBUTION["📱 Distribution"]
+        M365["Microsoft 365 Copilot"] ~~~ TEAMS["Teams"]
+        CUSTOM["Apps custom"] ~~~ API_EXT["APIs externes"]
+    end
+    subgraph OBSERVABILITY["📊 Observabilité"]
+        TRACES["Agent Tracing"] ~~~ MONITOR["Azure Monitor"]
+        EVAL["Évaluation Foundry"] ~~~ PURVIEW["Purview"]
+    end
+    CONTROL --> RUNTIME --> DISTRIBUTION
+    CONTROL --> OBSERVABILITY
+    style CONTROL fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
+    style RUNTIME fill:#e0e7ff,stroke:#6366f1,color:#312e81
+    style DISTRIBUTION fill:#d1fae5,stroke:#059669,color:#064e3b
+    style OBSERVABILITY fill:#fef3c7,stroke:#d97706,color:#78350f
+```
+
+### Entra ID — Identité par agent
+
+Chaque agent disposerait de sa propre **identité managée** dans Microsoft Entra ID :
+
+| Capacité | Description |
+|----------|-------------|
+| **Managed Identity** | Chaque agent possède une identité système ou utilisateur — pas de secrets partagés |
+| **OBO (On-Behalf-Of)** | L'agent agit avec les droits de l'utilisateur final, pas un compte technique |
+| **RBAC granulaire** | Permissions par agent : quel agent accède à quelles données, quels outils |
+| **Conditional Access** | Politiques d'accès conditionnel applicables aux agents (géo, device, risk level) |
+| **Audit logs** | Chaque action d'agent tracée dans Entra ID audit logs |
+
+### Entra Agent Registry — Publication et découverte
+
+L'**Entra Agent Registry** centraliserait l'enregistrement et la distribution des agents :
+
+| Fonction | Description |
+|----------|-------------|
+| **Enregistrement** | Chaque agent publié dans un registre centralisé avec métadonnées (nom, description, capabilities) |
+| **Découverte** | Les utilisateurs et applications découvrent les agents disponibles via le registre |
+| **Consentement** | Workflow d'approbation admin avant qu'un agent soit accessible aux utilisateurs |
+| **Distribution M365** | Agents publiés dans Microsoft 365 Copilot, Teams, Outlook via le registre |
+| **Agents 365** | Les agents enregistrés deviennent invocables comme « Agents 365 » dans l'écosystème Copilot |
+
+### Azure AI Gateway (APIM) — Contrôle du trafic IA
+
+Azure API Management, avec sa couche **AI Gateway**, offrirait un point de contrôle centralisé
+pour tout le trafic entre les agents et les modèles IA :
+
+```mermaid
+graph LR
+    subgraph AGENTS["🤖 Agents"]
+        A1["Agent Habitation"] ~~~ A2["Agent Auto"] ~~~ A3["Agent Santé"]
+    end
+    subgraph GATEWAY["🛡️ AI Gateway (APIM)"]
+        RL["Rate Limiting"] ~~~ LB["Load Balancing"]
+        LOG["Token Logging"] ~~~ COST["Cost Tracking"]
+        ROUTE["Routing"] ~~~ CACHE["Semantic Cache"]
+    end
+    subgraph MODELS["🧠 Modèles"]
+        GPT["GPT-4.1"] ~~~ EMB["Embeddings"] ~~~ CU["Doc Intelligence"]
+    end
+    AGENTS --> GATEWAY --> MODELS
+    style AGENTS fill:#e0e7ff,stroke:#6366f1,color:#312e81
+    style GATEWAY fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
+    style MODELS fill:#fef3c7,stroke:#d97706,color:#78350f
+```
+
+| Capacité AI Gateway | Description |
+|---------------------|-------------|
+| **Rate limiting** | Quotas par agent, par utilisateur ou par workflow — évite les abus et maîtrise les coûts |
+| **Load balancing** | Répartition du trafic entre plusieurs déploiements de modèles (failover, latence) |
+| **Token logging** | Comptage des tokens consommés par agent pour le chargeback et le reporting |
+| **Cost tracking** | Suivi du coût par requête, par agent, par persona — dashboards Azure Monitor |
+| **Semantic caching** | Cache des réponses similaires pour réduire les appels redondants et la latence |
+| **Content filtering** | Filtrage des entrées/sorties via Azure Content Safety (texte, images) |
+| **Circuit breaker** | Protection contre les cascades d'erreurs — fallback automatique |
+| **Routing intelligent** | Acheminement vers le modèle optimal selon la complexité (nano → mini → full) |
+
+### Azure Content Safety — Guardrails IA
+
+| Protection | Périmètre |
+|------------|----------|
+| **Prompt injection** | Détection et blocage des tentatives de contournement des instructions agent |
+| **Groundedness** | Vérification que les réponses sont ancrées dans les données fournies (pas d'hallucination) |
+| **Protected material** | Détection de contenu protégé par le droit d'auteur |
+| **PII detection** | Identification et masquage des données personnelles (RGPD) |
+| **Custom categories** | Catégories personnalisées pour le domaine assurance (ex. : termes médicaux sensibles) |
+
+### Matrice de gouvernance par couche
+
+| Couche | Service | Rôle dans la gouvernance |
+|--------|---------|-------------------------|
+| **Identité** | Entra ID | Identité managée par agent, OBO, RBAC, audit |
+| **Registre** | Entra Agent Registry | Publication, découverte, consentement, distribution M365 |
+| **Gateway** | APIM + AI Gateway | Rate limiting, load balancing, cost tracking, caching |
+| **Sécurité contenu** | Content Safety | Prompt injection, PII, groundedness, filtrage |
+| **Runtime** | Foundry Agent Service | Hébergement managé, auto-scaling, tracing OpenTelemetry |
+| **Runtime (alt.)** | Azure Container Apps | Hébergement custom, KEDA scaling, VNet isolation |
+| **Données** | Purview + Fabric | Classification, lineage, conformité RGPD |
+| **Observabilité** | App Insights + Monitor | Traces, métriques, alertes, dashboards |
+| **Évaluation** | Foundry Evaluation | Qualité agents, datasets, amélioration continue |
+
+---
+
+## 13. Stockage des résultats agents — Traçabilité et entraînement
+
+Les agents produiraient des **résultats transformés** à stocker pour la traçabilité réglementaire, l'amélioration continue des prompts, et l'entraînement des modèles.
 
 ### Architecture de stockage des outputs agents
 
 ```mermaid
-graph TB
-    subgraph AGENTS_OUT["🤖 Outputs des agents"]
-        direction LR
-        EX["Extraction<br/><i>Champs structurés CU</i>"]
-        AN["Analyse<br/><i>Scoring, risques,<br/>résumé GPT-4.1</i>"]
-        DE["Décision<br/><i>Couverture, montant,<br/>recommandation</i>"]
-        CI_OUT["Citations<br/><i>Articles polices<br/>sources RAG</i>"]
+graph LR
+    subgraph AGENTS_OUT["🤖 Outputs"]
+        EX["Extraction"] ~~~ AN["Analyse"] ~~~ DE["Décision"] ~~~ CI_OUT["Citations"]
     end
-
-    subgraph STORAGE_LAYERS["📦 Couches de stockage"]
-        direction TB
-
-        subgraph HOT["🔥 Stockage chaud — Operationnel"]
-            BLOB_HOT["Azure Blob Storage<br/><i>Résultats JSON par dossier<br/>Accès immédiat dashboard</i>"]
-            COSMOS["Azure Cosmos DB<br/><i>Conversations agents<br/>État des sessions</i>"]
-        end
-
-        subgraph WARM["🟡 Stockage tiède — Analytique"]
-            ONELAKE_W["OneLake (Fabric)<br/><i>Résultats agrégés<br/>Power BI reporting</i>"]
-            APPINS["Application Insights<br/><i>Traces agents<br/>Métriques OpenTelemetry</i>"]
-        end
-
-        subgraph COLD["🔵 Stockage froid — Entraînement"]
-            ONELAKE_C["OneLake Archive<br/><i>Historique complet<br/>pour fine-tuning</i>"]
-            EVAL["Evaluation Datasets<br/><i>Pairs question/réponse<br/>pour évaluation agents</i>"]
-        end
+    subgraph HOT["🔥 Chaud"]
+        BLOB_HOT["Blob Storage"] ~~~ COSMOS["Cosmos DB"]
     end
-
-    AGENTS_OUT --> HOT
-    HOT --> WARM
-    WARM --> COLD
-
+    subgraph WARM["🟡 Tiède"]
+        ONELAKE_W["OneLake"] ~~~ APPINS["App Insights"]
+    end
+    subgraph COLD["🔵 Froid"]
+        ONELAKE_C["Archive"] ~~~ EVAL["Eval Datasets"]
+    end
+    AGENTS_OUT --> HOT --> WARM --> COLD
     style AGENTS_OUT fill:#e0e7ff,stroke:#6366f1,color:#312e81
     style HOT fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
     style WARM fill:#fef3c7,stroke:#d97706,color:#78350f
@@ -760,27 +784,17 @@ graph TB
 ```mermaid
 graph LR
     subgraph PRODUCTION["🟢 Production"]
-        AGENT_PROD["Agent en production"]
-        TRACES["Traces & résultats"]
-        AGENT_PROD --> TRACES
+        AGENT_PROD["Agent"] --> TRACES["Traces"]
     end
-
     subgraph EVALUATION["🟡 Évaluation"]
-        DATASET["Datasets<br/><i>Questions/réponses<br/>attendues</i>"]
-        EVAL_RUN["Évaluation Foundry<br/><i>Intent Resolution<br/>Task Adherence<br/>Tool Call Accuracy</i>"]
-        DATASET --> EVAL_RUN
+        DATASET["Datasets"] --> EVAL_RUN["Évaluation Foundry"]
     end
-
     subgraph IMPROVEMENT["🔵 Amélioration"]
-        PROMPT_OPT["Optimisation prompts<br/><i>Instructions, exemples<br/>few-shot</i>"]
-        NEW_VERSION["Nouvelle version agent<br/><i>Versionning automatique<br/>Rollback possible</i>"]
-        PROMPT_OPT --> NEW_VERSION
+        PROMPT_OPT["Optim. prompts"] --> NEW_VERSION["Nouvelle version"]
     end
-
     TRACES --> DATASET
     EVAL_RUN --> PROMPT_OPT
     NEW_VERSION --> AGENT_PROD
-
     style PRODUCTION fill:#d1fae5,stroke:#059669,color:#064e3b
     style EVALUATION fill:#fef3c7,stroke:#d97706,color:#78350f
     style IMPROVEMENT fill:#e0e7ff,stroke:#6366f1,color:#312e81
@@ -798,46 +812,126 @@ graph LR
 
 ---
 
-## 13. Stratégie d'adoption progressive — Liberté de choix
+## 14. Amélioration continue par le retour humain (Human-in-the-Loop)
+
+Les agents de conseil ne seraient pas figés : ils s'amélioreraient **en permanence** grâce aux
+interventions des gestionnaires. Chaque correction, classification modifiée ou décision ajustée
+par un humain enrichirait la base de connaissance et affinerait les instructions des agents.
+
+### Boucle de rétroaction humaine
+
+```mermaid
+graph LR
+    subgraph AGENT["🤖 Agent IA"]
+        SUGGEST["Suggestion"]
+    end
+    subgraph HUMAN["👤 Gestionnaire"]
+        REVIEW["Revue"] --> DECISION{"Accepter /<br/>Modifier /<br/>Rejeter"}
+    end
+    subgraph FEEDBACK["📊 Feedback Store"]
+        LOG["Corrections loggées"] --> METRICS["Métriques qualité"]
+    end
+    subgraph IMPROVE["🔄 Amélioration"]
+        FEW["Few-shot examples"] ~~~ PROMPT["Prompts optimisés"]
+        RULES["Règles métier"] ~~~ EVAL_DS["Datasets évaluation"]
+    end
+    SUGGEST --> REVIEW
+    DECISION --> LOG
+    METRICS --> IMPROVE
+    IMPROVE --> AGENT
+    style AGENT fill:#e0e7ff,stroke:#6366f1,color:#312e81
+    style HUMAN fill:#d1fae5,stroke:#059669,color:#064e3b
+    style FEEDBACK fill:#fef3c7,stroke:#d97706,color:#78350f
+    style IMPROVE fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+```
+
+### Types d'interventions humaines et leur impact
+
+| Intervention humaine | Exemple assurance | Impact sur l'agent |
+|---------------------|-------------------|-------------------|
+| **Correction de classification** | Le gestionnaire reclasse un sinistre de « dégâts des eaux » en « tempête » | L'agent apprend à mieux distinguer les catégories via few-shot examples mis à jour |
+| **Modification du scoring** | Ajustement d'un score de risque de 7/10 à 4/10 avec justification | Les seuils de scoring sont recalibrés dans les instructions de l'agent |
+| **Ajout d'exclusion** | Le gestionnaire identifie une clause d'exclusion manquée par l'agent | La clause est ajoutée aux règles RAG de recherche de polices |
+| **Rejet d'hallucination** | L'agent cite un article de police inexistant, le gestionnaire signale l'erreur | Le feedback alimente un dataset d'évaluation de « groundedness » |
+| **Ajustement de montant** | Modification du montant de remboursement proposé (de 12 500 € à 8 200 €) | Les barèmes et plafonds dans les prompts sont affinés |
+| **Validation de fraude** | Confirmation ou infirmation d'un indicateur de fraude détecté | Le modèle de détection de fraude est renforcé (précision / rappel) |
+| **Enrichissement contextuel** | Ajout d'informations manquantes (antécédents, photos supplémentaires) | L'agent apprend les champs critiques à demander en priorité |
+
+### Pipeline d'amélioration par le feedback humain
+
+```mermaid
+graph LR
+    subgraph COLLECT["1️⃣ Collecte"]
+        C1["Corrections<br/>gestionnaires"] --> C2["Scores<br/>satisfaction"] --> C3["Temps de<br/>traitement"]
+    end
+    subgraph ANALYZE["2️⃣ Analyse"]
+        A1["Patterns<br/>d'erreur"] --> A2["Taux<br/>d'acceptation"] --> A3["Dérive de<br/>qualité"]
+    end
+    subgraph ACT["3️⃣ Action"]
+        ACT1["Mise à jour<br/>few-shot"] --> ACT2["Révision<br/>prompts"] --> ACT3["Ajout règles<br/>métier"]
+    end
+    subgraph VALIDATE["4️⃣ Validation"]
+        V1["Évaluation<br/>Foundry"] --> V2["A/B test<br/>agents"] --> V3["Déploiement<br/>progressif"]
+    end
+    COLLECT --> ANALYZE --> ACT --> VALIDATE
+    style COLLECT fill:#d1fae5,stroke:#059669,color:#064e3b
+    style ANALYZE fill:#fef3c7,stroke:#d97706,color:#78350f
+    style ACT fill:#e0e7ff,stroke:#6366f1,color:#312e81
+    style VALIDATE fill:#fee2e2,stroke:#ef4444,color:#7f1d1d
+```
+
+### Métriques de suivi Human-in-the-Loop
+
+| Métrique | Description | Cible |
+|----------|-------------|-------|
+| **Taux d'acceptation** | % de suggestions agent acceptées sans modification | > 80 % à terme |
+| **Taux de correction** | % de suggestions modifiées avant validation | < 15 % (en baisse) |
+| **Taux de rejet** | % de suggestions rejetées par le gestionnaire | < 5 % |
+| **Temps moyen de revue** | Durée entre suggestion et validation/rejet | En baisse continue |
+| **Score de confiance calibré** | Corrélation entre le score de confiance agent et le taux d'acceptation réel | > 0.85 |
+| **Dérive de qualité** | Évolution du taux d'acceptation dans le temps (détection de régression) | Stable ou en hausse |
+
+### Exemple concret — Sinistres Habitation
+
+1. **L'agent analyse** un dégât des eaux et propose : couverture confirmée, montant estimé 15 000 €, score 8/10
+2. **Le gestionnaire revoit** : reclasse en « dommages post-événement climatique », ajuste à 11 000 € (plafond contractuel), score 6/10
+3. **Le feedback est capturé** : la correction est loggée avec la justification (plafond art. 12.3, exclusion vétusté)
+4. **Le système apprend** :
+   - Le cas est ajouté comme **few-shot example** pour la catégorisation post-événement climatique
+   - Le prompt de l'agent est enrichi avec la **référence au plafond art. 12.3**
+   - Un nouveau cas de test est ajouté au **dataset d'évaluation Foundry**
+5. **L'évaluation confirme** : sur les 50 prochains cas similaires, le taux d'acceptation passe de 62 % à 84 %
+
+> **Vision** : à mesure que les gestionnaires corrigent et valident les suggestions agents,
+> ceux-ci deviendraient progressivement plus précis, plus fiables et plus alignés avec
+> les pratiques métier réelles. L'humain resterait toujours décisionnaire final,
+> mais passerait de « corriger systématiquement » à « superviser et valider ».
+
+---
+
+## 15. Stratégie d'adoption progressive — Liberté de choix
 
 > **Principe clé** : le client adopte à son rythme, module par module.
 > Chaque brique apporte de la valeur indépendamment des autres.
 > Aucun engagement « tout ou rien ».
 
-### Phases d'adoption recommandées
+### Phases d'adoption suggérées
 
 ```mermaid
-graph TB
-    subgraph PHASE1["🟢 Phase 1 — POC (actuel)"]
-        direction LR
-        P1_1["Upload documents<br/><i>Dans le navigateur</i>"]
-        P1_2["3 agents IA<br/><i>CU + GPT-4.1 + RAG</i>"]
-        P1_3["Dashboard résultats<br/><i>Next.js</i>"]
+graph LR
+    subgraph PHASE1["🟢 Phase 1 — POC"]
+        P1_1["Upload + 3 agents + Dashboard"]
     end
-
     subgraph PHASE2["🟡 Phase 2 — Agent Service"]
-        direction LR
-        P2_1["Migration agents<br/><i>→ Foundry Agent Service<br/>Hosted Agents pro-code</i>"]
-        P2_2["Web Search (GA)<br/><i>Enrichissement externe<br/>cotes, prix, taux</i>"]
-        P2_3["AI Search<br/><i>Remplace pgvector<br/>Index managé</i>"]
+        P2_1["Foundry / ACA + Web Search + AI Search"]
     end
-
-    subgraph PHASE3["🔵 Phase 3 — Données entreprise"]
-        direction LR
-        P3_1["Fabric Data Factory<br/><i>Connecteurs SAP,<br/>Oracle, SQL Server</i>"]
-        P3_2["OneLake<br/><i>Lac de données<br/>unifié</i>"]
-        P3_3["SharePoint<br/><i>Accès documents<br/>OBO auth</i>"]
+    subgraph PHASE3["🔵 Phase 3 — Données"]
+        P3_1["Data Factory + OneLake + SharePoint"]
     end
-
     subgraph PHASE4["🟣 Phase 4 — Intelligence"]
-        direction LR
-        P4_1["Fabric IQ<br/><i>Ontologie métier,<br/>data agents</i>"]
-        P4_2["Évaluation agents<br/><i>Datasets, métriques,<br/>amélioration continue</i>"]
-        P4_3["Multi-canal<br/><i>Teams, Power BI,<br/>Copilot M365</i>"]
+        P4_1["Fabric IQ + Évaluation + Multi-canal"]
     end
-
     PHASE1 --> PHASE2 --> PHASE3 --> PHASE4
-
     style PHASE1 fill:#d1fae5,stroke:#059669,color:#064e3b
     style PHASE2 fill:#fef3c7,stroke:#d97706,color:#78350f
     style PHASE3 fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
@@ -850,8 +944,8 @@ graph TB
 |-------|--------------|-----------|----------------|-------------|
 | **Phase 1 — POC** ✅ | Livré | Aucun | Validation pipeline agentique, ROI sur 5 personas | — |
 | **Phase 2 — Agent Service** | 4-6 semaines | Foundry project | Runtime managé, Web Search, observabilité bout en bout | ✅ Peut être fait sans Phase 3 |
-| **Phase 3 — Données entreprise** | 8-12 semaines | Fabric capacity, Data Gateway | Données SAP/legacy dans les agents, fini le re-keying | ✅ Peut être fait sans Phase 2 |
-| **Phase 4 — Intelligence** | Continu | Phases 2 + 3 | Ontologie Groupama, évaluation, distribution Teams/Copilot | Nécessite les phases précédentes |
+| **Phase 3 — Données entreprise** | 8-12 semaines | Fabric capacity, Data Gateway | Données ERP/legacy dans les agents, fini le re-keying | ✅ Peut être fait sans Phase 2 |
+| **Phase 4 — Intelligence** | Continu | Phases 2 + 3 | Ontologie métier, évaluation, distribution Teams/Copilot | Nécessite les phases précédentes |
 
 ### Ce que le client peut prendre séparément
 
@@ -861,7 +955,7 @@ graph TB
 | **AI Search (polices)** | ✅ Oui | Remplace pgvector — migration d'index, même API |
 | **Foundry Agent Service** | ✅ Oui | Migration du runtime Python custom → managé |
 | **SharePoint** | ✅ Oui | Outil built-in Foundry, accès documents existants |
-| **Data Factory (SAP)** | ✅ Oui | Ingestion batch, indépendant des agents |
+| **Data Factory (ERP/SQL)** | ✅ Oui | Ingestion batch, indépendant des agents |
 | **OneLake** | ✅ Oui | Stockage unifié, fonctionne sans Fabric IQ |
 | **Fabric IQ** | ⚠️ Avec Fabric | Nécessite OneLake et Fabric capacity |
 | **MCP Servers (SI)** | ⚠️ Développement | Nécessite développement custom par API on-premise |
@@ -876,7 +970,7 @@ graph TB
 | **FabricIQ** | Plateforme de données Microsoft Fabric, incluant Data Factory (ingestion), OneLake (stockage unifié), et Fabric IQ (ontologie + data agents) |
 | **FoundryIQ** | Plateforme d'agents IA Microsoft Foundry, incluant Agent Service (orchestration), Foundry IQ (knowledge retrieval) et le catalogue de modèles |
 | **OneLake** | Lac de données unifié dans Fabric — toutes les données organisationnelles dans un seul endroit, format Delta Lake ouvert |
-| **Data Gateway** | Passerelle logicielle installée dans le réseau Groupama pour connecter les systèmes on-premise au cloud de façon sécurisée |
+| **Data Gateway** | Passerelle logicielle installée dans le réseau du client pour connecter les systèmes on-premise au cloud de façon sécurisée |
 | **Fabric IQ** | Workload Fabric (preview) : ontologie métier, data agents, semantic models, graphe de données |
 | **Foundry IQ** | Système de knowledge retrieval de Foundry — RAG clé en main pour grounding des agents |
 | **MCP Server** | Model Context Protocol — standard ouvert permettant aux agents Foundry d'appeler des APIs externes (on-premise, SaaS) |
@@ -890,7 +984,164 @@ graph TB
 | **Purview** | Service de gouvernance Microsoft intégré à Fabric : classification, contrôle d'accès, audit, conformité RGPD |
 | **Microsoft Agent Framework** | SDK Python/.NET pour construire des Hosted Agents avec logique custom, outils @ai_function, et déploiement container sur Foundry Agent Service |
 | **Web Search (GA)** | Outil built-in Foundry qui utilise Grounding with Bing Search pour enrichir les réponses agents avec des données web en temps réel et des citations inline |
-| **Hosted Agent** | Agent basé sur du code custom (Python, .NET), packagé en container Docker et déployé sur Foundry Agent Service avec auto-scaling |
+| **Hosted Agent** | Agent basé sur du code custom (Python, .NET), packagé en container Docker et déployé sur Foundry Agent Service ou Azure Container Apps avec auto-scaling |
 | **A2A (Agent-to-Agent)** | Protocole de communication entre agents Foundry via endpoints A2A-compatibles (preview) |
 | **Prompt Optimization** | Processus itératif d'amélioration des instructions agents via évaluation automatisée (datasets + métriques Foundry) |
 | **Evaluation Datasets** | Paires question/réponse attendue utilisées pour mesurer objectivement la qualité des agents sur les métriques Intent Resolution, Task Adherence, Tool Call Accuracy |
+| **Entra Agent Registry** | Registre centralisé dans Microsoft Entra ID pour publier, découvrir et distribuer les agents vers M365 Copilot, Teams et applications custom |
+| **Agents 365** | Agents enregistrés dans l'Entra Agent Registry et invocables depuis Microsoft 365 Copilot, Teams, Outlook |
+| **AI Gateway (APIM)** | Couche d'Azure API Management dédiée au trafic IA : rate limiting, load balancing, token logging, cost tracking, semantic caching |
+| **Content Safety** | Service Azure de filtrage et protection IA : détection prompt injection, PII, groundedness, contenu protégé |
+| **Control Plane** | Ensemble des services de gouvernance (Entra ID, Agent Registry, AI Gateway, Content Safety) qui encadrent le cycle de vie des agents |
+| **Stratégie hybride** | Approche architecturale combinant plusieurs frameworks (Agent Framework SDK, LangChain/LangGraph, Prompt Agents) selon les besoins de chaque workload |
+| **Human-in-the-Loop (HITL)** | Boucle de rétroaction où les corrections et validations humaines alimentent l'amélioration continue des agents (few-shot, prompts, règles) |
+| **Few-shot examples** | Exemples concrets (entrée → sortie attendue) ajoutés aux prompts agents pour guider le comportement sur des cas spécifiques, enrichis au fil des corrections humaines |
+| **Taux d'acceptation** | Métrique clé HITL : pourcentage de suggestions agent acceptées sans modification par les gestionnaires — indicateur de maturité de l'agent |
+| **OneLake Shortcuts** | Références virtuelles (zero-copy) dans OneLake pointant vers des données externes (ADLS, S3, GCS, SharePoint) sans copie ni déplacement |
+| **Data Residency** | Principe selon lequel les données restent dans leur localisation géographique et leur stockage d'origine, sans transfert vers un lac centralisé |
+
+---
+
+## FAQ — Questions fréquentes sur les données et l'architecture
+
+### Localisation et souveraineté des données
+
+**Q : Mes données doivent-elles être déplacées dans OneLake ou Fabric pour que la plateforme agentique fonctionne ?**
+
+**Non.** La plateforme agentique (Foundry + agents) peut fonctionner **sans Microsoft Fabric**.
+Les agents Foundry accèdent directement aux données via :
+- **Azure AI Search** (index sémantique sur vos documents, où qu'ils soient stockés)
+- **Azure Blob Storage** (documents, PDFs, photos)
+- **SharePoint** (outil built-in Foundry avec authentification OBO)
+- **MCP Servers** (pont vers vos APIs on-premise : GED, tarificateur, etc.)
+- **APIs REST** via APIM (tout système exposé en HTTP)
+
+Les données restent là où elles sont. Aucune migration n'est requise.
+
+---
+
+**Q : Foundry IQ peut-il fonctionner sans Fabric ?**
+
+**Oui.** Foundry IQ est une **couche de connaissance autonome** (knowledge layer) indépendante de Fabric.
+Ses sources de connaissances supportées incluent :
+- Azure Blob Storage
+- SharePoint
+- OneLake (si Fabric est présent)
+- Données web publiques
+
+Foundry IQ est bâti sur **Azure AI Search** (agentic retrieval) — pas sur Fabric.
+*(Source : [Foundry IQ FAQ — Microsoft Learn](https://learn.microsoft.com/azure/foundry/agents/concepts/foundry-iq-faq))*
+
+---
+
+**Q : Quelle est la différence entre Fabric IQ, Foundry IQ et Work IQ ?**
+
+Ce sont **trois couches IQ indépendantes**, chacune autonome :
+
+| IQ | Périmètre | Prérequis | Standalone ? |
+|----|----------|-----------|-------------|
+| **Foundry IQ** | Connaissances entreprise (documents, Blob, SharePoint, web) | Azure AI Search | ✅ Oui |
+| **Fabric IQ** | Données analytiques (ontologie, semantic models, data agents) | Microsoft Fabric | ✅ Oui |
+| **Work IQ** | Collaboration M365 (documents, réunions, chats) | Microsoft 365 | ✅ Oui |
+
+On peut utiliser un, deux ou trois IQ ensemble. La plateforme agentique ne nécessite que **Foundry IQ** au minimum.
+*(Source : [Foundry IQ — Relationship to Fabric IQ and Work IQ](https://learn.microsoft.com/azure/foundry/agents/concepts/what-is-foundry-iq#relationship-to-fabric-iq-and-work-iq))*
+
+---
+
+**Q : Si j'utilise Fabric, mes données sont-elles copiées ?**
+
+**Pas forcément.** Fabric offre deux stratégies complémentaires :
+
+| Stratégie | Copie ? | Mécanisme | Cas d'usage |
+|----------|---------|-----------|-------------|
+| **Shortcuts** (recommandé) | ❌ Non | Référence virtuelle vers ADLS, S3, GCS, SharePoint | La donnée reste chez le client, zero-copy |
+| **Mirroring** | ✅ Oui (réplication) | CDC continu depuis bases opérationnelles | Bases transactionnelles SQL, Cosmos DB |
+| **Pipelines (Data Factory)** | ✅ Oui (batch) | ETL classique avec transformation | Historique ERP, référentiels |
+
+Avec les **Shortcuts**, les moteurs Fabric interrogent les données **in place** sans aucune copie.
+*(Source : [Get data into Fabric — Shortcuts](https://learn.microsoft.com/fabric/fundamentals/get-data#access-external-data-with-shortcuts))*
+
+---
+
+### Architecture sans Fabric
+
+**Q : Peut-on faire fonctionner la plateforme agentique complète sans Fabric ?**
+
+**Oui.** Voici l'architecture minimale sans Fabric :
+
+| Composant | Sans Fabric | Avec Fabric |
+|-----------|-------------|-------------|
+| **Stockage documents** | Azure Blob Storage | OneLake (ou Shortcuts vers Blob) |
+| **RAG / Polices** | Azure AI Search + Foundry IQ | Azure AI Search + Foundry IQ + Fabric IQ |
+| **Données ERP/legacy** | MCP Servers + APIs REST via APIM | Data Factory → OneLake + Fabric Data Agent |
+| **Agent runtime** | Foundry Agent Service / ACA | Foundry Agent Service / ACA |
+| **Modèles IA** | Azure OpenAI / Foundry Models | Azure OpenAI / Foundry Models |
+| **Gouvernance** | Entra ID + APIM + Purview | Entra ID + APIM + Purview + Fabric Gov |
+| **Ontologie métier** | ❌ Non disponible | ✅ Fabric IQ (semantic models, data agents) |
+| **Langage naturel sur données** | ❌ Non disponible | ✅ Fabric Data Agent |
+
+> Fabric apporte un **plus** (ontologie, Data Agents, unification), mais n'est pas requis pour le pipeline agentique.
+
+---
+
+**Q : Quand Fabric devient-il vraiment utile ?**
+
+Fabric ajouterait une valeur significative dans ces scénarios :
+
+| Scénario | Pourquoi Fabric ? |
+|----------|-------------------|
+| **Client 360** (agrégation cross-domaine) | OneLake unifie les données de multiples sources ; Fabric Data Agent permet des requêtes en langage naturel |
+| **Reporting Power BI avancé** | Semantic models Fabric alimentent Power BI avec gouvernance intégrée |
+| **Historique massif** (millions de sinistres) | OneLake + Spark traitent les volumes que Blob + AI Search seuls ne gèrent pas efficacement |
+| **Ontologie métier partagée** | Fabric IQ standardise les définitions (sinistre, prime, assuré) entre tous les agents |
+| **ERP intégration profonde** | Data Factory offre 200+ connecteurs batch natifs (SAP, Oracle, etc.) |
+
+---
+
+### Sécurité et conformité
+
+**Q : Les données traitées par les agents restent-elles dans Azure ?**
+
+**Oui.** Azure AI Agent Service garantit que :
+- Les données (prompts, réponses) ne sont **PAS** partagées avec d'autres clients
+- Les données ne sont **PAS** utilisées pour entraîner les modèles OpenAI, Meta ou Mistral
+- Le traitement se fait dans la **région Azure choisie** (ex. France Central)
+
+**Exception** : l'outil Grounding with Bing Search transfère des données hors du boundary Azure
+(soumis à des conditions d'utilisation séparées). Ce tool est désactivable par l'administrateur.
+*(Source : [Data, privacy, and security for Agent Service](https://learn.microsoft.com/azure/foundry/responsible-ai/agents/data-privacy-security))*
+
+---
+
+**Q : Puis-je contrôler la région de déploiement de mes agents ?**
+
+**Oui.** Tous les composants (Foundry, AI Search, Blob, OpenAI) sont déployés dans une région Azure
+spécifique (ex. **France Central**). Les données ne quittent pas cette région sauf activation
+explicite de services cross-région (Bing Search, geo-replication).
+
+---
+
+### Coût et progressivité
+
+**Q : Quel est le coût d'entrée minimum pour la plateforme agentique ?**
+
+| Niveau | Composants | Coût indicatif |
+|--------|------------|----------------|
+| **Minimum** (POC actuel) | Azure OpenAI + Blob + App Service | ~200 €/mois |
+| **Production sans Fabric** | Foundry Agent Service + AI Search + Blob + APIM | ~500–1 500 €/mois |
+| **Production avec Fabric** | Ci-dessus + Fabric F2/F4 capacity | +1 000–3 000 €/mois |
+
+> Fabric représente le coût le plus élevé. Démarrer sans Fabric et l'ajouter ultérieurement
+> est parfaitement viable et recommandé.
+
+---
+
+**Q : Puis-je commencer sans Fabric et l'ajouter plus tard ?**
+
+**Oui, c'est l'approche recommandée.** La stratégie d'adoption (section 15) prévoit :
+1. **Phase 1** : POC avec Blob + AI Search (livré)
+2. **Phase 2** : Foundry Agent Service (sans Fabric)
+3. **Phase 3** : Fabric (si nécessaire pour Client 360, ERP, ontologie)
+
+Chaque phase est indépendante. Aucun engagement « tout ou rien ».
