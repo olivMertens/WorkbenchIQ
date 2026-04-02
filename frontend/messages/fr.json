@@ -252,7 +252,7 @@
     "create": "Créer"
   },
   "patient": {
-    "name": "Nom du patient",
+    "name": "Nom de l'assuré",
     "occupation": "Profession",
     "weight": "Poids",
     "dob": "Date de naissance",
@@ -261,11 +261,11 @@
     "gender": "Sexe",
     "bmi": "IMC",
     "searchPlaceholder": "Rechercher dans le document...",
-    "informationNotExtracted": "Informations du patient non extraites. Consultez les Pages sources pour le contenu brut du document.",
-    "summary": "Résumé patient",
+    "informationNotExtracted": "Informations de l'assuré non extraites. Consultez les Pages sources pour le contenu brut du document.",
+    "summary": "Résumé de l'assuré",
     "aiAnalysis": "Analyse IA",
     "deepDive": "Analyse approfondie",
-    "noSummary": "Aucun résumé disponible. Lancez l'analyse pour générer le résumé patient.",
+    "noSummary": "Aucun résumé disponible. Lancez l'analyse pour générer le résumé de l'assuré.",
     "risk": "Risque",
     "riskAssessment": "Évaluation des risques",
     "policyAnalysis": "Analyse des polices"
@@ -285,6 +285,10 @@
     "noFindings": "Aucun résultat spécifique identifié.",
     "viewFullReport": "Voir le rapport complet",
     "policyFindings": "Résultats polices",
+    "reportTitle": "Rapport d'analyse des risques polices",
+    "overallRiskAssessment": "Évaluation globale du risque",
+    "rerunAnalysis": "Relancer l'analyse",
+    "exportPdf": "Exporter PDF",
     "riskLevels": {
       "high": "Risque élevé",
       "moderate": "Risque modéré",

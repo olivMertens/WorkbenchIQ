@@ -42,7 +42,7 @@ function parseLabResults(application: ApplicationMetadata): LabResultsData {
     llmHypertension.bp_readings.forEach((reading: any, idx: number) => {
       if (reading.systolic && reading.diastolic) {
         results.push({
-          name: llmHypertension.bp_readings.length > 1 ? `Blood Pressure #${idx + 1}` : 'Blood Pressure',
+          name: llmHypertension.bp_readings.length > 1 ? `Tension artérielle #${idx + 1}` : 'Tension artérielle',
           value: `${reading.systolic}/${reading.diastolic}`,
           unit: 'mmHg',
           date: reading.date,
@@ -59,10 +59,10 @@ function parseLabResults(application: ApplicationMetadata): LabResultsData {
   const llmCholesterol = application.llm_outputs?.medical_summary?.high_cholesterol?.parsed as any;
   if (llmCholesterol?.lipid_panels && Array.isArray(llmCholesterol.lipid_panels)) {
     llmCholesterol.lipid_panels.forEach((panel: any) => {
-      if (panel.total_cholesterol) results.push({ name: 'Total Cholesterol', value: panel.total_cholesterol, date: panel.date, confidence: lipidConfidence, citation: lipidField });
-      if (panel.ldl) results.push({ name: 'LDL Cholesterol', value: panel.ldl, date: panel.date, confidence: lipidConfidence, citation: lipidField });
-      if (panel.hdl) results.push({ name: 'HDL Cholesterol', value: panel.hdl, date: panel.date, confidence: lipidConfidence, citation: lipidField });
-      if (panel.triglycerides) results.push({ name: 'Triglycerides', value: panel.triglycerides, date: panel.date, confidence: lipidConfidence, citation: lipidField });
+      if (panel.total_cholesterol) results.push({ name: 'Cholestérol total', value: panel.total_cholesterol, date: panel.date, confidence: lipidConfidence, citation: lipidField });
+      if (panel.ldl) results.push({ name: 'LDL', value: panel.ldl, date: panel.date, confidence: lipidConfidence, citation: lipidField });
+      if (panel.hdl) results.push({ name: 'HDL', value: panel.hdl, date: panel.date, confidence: lipidConfidence, citation: lipidField });
+      if (panel.triglycerides) results.push({ name: 'Triglycérides', value: panel.triglycerides, date: panel.date, confidence: lipidConfidence, citation: lipidField });
     });
   }
   
@@ -77,7 +77,7 @@ function parseLabResults(application: ApplicationMetadata): LabResultsData {
         if (reading.systolic && reading.diastolic) {
           const dateInfo = reading.date ? ` (${reading.date})` : '';
           results.push({
-            name: bpArray.length > 1 ? `Blood Pressure #${idx + 1}` : 'Blood Pressure',
+            name: bpArray.length > 1 ? `Tension artérielle #${idx + 1}` : 'Tension artérielle',
             value: `${reading.systolic}/${reading.diastolic}`,
             unit: 'mmHg',
             date: reading.date,
@@ -94,7 +94,7 @@ function parseLabResults(application: ApplicationMetadata): LabResultsData {
         const match = reading.match(/(\d+\/\d+)\s*(mmHg)?/i);
         if (match) {
           results.push({
-            name: readings.length > 1 ? `Blood Pressure #${idx + 1}` : 'Blood Pressure',
+            name: readings.length > 1 ? `Tension artérielle #${idx + 1}` : 'Tension artérielle',
             value: match[1],
             unit: 'mmHg',
             confidence: bpField.confidence,

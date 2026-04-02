@@ -60,14 +60,20 @@ export default function PatientHeader({ application }: PatientHeaderProps) {
         {/* Patient Name and Application Info */}
         <div className="flex items-baseline gap-3">
           <h1 className="text-2xl font-bold text-slate-900">
-            {hasValue(patient.name) ? patient.name : `Application ${application.id}`}
+            {hasValue(patient.name) ? (
+              application.external_reference ? (
+                <a href={`/customers/${application.external_reference}`} className="hover:text-indigo-600 transition-colors cursor-pointer">
+                  {patient.name}
+                </a>
+              ) : patient.name
+            ) : `Application ${application.id}`}
           </h1>
           {application.external_reference && (
             <>
               <span className="text-lg text-slate-600">-</span>
-              <span className="text-lg font-medium text-blue-600">
+              <a href={`/customers/${application.external_reference}`} className="text-lg font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors">
                 {application.external_reference}
-              </span>
+              </a>
             </>
           )}
           <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${

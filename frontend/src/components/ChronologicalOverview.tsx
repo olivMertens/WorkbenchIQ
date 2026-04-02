@@ -82,13 +82,15 @@ function buildTimelineFromData(application: ApplicationMetadata): TimelineEntry[
   const llmOtherFindings = application.llm_outputs?.medical_summary?.other_medical_findings?.parsed as any;
   if (llmOtherFindings?.conditions && Array.isArray(llmOtherFindings.conditions)) {
     llmOtherFindings.conditions.forEach((condition: any, idx: number) => {
-      const name = condition.name || 'Unknown condition';
+      const name = condition.name || 'Pathologie inconnue';
       const onset = condition.onset || '';
       const status = condition.status || '';
       const details = condition.details || '';
       
-      const title = `${name}${status ? ' (' + status + ')' : ''}`;
-      const fullDetails = `${name}\nOnset: ${onset}\nStatus: ${status}\nDetails: ${details}`;
+      // Translate status values to French
+      const statusFr = status === 'Ongoing' ? 'En cours' : status === 'Resolved' ? 'Résolu' : status === 'active' ? 'Actif' : status === 'monitoring' ? 'Suivi' : status;
+      const title = `${name}${statusFr ? ' (' + statusFr + ')' : ''}`;
+      const fullDetails = `${name}\nDébut : ${onset}\nÉtat : ${statusFr}\nDétails : ${details}`;
       
       const parsedDate = parseDate(onset);
       const displayDate = formatDateDisplay(parsedDate);

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { X, FileText, Download, RefreshCw, Shield, AlertTriangle, CheckCircle, Clock, Play, Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { ApplicationMetadata, RiskFinding, RiskAnalysisResult } from '@/lib/types';
 
 interface PolicyReportModalProps {
@@ -11,13 +12,13 @@ interface PolicyReportModalProps {
   onRerunAnalysis?: () => Promise<void>;
 }
 
-function getRatingBadge(rating: string) {
+function getRatingBadge(rating: string, t: (key: string) => string) {
   const lowerRating = (rating || '').toLowerCase();
   if (lowerRating.includes('high')) {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full text-xs font-medium">
         <AlertTriangle className="w-3 h-3" />
-        High Risk
+        {t('riskLevels.high')}
       </span>
     );
   }
@@ -25,14 +26,14 @@ function getRatingBadge(rating: string) {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
         <Clock className="w-3 h-3" />
-        Moderate Risk
+        {t('riskLevels.moderate')}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
       <CheckCircle className="w-3 h-3" />
-      Low Risk
+      {t('riskLevels.low')}
     </span>
   );
 }
@@ -43,6 +44,7 @@ export default function PolicyReportModal({
   application,
   onRerunAnalysis,
 }: PolicyReportModalProps) {
+  const t = useTranslations('policy');
   const [isRerunning, setIsRerunning] = useState(false);
   const [isRunningRiskAnalysis, setIsRunningRiskAnalysis] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -130,7 +132,7 @@ export default function PolicyReportModal({
 
   function generatePrintableReport(): string {
     const customerProfile = application.llm_outputs?.application_summary?.customer_profile?.parsed;
-    const patientName = customerProfile?.full_name || customerProfile?.summary?.split('.')[0] || 'Unknown Patient';
+    const patientName = customerProfile?.full_name || customerProfile?.summary?.split('.')[0] || 'Assuré';
     const dateGenerated = new Date().toLocaleDateString();
     const premium = riskAnalysis?.premium_recommendation;
 
@@ -138,7 +140,7 @@ export default function PolicyReportModal({
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Underwriting Policy Report - ${patientName}</title>
+          <title>Rapport d'analyse des risques polices - ${patientName}</title>
           <style>
             body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
             h1 { color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
@@ -158,51 +160,51 @@ export default function PolicyReportModal({
         </head>
         <body>
           <div class="header">
-            <h1>Underwriting Policy Report</h1>
+            <h1>Rapport d'analyse des risques polices</h1>
             <div class="rating ${overallRating.toLowerCase()}">${overallRating}</div>
           </div>
           
-          <p><strong>Patient:</strong> ${patientName}</p>
-          <p><strong>Application ID:</strong> ${application.id}</p>
-          <p><strong>Date Generated:</strong> ${dateGenerated}</p>
+          <p><strong>Assuré :</strong> ${patientName}</p>
+          <p><strong>Dossier :</strong> ${application.id}</p>
+          <p><strong>Date :</strong> ${dateGenerated}</p>
           
           ${riskAnalysis?.overall_rationale ? `
           <div class="summary-box">
-            <h3>Overall Assessment</h3>
+            <h3>Évaluation globale</h3>
             <p>${riskAnalysis.overall_rationale}</p>
           </div>
           ` : ''}
           
           ${premium ? `
           <div class="premium-box">
-            <h3>Premium Recommendation</h3>
-            <p><strong>Decision:</strong> ${premium.base_decision}</p>
-            ${premium.loading_percentage && premium.loading_percentage !== '0%' ? `<p><strong>Loading:</strong> ${premium.loading_percentage}</p>` : ''}
-            ${premium.exclusions?.length ? `<p><strong>Exclusions:</strong> ${premium.exclusions.join(', ')}</p>` : ''}
-            ${premium.conditions?.length ? `<p><strong>Conditions:</strong> ${premium.conditions.join(', ')}</p>` : ''}
+            <h3>Recommandation de prime</h3>
+            <p><strong>Décision :</strong> ${premium.base_decision}</p>
+            ${premium.loading_percentage && premium.loading_percentage !== '0%' ? `<p><strong>Majoration :</strong> ${premium.loading_percentage}</p>` : ''}
+            ${premium.exclusions?.length ? `<p><strong>Exclusions :</strong> ${premium.exclusions.join(', ')}</p>` : ''}
+            ${premium.conditions?.length ? `<p><strong>Conditions :</strong> ${premium.conditions.join(', ')}</p>` : ''}
           </div>
           ` : ''}
           
-          <h2>Policy Findings (${findings.length})</h2>
-          ${findings.length === 0 ? '<p>No policy findings recorded.</p>' : ''}
+          <h2>Résultats polices (${findings.length})</h2>
+          ${findings.length === 0 ? '<p>Aucun résultat identifié.</p>' : ''}
           ${findings.map((f: RiskFinding) => `
             <div class="finding">
               <div><span class="policy-id">${f.policy_id}</span> ${f.policy_name}</div>
-              <p><strong>Category:</strong> ${f.category}</p>
-              <p><strong>Finding:</strong> ${f.finding}</p>
-              <p><strong>Risk Level:</strong> ${f.risk_level}</p>
-              <p><strong>Action:</strong> ${f.action}</p>
-              ${f.rationale ? `<p><strong>Rationale:</strong> ${f.rationale}</p>` : ''}
+              <p><strong>Catégorie :</strong> ${f.category}</p>
+              <p><strong>Constat :</strong> ${f.finding}</p>
+              <p><strong>Niveau de risque :</strong> ${f.risk_level}</p>
+              <p><strong>Action :</strong> ${f.action}</p>
+              ${f.rationale ? `<p><strong>Justification :</strong> ${f.rationale}</p>` : ''}
             </div>
           `).join('')}
           
           ${riskAnalysis?.underwriting_action ? `
-          <h2>Recommended Action</h2>
+          <h2>Action recommandée</h2>
           <p>${riskAnalysis.underwriting_action}</p>
           ` : ''}
           
           ${riskAnalysis?.data_gaps?.length ? `
-          <h2>Data Gaps</h2>
+          <h2>Données manquantes</h2>
           <ul>
             ${riskAnalysis.data_gaps.map((gap: string) => `<li>${gap}</li>`).join('')}
           </ul>
@@ -232,7 +234,7 @@ export default function PolicyReportModal({
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900">
-                Policy Risk Analysis Report
+                {t('reportTitle')}
               </h2>
               <p className="text-sm text-slate-500">
                 Application {application.id.substring(0, 8)}
@@ -256,10 +258,10 @@ export default function PolicyReportModal({
                 <FileText className="w-10 h-10 text-indigo-600" />
               </div>
               <h3 className="text-xl font-medium text-slate-900 mb-2">
-                Risk Analysis Not Run
+                {t('riskAnalysisNotRun')}
               </h3>
               <p className="text-slate-600 mb-6 max-w-md mx-auto">
-                Run a comprehensive policy-based risk analysis to evaluate this application against underwriting guidelines and generate a detailed report.
+                {t('runComprehensiveAnalysis')}
               </p>
               
               {error && (
@@ -276,19 +278,19 @@ export default function PolicyReportModal({
                 {isRunningRiskAnalysis ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Running Analysis...
+                    {t('runningAnalysis')}
                   </>
                 ) : (
                   <>
                     <Play className="w-5 h-5" />
-                    Run Risk Analysis
+                    {t('runAnalysisButton')}
                   </>
                 )}
               </button>
 
               {application.status !== 'completed' && (
                 <p className="text-sm text-slate-500 mt-4">
-                  Standard analysis must be completed first
+                  {t('standardAnalysisMustComplete')}
                 </p>
               )}
             </div>
@@ -300,10 +302,10 @@ export default function PolicyReportModal({
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-sm font-medium text-slate-500 uppercase">
-                      Overall Risk Assessment
+                      {t('overallRiskAssessment')}
                     </h3>
                     <div className="mt-2">
-                      {getRatingBadge(overallRating)}
+                      {getRatingBadge(overallRating, t)}
                     </div>
                   </div>
                   <div className="text-right">
@@ -311,7 +313,7 @@ export default function PolicyReportModal({
                       {findings.length}
                     </div>
                     <div className="text-sm text-slate-500">
-                      Policy Findings
+                      {t('policyFindings')}
                     </div>
                   </div>
                 </div>
@@ -327,11 +329,11 @@ export default function PolicyReportModal({
               {riskAnalysis.premium_recommendation && (
                 <div className="mb-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
                   <h3 className="text-sm font-semibold text-amber-800 uppercase tracking-wide mb-3">
-                    Premium Recommendation
+                    {t('premiumRecommendation')}
                   </h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-amber-700">Decision:</span>
+                      <span className="text-amber-700">{t('decision')}</span>
                       <span className="ml-2 font-medium text-amber-900">
                         {riskAnalysis.premium_recommendation.base_decision}
                       </span>
@@ -339,7 +341,7 @@ export default function PolicyReportModal({
                     {riskAnalysis.premium_recommendation.loading_percentage && 
                      riskAnalysis.premium_recommendation.loading_percentage !== '0%' && (
                       <div>
-                        <span className="text-amber-700">Loading:</span>
+                        <span className="text-amber-700">{t('loading')}</span>
                         <span className="ml-2 font-medium text-amber-900">
                           {riskAnalysis.premium_recommendation.loading_percentage}
                         </span>
@@ -348,7 +350,7 @@ export default function PolicyReportModal({
                   </div>
                   {riskAnalysis.premium_recommendation.exclusions && riskAnalysis.premium_recommendation.exclusions.length > 0 && (
                     <div className="mt-2 text-sm">
-                      <span className="text-amber-700">Exclusions:</span>
+                      <span className="text-amber-700">Exclusions :</span>
                       <span className="ml-2 text-amber-900">
                         {riskAnalysis.premium_recommendation.exclusions.join(', ')}
                       </span>
@@ -360,13 +362,13 @@ export default function PolicyReportModal({
               {/* Policy Findings */}
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
-                  Policy Findings
+                  {t('policyFindings')}
                 </h3>
                 
                 {findings.length === 0 ? (
                   <div className="text-center py-8 text-slate-500">
                     <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No specific policy findings identified.</p>
+                    <p>{t('noFindings')}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -401,12 +403,12 @@ export default function PolicyReportModal({
                             </p>
                             
                             <div className="mt-3 text-sm text-slate-500">
-                              <span className="font-medium">Action:</span> {finding.action}
+                              <span className="font-medium">Action :</span> {finding.action}
                             </div>
                             
                             {finding.rationale && (
                               <div className="mt-1 text-sm text-slate-500">
-                                <span className="font-medium">Rationale:</span> {finding.rationale}
+                                <span className="font-medium">Justification :</span> {finding.rationale}
                               </div>
                             )}
                           </div>
@@ -421,7 +423,7 @@ export default function PolicyReportModal({
               {riskAnalysis.underwriting_action && (
                 <div className="mt-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
                   <h3 className="text-sm font-semibold text-indigo-800 uppercase tracking-wide mb-2">
-                    Recommended Action
+                    Action recommandée
                   </h3>
                   <p className="text-sm text-indigo-900">
                     {riskAnalysis.underwriting_action}
@@ -433,7 +435,7 @@ export default function PolicyReportModal({
               {riskAnalysis.data_gaps && riskAnalysis.data_gaps.length > 0 && (
                 <div className="mt-6 p-4 bg-slate-50 rounded-lg">
                   <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">
-                    Data Gaps
+                    Données manquantes
                   </h3>
                   <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
                     {riskAnalysis.data_gaps.map((gap: string, idx: number) => (
@@ -450,8 +452,8 @@ export default function PolicyReportModal({
         <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
           <div className="text-sm text-slate-500">
             {application.risk_analysis?.timestamp 
-              ? `Last analyzed: ${new Date(application.risk_analysis.timestamp).toLocaleString()}`
-              : 'Not yet analyzed'}
+              ? `Dernière analyse : ${new Date(application.risk_analysis.timestamp).toLocaleString('fr-FR')}`
+              : 'Non analysé'}
           </div>
           <div className="flex items-center gap-3">
             {hasRiskAnalysis && (
@@ -466,14 +468,14 @@ export default function PolicyReportModal({
                   ) : (
                     <RefreshCw className="w-4 h-4" />
                   )}
-                  Re-run
+                  {t('rerunAnalysis')}
                 </button>
                 <button
                   onClick={handleExportPDF}
                   className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
                 >
                   <Download className="w-4 h-4" />
-                  Export PDF
+                  {t('exportPdf')}
                 </button>
               </>
             )}
