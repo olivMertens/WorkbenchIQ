@@ -26,7 +26,7 @@ CUSTOMERS: list[dict] = [
     {"id": "GRP-010", "name": "LEFEBVRE Nathalie",         "dob": "1979-01-07", "email": "n.lefebvre@laposte.net",    "phone": "07 01 23 45 67", "addr": "29 avenue Jean Jaurès, 59000 Lille",        "since": "2017-08-20", "risk": "low",    "tags": ["auto", "habitation"]},
     {"id": "GRP-011", "name": "ROUX Frédéric",             "dob": "1983-05-11", "email": "f.roux@outlook.fr",         "phone": "07 12 34 56 78", "addr": "6 rue Victor Hugo, 33000 Bordeaux",         "since": "2018-03-10", "risk": "low",    "tags": ["habitation", "auto"]},
     {"id": "GRP-012", "name": "FOURNIER Camille",          "dob": "1992-10-25", "email": "c.fournier@gmail.com",      "phone": "07 23 45 67 89", "addr": "41 rue de la Paix, 75002 Paris",            "since": "2021-09-15", "risk": "low",    "tags": ["santé", "auto"]},
-    {"id": "GRP-013", "name": "GIRARD Laurent",            "dob": "1970-07-04", "email": "l.girard@free.fr",          "phone": "07 34 56 78 90", "addr": "22 chemin de Ronde, 78000 Versailles",      "since": "2010-06-01", "risk": "medium", "tags": ["habitation", "tempête", "sinistre-2024"]},
+    {"id": "GRP-013", "name": "GIRARD Laurent",            "dob": "1970-07-04", "email": "l.girard@free.fr",          "phone": "07 34 56 78 90", "addr": "22 chemin de Ronde, 78000 Versailles",      "since": "2010-06-01", "risk": "medium", "tags": ["habitation", "sinistre-habitation", "tempête", "sinistre-2024"]},
     {"id": "GRP-014", "name": "BONNET Véronique",          "dob": "1966-04-19", "email": "v.bonnet@orange.fr",        "phone": "07 45 67 89 01", "addr": "9 place de l'Église, 21000 Dijon",          "since": "2009-11-15", "risk": "low",    "tags": ["fidèle", "vie", "épargne"]},
     {"id": "GRP-015", "name": "LAMBERT Sébastien",         "dob": "1987-08-08", "email": "s.lambert@hotmail.fr",      "phone": "07 56 78 90 12", "addr": "17 rue des Remparts, 34000 Montpellier",    "since": "2020-07-01", "risk": "high",   "tags": ["sinistre-habitation", "fraude-suspectée"]},
     {"id": "GRP-016", "name": "FONTAINE Aurélie",          "dob": "1993-12-31", "email": "a.fontaine@gmail.com",      "phone": "07 67 89 01 23", "addr": "5 allée des Cerisiers, 69003 Lyon",         "since": "2022-04-10", "risk": "low",    "tags": ["santé", "jeune"]},
@@ -108,14 +108,14 @@ def create_groupama_customers(storage_root: str) -> int:
 
         # Risk correlations for high-risk customers
         if c["risk"] == "high":
+            # Extract personas from events created for this customer
+            event_personas = list({e.persona for e in events})
             correlations = [
                 RiskCorrelation(
-                    correlation_id=f"RC-{c['id']}-001",
-                    risk_type="multi_sinistralité",
-                    severity="high",
-                    description=f"Client {c['name']} présente un historique de sinistres multiples.",
-                    contributing_personas=[t["persona"] for t in templates for key, templates in JOURNEY_TEMPLATES.items() if key in " ".join(c["tags"])],
-                    recommended_action="Revue de portefeuille recommandée",
+                    severity="critical",
+                    title=f"Multi-sinistralité — {c['name']}",
+                    description=f"Client {c['name']} présente un historique de sinistres multiples. Revue de portefeuille recommandée.",
+                    personas_involved=event_personas or ["automotive_claims", "habitation_claims"],
                 ),
             ]
             save_customer_risk_correlations(storage_root, c["id"], correlations)
