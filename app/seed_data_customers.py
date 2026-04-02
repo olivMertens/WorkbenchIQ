@@ -10,6 +10,7 @@ from app.customer360 import (
     save_customer_profile,
     save_customer_risk_correlations,
 )
+from app.storage import load_application, save_application_metadata, list_applications
 
 
 # fmt: off
@@ -67,8 +68,12 @@ JOURNEY_TEMPLATES: dict[str, list[dict]] = {
 
 
 def create_groupama_customers(storage_root: str) -> int:
-    """Create 30 Groupama customer profiles with journey events."""
+    """Create 30 Groupama customer profiles with journey events and link to real apps."""
     count = 0
+    
+    # Discover existing applications to link to customers
+    real_apps = _discover_real_apps(storage_root)
+    
     for c in CUSTOMERS:
         profile = CustomerProfile(
             id=c["id"],
@@ -103,12 +108,18 @@ def create_groupama_customers(storage_root: str) -> int:
                             risk_level=tmpl.get("risk_level"),
                         ))
 
+        # For GRP-001 (Olivier MERTENS LAFFITE), add real app links
+        if c["id"] == "GRP-001":
+            events = _enrich_grp001_events(events, real_apps)
+        # For GRP-016 (Aurélie FONTAINE) or first santé customer, link underwriting app
+        if c["id"] == "GRP-016":
+            events = _enrich_sante_customer_events(events, real_apps)
+
         if events:
             save_customer_journey(storage_root, c["id"], events)
 
         # Risk correlations for high-risk customers
         if c["risk"] == "high":
-            # Extract personas from events created for this customer
             event_personas = list({e.persona for e in events})
             correlations = [
                 RiskCorrelation(
@@ -122,3 +133,82 @@ def create_groupama_customers(storage_root: str) -> int:
 
         count += 1
     return count
+
+
+def _discover_real_apps(storage_root: str) -> dict:
+    """Find real application IDs by persona for linking."""
+    apps_by_persona: dict[str, list[str]] = {}
+    try:
+        all_apps = list_applications(storage_root)
+        for app_summary in all_apps:
+            persona = app_summary.get("persona") or ""
+            app_id = app_summary.get("id", "")
+            if persona and app_id:
+                apps_by_persona.setdefault(persona, []).append(app_id)
+    except Exception:
+        pass
+    return apps_by_persona
+
+
+def _enrich_grp001_events(events: list, real_apps: dict) -> list:
+    """Add real app links for GRP-001 (Olivier MERTENS LAFFITE — habitation demo)."""
+    # Link habitation claims app
+    hab_apps = real_apps.get("habitation_claims", [])
+    if hab_apps:
+        events.append(CustomerJourneyEvent(
+            date="2026-03-28",
+            persona="habitation_claims",
+            application_id=hab_apps[0],
+            event_type="sinistre_declare",
+            title="Sinistre habitation — Tempête Gérard",
+            summary="Déclaration de sinistre suite à la tempête du 27/03/2026. Dégâts des eaux cave et sous-sol. Montant estimé 10 825 €.",
+            status="en_cours",
+            risk_level="medium",
+        ))
+    
+    # Link underwriting app if it's also for this customer
+    uw_apps = real_apps.get("underwriting", [])
+    if uw_apps:
+        events.append(CustomerJourneyEvent(
+            date="2021-06-15",
+            persona="underwriting",
+            application_id=uw_apps[0],
+            event_type="souscription_habitation",
+            title="Souscription MRH — Formule Confort Plus",
+            summary="Contrat Multirisque Habitation HAB-33-2021-091745 souscrit. Formule Confort Plus, cotisation 912 €/an.",
+            status="actif",
+            risk_level="low",
+        ))
+    
+    return events
+
+
+def _enrich_sante_customer_events(events: list, real_apps: dict) -> list:
+    """Add real app links for health underwriting customer."""
+    uw_apps = real_apps.get("underwriting", [])
+    if uw_apps:
+        events.append(CustomerJourneyEvent(
+            date="2026-03-15",
+            persona="underwriting",
+            application_id=uw_apps[0],
+            event_type="souscription_sante",
+            title="Demande de souscription Complémentaire Santé",
+            summary="Demande Équilibre Plus. Questionnaire de santé : HTA contrôlée, ancien fumeur, IMC 27.2.",
+            status="en_cours",
+            risk_level="low",
+        ))
+    
+    lh_apps = real_apps.get("life_health_claims", [])
+    if lh_apps:
+        events.append(CustomerJourneyEvent(
+            date="2025-09-10",
+            persona="life_health_claims",
+            application_id=lh_apps[0],
+            event_type="sinistre_sante",
+            title="Remboursement consultation ophtalmologue",
+            summary="Consultation spécialiste + lunettes. Remboursement traité en 48h.",
+            status="traité",
+            risk_level="low",
+        ))
+    
+    return events

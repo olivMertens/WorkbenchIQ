@@ -4182,7 +4182,10 @@ async def seed_customer_360_data():
     try:
         from app.seed_data_customers import create_groupama_customers
         
-        # Seed customer profiles and journeys
+        # Link existing apps to customer IDs via external_reference
+        _link_apps_to_customers(settings.app.storage_root)
+        
+        # Seed customer profiles and journeys (discovers real app IDs)
         customer_count = create_groupama_customers(settings.app.storage_root)
         
         # Try to seed rich application data (only available in dev, not in Docker)
@@ -4200,6 +4203,33 @@ async def seed_customer_360_data():
     except Exception as e:
         logger.error("Failed to seed customer 360 data: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def _link_apps_to_customers(storage_root: str):
+    """Set external_reference on existing apps to link them to customer profiles."""
+    from app.storage import list_applications as _list_apps
+    
+    # Map persona → customer ID for demo linking
+    persona_customer_map = {
+        "habitation_claims": "GRP-001",   # Olivier MERTENS LAFFITE
+        "underwriting": "GRP-001",         # Same customer — souscription MRH
+        "life_health_claims": "GRP-016",   # Aurélie FONTAINE — santé
+    }
+    
+    try:
+        all_apps = _list_apps(storage_root)
+        for app_summary in all_apps:
+            persona = app_summary.get("persona", "")
+            app_id = app_summary.get("id", "")
+            customer_id = persona_customer_map.get(persona)
+            if customer_id and app_id:
+                app_md = load_application(storage_root, app_id)
+                if app_md and app_md.external_reference != customer_id:
+                    app_md.external_reference = customer_id
+                    save_application_metadata(storage_root, app_md)
+                    logger.info("Linked app %s (%s) to customer %s", app_id, persona, customer_id)
+    except Exception as e:
+        logger.warning("Failed to link apps to customers: %s", e)
 
 
 # Entry point for running with uvicorn directly

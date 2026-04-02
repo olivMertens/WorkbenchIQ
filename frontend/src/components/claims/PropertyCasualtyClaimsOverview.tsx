@@ -163,7 +163,16 @@ function HeaderStrip({ application }: { application: ApplicationMetadata | null 
         <div className="flex items-center gap-6 text-sm">
           <div><span className="text-indigo-200 text-xs">Branche :</span> <span className="font-medium">{lineOfBusiness}</span></div>
           <div><span className="text-indigo-200 text-xs">Cause :</span> <span className="font-medium">{causeOfLoss}</span></div>
-          {insuredName && <div><span className="text-indigo-200 text-xs">Assuré :</span> <span className="font-medium">{insuredName}</span></div>}
+          {insuredName && (
+            <div>
+              <span className="text-indigo-200 text-xs">Assuré :</span>{' '}
+              {application?.external_reference ? (
+                <a href={`/customers/${application.external_reference}`} className="font-medium underline decoration-indigo-300 hover:decoration-white cursor-pointer">{insuredName}</a>
+              ) : (
+                <span className="font-medium">{insuredName}</span>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-5">
           <div className="text-center"><div className="text-xs text-indigo-200">Indemnisé</div><div className="font-semibold">{paidIndemnity}</div></div>
@@ -560,10 +569,15 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
                       if (!fieldVal || fieldVal.value == null || fieldVal.value === '') return null;
                       const rawName = fieldVal.field_name || key.split(':').pop() || key;
                       const label = getFieldLabel(rawName);
+                      const isNameField = rawName === 'NomAssure' || rawName === 'AssuréNom' || rawName === 'NomSouscripteur';
                       return (
                         <div key={key} className="flex justify-between items-center">
                           <span className="text-slate-600 truncate mr-2">{label}</span>
-                          <span className="font-medium text-slate-900 text-right flex-shrink-0">{String(fieldVal.value)}</span>
+                          {isNameField && application?.external_reference ? (
+                            <a href={`/customers/${application.external_reference}`} className="font-medium text-indigo-600 hover:text-indigo-800 underline text-right flex-shrink-0 cursor-pointer">{String(fieldVal.value)}</a>
+                          ) : (
+                            <span className="font-medium text-slate-900 text-right flex-shrink-0">{String(fieldVal.value)}</span>
+                          )}
                         </div>
                       );
                     })}
