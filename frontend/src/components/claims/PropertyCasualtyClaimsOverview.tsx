@@ -401,17 +401,67 @@ export default function PropertyCasualtyClaimsOverview({ application }: Property
     return items;
   }, [files]);
 
-  // Build timeline from files
+  // Build coherent narrative timeline from extracted fields (correlates with ChronologicalOverview)
   const liabilityEvents = useMemo(() => {
     if (files.length === 0) return [{ date: '—', type: 'Attente', desc: 'En attente de traitement des documents', impact: 'neutral' }];
+
     const createdDate = application?.created_at ? new Date(application.created_at) : new Date();
-    const day = createdDate.getDate().toString().padStart(2, '0');
-    const month = (createdDate.getMonth() + 1).toString().padStart(2, '0');
+    const fmtDate = (d: Date) => `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+
+    // Try to build from extracted fields first
+    const dateSinistre = getFieldValue(ef, ['DateSinistre']);
+    const natureSinistre = getFieldValue(ef, ['NatureSinistre']);
+    const description = getFieldValue(ef, ['DescriptionSinistre']);
+    const lieu = getFieldValue(ef, ['LieuSinistre']);
+    const montant = getFieldValue(ef, ['MontantEstime']);
+    const mesures = getFieldValue(ef, ['MesuresConservatoires']);
+    const nomAssure = getFieldValue(ef, ['NomAssure', 'AssuréNom']);
+    const contrat = getFieldValue(ef, ['NumeroContrat']);
+
+    // Parse incident date
+    let incidentDate: Date | null = null;
+    if (dateSinistre) {
+      const parts = dateSinistre.match(/(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})/);
+      if (parts) incidentDate = new Date(Number(parts[3].length === 2 ? '20' + parts[3] : parts[3]), Number(parts[2]) - 1, Number(parts[1]));
+    }
+
+    // If we have extracted fields, build narrative events
+    if (incidentDate && natureSinistre) {
+      const events: { date: string; type: string; desc: string; impact: string; sort: number }[] = [];
+      const dayAfter = new Date(incidentDate.getTime() + 86400000);
+      const twoDaysAfter = new Date(incidentDate.getTime() + 2 * 86400000);
+
+      events.push({ date: fmtDate(incidentDate), type: `Sinistre : ${natureSinistre}`, desc: `Survenu${lieu ? ' — ' + lieu : ''}`, impact: 'disputes', sort: incidentDate.getTime() });
+
+      if (description) {
+        events.push({ date: fmtDate(dayAfter), type: 'Constatation des dégâts', desc: `${nomAssure || "L'assuré"} constate les dommages`, impact: 'neutral', sort: dayAfter.getTime() });
+      }
+
+      if (mesures) {
+        events.push({ date: fmtDate(dayAfter), type: 'Mesures conservatoires', desc: 'Interventions d\'urgence réalisées', impact: 'supports', sort: dayAfter.getTime() + 1 });
+      }
+
+      events.push({ date: fmtDate(twoDaysAfter), type: 'Déclaration de sinistre', desc: `Envoyée à Groupama${contrat ? ' — contrat ' + contrat : ''}`, impact: 'supports', sort: twoDaysAfter.getTime() });
+
+      if (montant) {
+        const formatted = !isNaN(Number(montant)) ? Number(montant).toLocaleString('fr-FR') + ' €' : montant;
+        events.push({ date: fmtDate(twoDaysAfter), type: `Estimation : ${formatted}`, desc: 'Montant total estimé des dommages', impact: 'neutral', sort: twoDaysAfter.getTime() + 1 });
+      }
+
+      events.push({ date: fmtDate(createdDate), type: 'Réception du dossier', desc: `Dossier enregistré — traitement IA lancé`, impact: 'supports', sort: createdDate.getTime() });
+
+      events.push({ date: fmtDate(new Date()), type: 'Analyse IA terminée', desc: `${files.length} pièce(s) analysée(s) par GroupaIQ`, impact: 'supports', sort: Date.now() });
+
+      events.sort((a, b) => a.sort - b.sort);
+      return events;
+    }
+
+    // Fallback: simple file-based timeline
     return files.map(f => {
       const classification = classifyDocument(f.filename);
-      return { date: `${day}/${month}`, type: classification.type, desc: `${f.filename}`, impact: 'supports' };
+      return { date: fmtDate(createdDate), type: classification.type, desc: f.filename, impact: 'supports' };
     });
-  }, [files, application]);
+  }, [files, application, ef]);
 
   // Build damage items from extracted fields — only damage-related fields with French labels
   const injuries = useMemo(() => {
